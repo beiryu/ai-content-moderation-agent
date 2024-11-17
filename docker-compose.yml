@@ -1,0 +1,38 @@
+version: "3.8"
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ai_content_moderation_agent_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - ai_content_moderation_agent_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ai_content_moderation_agent_phpmyadmin
+    links:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - 8080:80
+    networks:
+      - ai_content_moderation_agent_network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  ai_content_moderation_agent_network:
+    driver: bridge

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useSession } from "next-auth/react"
 
 import { UserSubscriptionPlan } from "types"
 import { cn, formatDate } from "@/lib/utils"
@@ -29,12 +30,43 @@ export function BillingForm({
 }: BillingFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
 
+  const { data: session } = useSession()
+
   async function onSubmit(event) {
     event.preventDefault()
     setIsLoading(!isLoading)
 
+    /**
+     * Stripe
+     */
     // Get a Stripe session URL.
-    const response = await fetch("/api/users/stripe")
+    // const response = await fetch("/api/users/stripe")
+
+    // if (!response?.ok) {
+    //   return toast({
+    //     title: "Something went wrong.",
+    //     description: "Please refresh the page and try again.",
+    //     variant: "destructive",
+    //   })
+    // }
+
+    // Redirect to the Stripe session.
+    // This could be a checkout page for initial upgrade.
+    // Or portal to manage existing subscription.
+    // const session = await response.json()
+    // if (session) {
+    //   window.location.href = session.url
+    // }
+
+    /**
+     * Momo
+     */
+    // Get payment URL based on user's region
+    const endpoint = /^84/.test(session?.user?.phone || "")
+      ? "/api/users/momo"
+      : "/api/users/stripe"
+
+    const response = await fetch(endpoint)
 
     if (!response?.ok) {
       return toast({
@@ -44,12 +76,9 @@ export function BillingForm({
       })
     }
 
-    // Redirect to the Stripe session.
-    // This could be a checkout page for initial upgrade.
-    // Or portal to manage existing subscription.
-    const session = await response.json()
-    if (session) {
-      window.location.href = session.url
+    const data = await response.json()
+    if (data.url) {
+      window.location.href = data.url
     }
   }
 

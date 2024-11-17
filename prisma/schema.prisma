@@ -46,6 +46,7 @@ model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
+  phone         String?
   emailVerified DateTime?
   image         String?
   createdAt     DateTime  @default(now()) @map(name: "created_at")
@@ -59,6 +60,12 @@ model User {
   stripeSubscriptionId   String?   @unique @map(name: "stripe_subscription_id")
   stripePriceId          String?   @map(name: "stripe_price_id")
   stripeCurrentPeriodEnd DateTime? @map(name: "stripe_current_period_end")
+
+  // Momo fields
+  momoCustomerId       String?   @unique @map(name: "momo_customer_id")
+  momoSubscriptionId   String?   @unique @map(name: "momo_subscription_id")
+  momoPriceId         String?   @map(name: "momo_price_id") 
+  momoCurrentPeriodEnd DateTime? @map(name: "momo_current_period_end")
 
   @@map(name: "users")
 }
