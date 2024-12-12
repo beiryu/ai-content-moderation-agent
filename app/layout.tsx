@@ -6,6 +6,7 @@ import { siteConfig } from "@/config/site"
 import { absoluteUrl, cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/toaster"
 import { Analytics } from "@/components/analytics"
+import { AuthProvider } from "@/components/session-provider"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { ThemeProvider } from "@/components/theme-provider"
 
@@ -83,7 +84,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
+          <AuthProvider>{children}</AuthProvider>
           <Analytics />
           <Toaster />
           <TailwindIndicator />
