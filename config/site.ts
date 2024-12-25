@@ -1,13 +1,13 @@
 import { SiteConfig } from "types"
 
 export const siteConfig: SiteConfig = {
-  name: "Taxonomy",
+  name: "Let's Talk Wise",
   description:
-    "An open source application built using the new router, server components and everything new in Next.js 13.",
-  url: "https://tx.shadcn.com",
-  ogImage: "https://tx.shadcn.com/og.jpg",
+    "Let's Talk Wise is an app that helps you have more effective meetings using AI technology.",
+  url: "https://letstalkwise.com",
+  ogImage: "https://letstalkwise.com/og.jpg",
   links: {
-    twitter: "https://twitter.com/shadcn",
-    github: "https://github.com/shadcn/taxonomy",
+    twitter: "https://twitter.com/letstalkwise",
+    github: "https://github.com/letstalkwise",
   },
 }

@@ -1,10 +1,10 @@
 {
-  "name": "taxonomy",
+  "name": "letstalkwise",
   "version": "0.2.0",
   "private": true,
   "author": {
-    "name": "shadcn",
-    "url": "https://twitter.com/shadcn"
+    "name": "beiryu",
+    "url": "https://twitter.com/beiryu"
   },
   "scripts": {
     "dev": "concurrently \"contentlayer dev\" \"next dev\"",
