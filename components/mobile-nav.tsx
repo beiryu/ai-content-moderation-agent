@@ -9,10 +9,15 @@ import { Icons } from "@/components/icons"
 
 interface MobileNavProps {
   items: MainNavItem[]
+  setShowMobileMenu: (show: boolean) => void
   children?: React.ReactNode
 }
 
-export function MobileNav({ items, children }: MobileNavProps) {
+export function MobileNav({
+  items,
+  setShowMobileMenu,
+  children,
+}: MobileNavProps) {
   useLockBody()
 
   return (
@@ -22,7 +27,11 @@ export function MobileNav({ items, children }: MobileNavProps) {
       )}
     >
       <div className="relative z-20 grid gap-6 rounded-md bg-popover p-4 text-popover-foreground shadow-md">
-        <Link href="/" className="flex items-center space-x-2">
+        <Link
+          href="/#hero"
+          onClick={() => setShowMobileMenu(false)}
+          className="flex items-center space-x-2"
+        >
           <Icons.logo />
           <span className="font-bold">{siteConfig.name}</span>
         </Link>
@@ -31,6 +40,7 @@ export function MobileNav({ items, children }: MobileNavProps) {
             <Link
               key={index}
               href={item.disabled ? "#" : item.href}
+              onClick={() => setShowMobileMenu(false)}
               className={cn(
                 "flex w-full items-center rounded-md p-2 text-sm font-medium hover:underline",
                 item.disabled && "cursor-not-allowed opacity-60"

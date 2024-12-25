@@ -9,5 +9,6 @@ export const siteConfig: SiteConfig = {
   links: {
     twitter: "https://twitter.com/letstalkwise",
     github: "https://github.com/letstalkwise",
+    linkedin: "https://www.linkedin.com/company/letstalkwise",
   },
 }

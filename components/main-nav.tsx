@@ -21,7 +21,7 @@ export function MainNav({ items, children }: MainNavProps) {
 
   return (
     <div className="flex gap-6 md:gap-10">
-      <Link href="/" className="hidden items-center space-x-2 md:flex">
+      <Link href="/#hero" className="hidden items-center space-x-2 md:flex">
         <Icons.logo />
         <span className="hidden font-bold sm:inline-block">
           {siteConfig.name}
@@ -32,7 +32,7 @@ export function MainNav({ items, children }: MainNavProps) {
           {items?.map((item, index) => (
             <Link
               key={index}
-              href={item.disabled ? "#" : item.href}
+              href={item.disabled ? "#hero" : item.href}
               className={cn(
                 "flex items-center text-lg font-medium transition-colors hover:text-foreground/80 sm:text-sm",
                 item.href.startsWith(`/${segment}`)
@@ -54,7 +54,9 @@ export function MainNav({ items, children }: MainNavProps) {
         <span className="font-bold">Menu</span>
       </button>
       {showMobileMenu && items && (
-        <MobileNav items={items}>{children}</MobileNav>
+        <MobileNav items={items} setShowMobileMenu={setShowMobileMenu}>
+          {children}
+        </MobileNav>
       )}
     </div>
   )
