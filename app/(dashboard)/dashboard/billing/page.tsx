@@ -49,10 +49,12 @@ export default async function BillingPage() {
       <div className="grid gap-8">
         <Alert className="!pl-14">
           <Icons.warning />
-          <AlertTitle>This is a demo app.</AlertTitle>
+          <AlertTitle>
+            This is an early version of Let&apos;s Talk Wise.
+          </AlertTitle>
           <AlertDescription>
-            Taxonomy app is a demo app using a Stripe test environment. You can
-            find a list of test card numbers on the{" "}
+            Let&apos;s Talk Wise app is a app that helps you have more effective
+            meetings using AI technology.
             <a
               href="https://stripe.com/docs/testing#cards"
               target="_blank"

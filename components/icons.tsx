@@ -17,6 +17,7 @@ import {
   MoreVertical,
   Pizza,
   Plus,
+  Podcast,
   Settings,
   SunMedium,
   Trash,
@@ -29,7 +30,7 @@ import {
 export type Icon = LucideIcon
 
 export const Icons = {
-  logo: Command,
+  logo: Podcast,
   close: X,
   spinner: Loader2,
   chevronLeft: ChevronLeft,

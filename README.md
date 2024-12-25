@@ -1,4 +1,4 @@
-# Taxonomy
+# Let's Talk Wise
 
 An open source application built using the new router, server components and everything new in Next.js 13.
 
@@ -87,4 +87,4 @@ pnpm dev
 
 ## License
 
-Licensed under the [MIT license](https://github.com/shadcn/taxonomy/blob/main/LICENSE.md).
+Licensed under the [MIT license]().
