@@ -5,7 +5,6 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Command,
   Contact,
   CreditCard,
   File,
@@ -25,14 +24,12 @@ import {
   Plus,
   Podcast,
   Settings,
-  Smartphone,
   SunMedium,
   Trash,
   Tv,
-  Twitter,
   User,
   X,
-  type Icon as LucideIcon,
+  type LucideIcon,
 } from "lucide-react"
 
 export type Icon = LucideIcon
@@ -59,6 +56,15 @@ export const Icons = {
   sun: SunMedium,
   moon: Moon,
   laptop: Laptop,
+  check: Check,
+  messageSquare: MessageSquare,
+  tv: Tv,
+  contact: Contact,
+  fileBarChart2: FileBarChart2,
+  bookOpenCheck: BookOpenCheck,
+  fileText: FileText,
+  micOff: MicOff,
+  micOn: Mic,
   gitHub: ({ ...props }: LucideProps) => (
     <svg
       aria-hidden="true"
@@ -76,14 +82,4 @@ export const Icons = {
       ></path>
     </svg>
   ),
-  twitter: Twitter,
-  check: Check,
-  messageSquare: MessageSquare,
-  tv: Tv,
-  contact: Contact,
-  fileBarChart2: FileBarChart2,
-  bookOpenCheck: BookOpenCheck,
-  fileText: FileText,
-  micOff: MicOff,
-  micOn: Mic,
 }

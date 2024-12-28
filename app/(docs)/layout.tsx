@@ -1,8 +1,4 @@
-import Link from "next/link"
-
 import { docsConfig } from "@/config/docs"
-import { siteConfig } from "@/config/site"
-import { Icons } from "@/components/icons"
 import { MainNav } from "@/components/main-nav"
 import { DocsSearch } from "@/components/search"
 import { DocsSidebarNav } from "@/components/sidebar-nav"
@@ -24,16 +20,6 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
             <div className="flex-1 sm:grow-0">
               <DocsSearch />
             </div>
-            <nav className="flex space-x-4">
-              <Link
-                href={siteConfig.links.github}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Icons.gitHub className="h-7 w-7" />
-                <span className="sr-only">GitHub</span>
-              </Link>
-            </nav>
           </div>
         </div>
       </header>
