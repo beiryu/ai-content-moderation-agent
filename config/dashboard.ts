@@ -20,6 +20,11 @@ export const dashboardConfig: DashboardConfig = {
       icon: "post",
     },
     {
+      title: "Live Interview",
+      href: "/dashboard/live-interview",
+      icon: "page",
+    },
+    {
       title: "Billing",
       href: "/dashboard/billing",
       icon: "billing",

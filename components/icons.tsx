@@ -17,6 +17,8 @@ import {
   Loader2,
   LucideProps,
   MessageSquare,
+  Mic,
+  MicOff,
   Moon,
   MoreVertical,
   Pizza,
@@ -82,4 +84,6 @@ export const Icons = {
   fileBarChart2: FileBarChart2,
   bookOpenCheck: BookOpenCheck,
   fileText: FileText,
+  micOff: MicOff,
+  micOn: Mic,
 }

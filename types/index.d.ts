@@ -63,3 +63,11 @@ export type UserSubscriptionPlan = SubscriptionPlan &
     stripeCurrentPeriodEnd: number
     isPro: boolean
   }
+
+export type Flags = "interview-assistant" | "summarize"
+
+export type HistoryData = {
+  createdAt: string
+  data: string
+  tag: Flags
+}

@@ -16,6 +16,8 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^1.0.11",
+    "@deepgram/sdk": "^3.9.0",
     "@editorjs/code": "^2.8.0",
     "@editorjs/editorjs": "^2.26.5",
     "@editorjs/embed": "^2.5.3",
@@ -61,6 +63,7 @@
     "@typescript-eslint/parser": "^5.59.0",
     "@vercel/analytics": "^1.0.0",
     "@vercel/og": "^0.0.21",
+    "ai": "^4.0.22",
     "class-variance-authority": "^0.4.0",
     "clsx": "^1.2.1",
     "cmdk": "^0.1.22",
@@ -73,6 +76,7 @@
     "next-contentlayer": "^0.3.1",
     "next-themes": "^0.2.1",
     "nodemailer": "^6.9.1",
+    "openai": "^4.77.0",
     "pg": "^8.13.1",
     "postmark": "^3.0.15",
     "prop-types": "^15.8.1",
@@ -88,7 +92,8 @@
     "tailwind-merge": "^1.12.0",
     "tailwindcss-animate": "^1.0.5",
     "uuid": "^11.0.3",
-    "zod": "^3.21.4"
+    "zod": "^3.21.4",
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.6.1",
