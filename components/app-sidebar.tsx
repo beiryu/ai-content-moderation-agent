@@ -6,12 +6,13 @@ import {
   Bot,
   Command,
   Frame,
+  Fullscreen,
   LifeBuoy,
   Map,
   PieChart,
+  Podcast,
   Send,
   Settings2,
-  SquareTerminal,
 } from "lucide-react"
 import { User } from "next-auth"
 
@@ -32,40 +33,40 @@ import { NavUser } from "@/components/nav-user"
 const data = {
   navMain: [
     {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
+      title: "Interview",
+      url: "/dashboard/live-interview",
+      icon: Fullscreen,
       isActive: true,
       items: [
         {
+          title: "Live Interview",
+          url: "/dashboard/live-interview",
+        },
+        {
+          title: "Mock Interview",
+          url: "/dashboard/mock-interview",
+        },
+        {
           title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
+          url: "/dashboard/history",
         },
       ],
     },
     {
-      title: "Models",
+      title: "AI Tools",
       url: "#",
       icon: Bot,
       items: [
         {
-          title: "Genesis",
+          title: "AI Material Generator",
           url: "#",
         },
         {
-          title: "Explorer",
+          title: "AI Career Coach",
           url: "#",
         },
         {
-          title: "Quantum",
+          title: "Speak with Recruiters",
           url: "#",
         },
       ],
@@ -76,19 +77,11 @@ const data = {
       icon: BookOpen,
       items: [
         {
-          title: "Introduction",
+          title: "Preparation Hub",
           url: "#",
         },
         {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
+          title: "Resource Center",
           url: "#",
         },
       ],
@@ -100,10 +93,6 @@ const data = {
       items: [
         {
           title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
           url: "#",
         },
         {
@@ -160,10 +149,12 @@ export function AppSidebar({
             <SidebarMenuButton size="lg" asChild>
               <a href="#">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Command className="size-4" />
+                  <Podcast className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Acme Inc</span>
+                  <span className="truncate font-semibold">
+                    Let&apos;s Take Wise
+                  </span>
                   <span className="truncate text-xs">Enterprise</span>
                 </div>
               </a>
