@@ -4,7 +4,7 @@ import * as React from "react"
 import { Row } from "@tanstack/react-table"
 import { Copy, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 
-import { taskSchema } from "@/lib/validations/table"
+import { taskSchema } from "@/lib/validations/task"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import {

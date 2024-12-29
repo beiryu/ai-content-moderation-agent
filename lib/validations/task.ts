@@ -15,9 +15,9 @@ export const priorities = ["low", "medium", "high"] as const
 export const taskSchema = z.object({
   id: z.string(),
   title: z.string(),
-  status: z.enum(statuses),
-  label: z.enum(labels),
-  priority: z.enum(priorities),
+  status: z.string(),
+  label: z.string(),
+  priority: z.string(),
   due_date: z.date().transform((value) => new Date(value)),
 })
 

@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { cn } from "@/lib/utils"
-import { TaskType, labels, priorities, statuses } from "@/lib/validations/table"
+import { TaskType, labels, priorities, statuses } from "@/lib/validations/task"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -44,9 +44,9 @@ type EditProps = {
 const editSchema = z.object({
   id: z.string(),
   title: z.string().min(1, { message: "Title Required" }),
-  status: z.enum(statuses),
-  label: z.enum(labels),
-  priority: z.enum(priorities),
+  status: z.string(),
+  label: z.string(),
+  priority: z.string(),
   due_date: z.date({
     required_error: "Due date is required.",
   }),

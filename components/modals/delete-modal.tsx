@@ -1,7 +1,7 @@
 "use client"
 
 // * * This is just a demostration of delete modal, actual functionality may vary
-import { TaskType } from "@/lib/validations/table"
+import { TaskType } from "@/lib/validations/task"
 import {
   AlertDialog,
   AlertDialogCancel,

@@ -1,5 +1,4 @@
 import { Outfit as FontOutfit } from "next/font/google"
-import localFont from "next/font/local"
 
 import "@/styles/globals.css"
 import { siteConfig } from "@/config/site"
@@ -9,6 +8,8 @@ import { Analytics } from "@/components/analytics"
 import { AuthProvider } from "@/components/session-provider"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { ThemeProvider } from "@/components/theme-provider"
+
+import { ReactQueryProvider } from "./_provider/react-query-provider"
 
 const fontOutfit = FontOutfit({
   subsets: ["latin"],
@@ -77,10 +78,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
         )}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AuthProvider>{children}</AuthProvider>
-          <Analytics />
-          <Toaster />
-          <TailwindIndicator />
+          <ReactQueryProvider>
+            <AuthProvider>{children}</AuthProvider>
+            <Analytics />
+            <Toaster />
+            <TailwindIndicator />
+          </ReactQueryProvider>
         </ThemeProvider>
       </body>
     </html>

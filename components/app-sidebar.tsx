@@ -58,7 +58,7 @@ const data = {
       icon: Bot,
       items: [
         {
-          title: "AI Material Generator",
+          title: "Cover Letter Generator",
           url: "#",
         },
         {
