@@ -39,7 +39,7 @@ export default async function IndexPage() {
         id="hero"
         className="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32"
       >
-        <div className="container flex max-w-[64rem] flex-col items-center gap-4 text-center">
+        <div className="container flex max-w-5xl flex-col items-center gap-4 text-center">
           <Link
             href={siteConfig.links.linkedin}
             className="rounded-2xl bg-muted px-4 py-1.5 text-sm font-medium"
@@ -52,7 +52,7 @@ export default async function IndexPage() {
             <br />
             Your AI-Powered Interview
           </h1>
-          <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
+          <p className="max-w-2xl leading-normal text-muted-foreground sm:text-xl sm:leading-8">
             Master your interview skills with AI-powered practice sessions,
             instant feedback, and personalized coaching. Let&apos;s Talk Wise
             helps you prepare for your dream job with cutting-edge technology.
@@ -85,10 +85,10 @@ export default async function IndexPage() {
             meetings using AI technology.
           </p>
         </div>
-        <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-3">
+        <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-5xl md:grid-cols-3">
           <div className="relative overflow-hidden rounded-lg border bg-background p-2">
             <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-              <Icons.messageSquare className="h-12 w-12" />
+              <Icons.messageSquare className="size-12" />
               <div className="space-y-2">
                 <h3 className="font-bold">Real-time AI Feedback</h3>
                 <p className="text-sm text-muted-foreground">
@@ -100,7 +100,7 @@ export default async function IndexPage() {
           </div>
           <div className="relative overflow-hidden rounded-lg border bg-background p-2">
             <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-              <Icons.tv className="h-12 w-12" />
+              <Icons.tv className="size-12" />
               <div className="space-y-2">
                 <h3 className="font-bold">Smart Meeting Assistant</h3>
                 <p className="text-sm text-muted-foreground">
@@ -111,7 +111,7 @@ export default async function IndexPage() {
           </div>
           <div className="relative overflow-hidden rounded-lg border bg-background p-2">
             <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-              <Icons.contact className="h-12 w-12" />
+              <Icons.contact className="size-12" />
               <div className="space-y-2">
                 <h3 className="font-bold">Personalized Coaching</h3>
                 <p className="text-sm text-muted-foreground">
@@ -122,7 +122,7 @@ export default async function IndexPage() {
           </div>
           <div className="relative overflow-hidden rounded-lg border bg-background p-2">
             <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-              <Icons.fileBarChart2 className="h-12 w-12" />
+              <Icons.fileBarChart2 className="size-12" />
               <div className="space-y-2">
                 <h3 className="font-bold">Performance Analytics</h3>
                 <p className="text-sm text-muted-foreground">
@@ -133,7 +133,7 @@ export default async function IndexPage() {
           </div>
           <div className="relative overflow-hidden rounded-lg border bg-background p-2">
             <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-              <Icons.bookOpenCheck className="h-12 w-12" />
+              <Icons.bookOpenCheck className="size-12" />
               <div className="space-y-2">
                 <h3 className="font-bold">Mock Interviews</h3>
                 <p className="text-sm text-muted-foreground">
@@ -144,7 +144,7 @@ export default async function IndexPage() {
           </div>
           <div className="relative overflow-hidden rounded-lg border bg-background p-2">
             <div className="flex h-[180px] flex-col justify-between rounded-md p-6">
-              <Icons.fileText className="h-12 w-12" />
+              <Icons.fileText className="size-12" />
               <div className="space-y-2">
                 <h3 className="font-bold">Meeting Summaries</h3>
                 <p className="text-sm text-muted-foreground">

@@ -18,12 +18,12 @@ export function RecordButton({
       <div className="flex items-center">
         {micOpen ? (
           <>
-            <Icons.micOff className="h-4 w-4 -translate-x-0.5 mr-2" />
+            <Icons.micOff className="size-4 -translate-x-0.5 mr-2" />
             Stop listening
           </>
         ) : (
           <>
-            <Icons.micOn className="h-4 w-4 -translate-x-0.5 mr-2" />
+            <Icons.micOn className="size-4 -translate-x-0.5 mr-2" />
             Start listening
           </>
         )}
