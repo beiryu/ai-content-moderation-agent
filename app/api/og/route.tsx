@@ -1,4 +1,4 @@
-import { ImageResponse } from "@vercel/og"
+import { ImageResponse } from "next/og"
 
 import { ogImageSchema } from "@/lib/validations/og"
 
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
 
     const fontSize = heading.length > 100 ? "70px" : "100px"
 
-    return new ImageResponse(
+    const image = new ImageResponse(
       (
         <div
           tw="flex relative flex-col p-12 w-full h-full items-start"
@@ -140,6 +140,8 @@ export async function GET(req: Request) {
         ],
       }
     )
+
+    return image
   } catch (error) {
     return new Response(`Failed to generate image`, {
       status: 500,

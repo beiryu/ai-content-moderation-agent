@@ -20,50 +20,59 @@ interface RootLayoutProps {
   children: React.ReactNode
 }
 
+// TODO: Add metadata
 export const metadata = {
-  title: {
-    default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
-  },
-  description: siteConfig.description,
-  keywords: [
-    "Next.js",
-    "React",
-    "Tailwind CSS",
-    "Server Components",
-    "Radix UI",
-  ],
-  authors: [
-    {
-      name: "beiryu",
-      url: "https://beiryu.com",
+  metadataBase: new URL(siteConfig.url),
+  alternates: {
+    canonical: "/",
+    languages: {
+      "en-US": "/en-US",
     },
-  ],
-  creator: "beiryu",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
+  },
+  // title: {
+  //   default: siteConfig.name,
+  //   template: `%s | ${siteConfig.name}`,
+  // },
+  // description: siteConfig.description,
+  // keywords: [
+  //   "Next.js",
+  //   "React",
+  //   "Tailwind CSS",
+  //   "Server Components",
+  //   "Radix UI",
+  // ],
+  // authors: [
+  //   {
+  //     name: "beiryu",
+  //     url: "https://beiryu.com",
+  //   },
+  // ],
+  // creator: "beiryu",
+  // themeColor: [
+  //   { media: "(prefers-color-scheme: light)", color: "white" },
+  //   { media: "(prefers-color-scheme: dark)", color: "black" },
+  // ],
   openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: siteConfig.url,
-    title: siteConfig.name,
-    description: siteConfig.description,
-    siteName: siteConfig.name,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: siteConfig.name,
-    description: siteConfig.description,
+    // type: "website",
+    // locale: "en_US",
+    // url: siteConfig.url,
+    // title: siteConfig.name,
+    // description: siteConfig.description,
+    // siteName: siteConfig.name,
     images: [`${siteConfig.url}/og.jpg`],
-    creator: "@beiryu",
   },
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
-    apple: "/apple-touch-icon.png",
-  },
+  // twitter: {
+  //   card: "summary_large_image",
+  //   title: siteConfig.name,
+  //   description: siteConfig.description,
+  //   images: [`${siteConfig.url}/og.jpg`],
+  //   creator: "@beiryu",
+  // },
+  // icons: {
+  //   icon: "/favicon.ico",
+  //   shortcut: "/favicon-16x16.png",
+  //   apple: "/apple-touch-icon.png",
+  // },
   // manifest: `${siteConfig.url}/site.webmanifest`,
 }
 
