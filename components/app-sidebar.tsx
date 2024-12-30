@@ -34,21 +34,17 @@ const data = {
   navMain: [
     {
       title: "Interview",
-      url: "/dashboard/live-interview",
+      url: "/dashboard/interviews",
       icon: Fullscreen,
       isActive: true,
       items: [
         {
-          title: "Live Interview",
-          url: "/dashboard/live-interview",
+          title: "Interview Buddy",
+          url: "/dashboard/interviews",
         },
         {
-          title: "Mock Interview",
-          url: "/dashboard/mock-interview",
-        },
-        {
-          title: "History",
-          url: "/dashboard/history",
+          title: "Interview Sessions",
+          url: "/dashboard/interview-sessions",
         },
       ],
     },

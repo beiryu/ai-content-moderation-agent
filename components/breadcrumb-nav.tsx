@@ -12,17 +12,13 @@ import {
 } from "@/components/ui/breadcrumb"
 
 const breadcrumbMap = {
-  "/dashboard/live-interview": {
-    parent: { title: "Interview", href: "/dashboard/live-interview" },
-    current: "Live Interview",
+  "/dashboard/interviews": {
+    parent: { title: "Interview", href: "/dashboard/interviews" },
+    current: "Interview Buddy",
   },
-  "/dashboard/mock-interview": {
-    parent: { title: "Interview", href: "/dashboard/mock-interview" },
-    current: "Mock Interview",
-  },
-  "/dashboard/history": {
-    parent: { title: "Interview", href: "/dashboard/history" },
-    current: "History",
+  "/dashboard/interview-sessions": {
+    parent: { title: "Interview", href: "/dashboard/interview-sessions" },
+    current: "Interview Sessions",
   },
 }
 

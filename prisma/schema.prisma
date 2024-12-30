@@ -104,8 +104,8 @@ model Interview {
   priority          String
   date              DateTime
   type              String              // technical, behavioral, etc
-  jobId             String
-  job               Job                 @relation(fields: [jobId], references: [id])
+  jobId             String?
+  job               Job?                 @relation(fields: [jobId], references: [id])
   interviewSessions InterviewSession[]
   createdAt         DateTime            @default(now()) @map(name: "created_at")
   updatedAt         DateTime            @updatedAt @map(name: "updated_at")
