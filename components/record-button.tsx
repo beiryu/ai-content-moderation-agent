@@ -14,7 +14,12 @@ export function RecordButton({
   disabled,
 }: RecordButtonProps) {
   return (
-    <Button onClick={onClick} disabled={disabled} className="w-full">
+    <Button
+      onClick={onClick}
+      disabled={disabled}
+      className="w-full"
+      effect="ringHover"
+    >
       <div className="flex items-center">
         {micOpen ? (
           <>

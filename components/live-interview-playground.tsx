@@ -125,11 +125,21 @@ export function LiveInterviewPlayground() {
           </div>
 
           {!isLoading ? (
-            <Button variant="default" disabled={isLoading} type="submit">
+            <Button
+              effect="gooeyRight"
+              variant="default"
+              disabled={isLoading}
+              type="submit"
+            >
               Process
             </Button>
           ) : (
-            <Button variant="default" disabled={!isLoading} onClick={stop}>
+            <Button
+              effect="gooeyRight"
+              variant="default"
+              disabled={!isLoading}
+              onClick={stop}
+            >
               Stop
             </Button>
           )}
