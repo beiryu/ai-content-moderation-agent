@@ -67,6 +67,10 @@ model User {
   momoPriceId         String?   @map(name: "momo_price_id") 
   momoCurrentPeriodEnd DateTime? @map(name: "momo_current_period_end")
 
+  resume Resume?
+  userProgress UserProgress?
+  coachingSessions CoachingSession[]
+
   @@map(name: "users")
 }
 
@@ -91,4 +95,126 @@ model Post {
   author User @relation(fields: [authorId], references: [id])
 
   @@map(name: "posts")
+}
+
+model Interview {
+  id                String              @id @default(cuid())
+  name              String
+  status            String
+  priority          String
+  date              DateTime
+  type              String              // technical, behavioral, etc
+  jobId             String
+  job               Job                 @relation(fields: [jobId], references: [id])
+  interviewSessions InterviewSession[]
+  createdAt         DateTime            @default(now()) @map(name: "created_at")
+  updatedAt         DateTime            @updatedAt @map(name: "updated_at")
+
+  @@map("interviews")
+}
+
+model InterviewSession {
+  id                String                      @id @default(cuid()) 
+  interviewId       String
+  interview         Interview                   @relation(fields: [interviewId], references: [id])
+  conversation      Json                        // Stores role and content
+  completionRate    Float                       @map(name: "completion_rate")
+  performanceScore  Float                       @map(name: "performance_score")
+  feedbackSummary   String                      @map(name: "feedback_summary")
+  duration          Int                         // in minutes
+  performance       InterviewSessionPerformance?
+  createdAt         DateTime                    @default(now()) @map(name: "created_at")
+  updatedAt         DateTime                    @updatedAt @map(name: "updated_at")
+
+  @@map("interview_sessions")
+}
+
+model InterviewSessionPerformance {
+  id                   String           @id @default(cuid())
+  interviewSessionId   String           @unique
+  interviewSession     InterviewSession @relation(fields: [interviewSessionId], references: [id])
+  overallScore         Float            @map(name: "overall_score")
+  technicalScore       Float            @map(name: "technical_score")
+  communicationScore   Float            @map(name: "communication_score")
+  confidenceScore      Float            @map(name: "confidence_score")
+  answerQualityScore   Float            @map(name: "answer_quality_score")
+  answerCompletionRate Float            @map(name: "answer_completion_rate")
+  questionsAttempted   Int              @map(name: "questions_attempted")
+  createdAt           DateTime          @default(now()) @map(name: "created_at")
+  updatedAt           DateTime          @updatedAt @map(name: "updated_at")
+
+  @@map("interview_session_performances")
+}
+
+model Job {
+  id             String      @id @default(cuid())
+  companyName    String      @map(name: "company_name")
+  companyDetail  String?     @db.Text @map(name: "company_detail")
+  description    String      @db.Text @map(name: "description")
+  coverLetter    String?     @db.Text @map(name: "cover_letter")
+  status         String      @default("active")
+  resumeId       String      
+  resume         Resume      @relation(fields: [resumeId], references: [id])
+  interviews     Interview[]
+  qa             QA[]
+  createdAt      DateTime    @default(now()) @map(name: "created_at")
+  updatedAt      DateTime    @updatedAt @map(name: "updated_at")
+
+  @@map("jobs")
+}
+
+model Resume {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  content   Json     // Stores structured resume data
+  status    String   @default("active")
+  jobs      Job[]
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+
+  @@map("resumes")
+}
+
+model QA {
+  id            String   @id @default(cuid())
+  jobId         String
+  job           Job      @relation(fields: [jobId], references: [id])
+  question      String   @db.Text
+  answer        String   @db.Text
+  category      String
+  difficultyLevel Int      @map(name: "difficulty_level")
+  createdAt     DateTime @default(now()) @map(name: "created_at")
+  updatedAt     DateTime @updatedAt @map(name: "updated_at")
+
+  @@map("qa")
+}
+
+model UserProgress {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  totalInterviews  Int      @default(0) @map(name: "total_interviews")
+  averageScore     Float    @default(0) @map(name: "average_score")
+  improvementRate  Float    @default(0) @map(name: "improvement_rate")
+  strongestAreas   Json     @map(name: "strongest_areas") // Array of strings
+  weakestAreas     Json     @map(name: "weakest_areas") // Array of strings
+  practiceHours    Float    @default(0) @map(name: "practice_hours")
+  lastInterviewDate DateTime? @map(name: "last_interview_date")
+  createdAt        DateTime @default(now()) @map(name: "created_at")
+  updatedAt        DateTime @updatedAt @map(name: "updated_at")
+
+  @@map("user_progress")
+}
+
+model CoachingSession {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  focusArea    String   @map(name: "focus_area") // career/interview/recruiter
+  conversation Json     // Stores role and content
+  createdAt    DateTime @default(now()) @map(name: "created_at")
+  updatedAt    DateTime @updatedAt @map(name: "updated_at")
+
+  @@map("coaching_sessions")
 }
