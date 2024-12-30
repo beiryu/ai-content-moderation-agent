@@ -1,10 +1,11 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { Row } from "@tanstack/react-table"
 import { Copy, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 
-import { taskSchema } from "@/lib/validations/task"
+import { InterviewSchema } from "@/lib/validations/interview"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import {
@@ -20,7 +21,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { label_options } from "@/components/filters"
+import { type_options } from "@/components/filters"
 import DeleteDialog from "@/components/modals/delete-modal"
 import EditDialog from "@/components/modals/edit-modal"
 
@@ -34,10 +35,13 @@ export function DataTableRowActions<TData>({
   const [dialogContent, setDialogContent] =
     React.useState<React.ReactNode | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = React.useState<boolean>(false)
-  const task = taskSchema.parse(row.original)
+
+  const interview = InterviewSchema.parse(row.original)
+
+  const router = useRouter()
 
   const handleEditClick = () => {
-    setDialogContent(<EditDialog task={task} />)
+    setDialogContent(<EditDialog interview={interview} />)
   }
 
   return (
@@ -55,13 +59,18 @@ export function DataTableRowActions<TData>({
         <DropdownMenuContent align="end" className="w-[200px]">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuItem
-            onClick={() => navigator.clipboard.writeText(task.id)}
+            onClick={() => navigator.clipboard.writeText(interview.id)}
           >
             <Copy className="mr-2 size-4" />
-            Copy Task ID
+            Copy Interview ID
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DialogTrigger asChild onClick={() => {}}>
+          <DialogTrigger
+            asChild
+            onClick={() => {
+              router.push(`/dashboard/interviews/${interview.id}`)
+            }}
+          >
             <DropdownMenuItem>
               {" "}
               <Eye className="mr-2 size-4" />
@@ -74,7 +83,7 @@ export function DataTableRowActions<TData>({
               Edit Details
             </DropdownMenuItem>
           </DialogTrigger>
-          <DropdownMenuItem
+          {/* <DropdownMenuItem
             onSelect={() => setShowDeleteDialog(true)}
             className="text-red-600"
           >
@@ -85,24 +94,24 @@ export function DataTableRowActions<TData>({
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>Labels</DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
-              <DropdownMenuRadioGroup value={task.label}>
-                {label_options.map((label) => (
-                  <DropdownMenuRadioItem key={label.value} value={label.value}>
-                    <label.icon className="size-4 mr-2" />
-                    {label.label}
+              <DropdownMenuRadioGroup value={interview.type}>
+                {type_options.map((type) => (
+                  <DropdownMenuRadioItem key={type.value} value={type.value}>
+                    <type.icon className="size-4 mr-2" />
+                    {type.label}
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>
             </DropdownMenuSubContent>
-          </DropdownMenuSub>
+          </DropdownMenuSub> */}
         </DropdownMenuContent>
       </DropdownMenu>
       {dialogContent && <DialogContent>{dialogContent}</DialogContent>}
-      <DeleteDialog
-        task={task}
+      {/* <DeleteDialog
+        interview={interview}
         isOpen={showDeleteDialog}
         showActionToggle={setShowDeleteDialog}
-      />
+      /> */}
     </Dialog>
   )
 }

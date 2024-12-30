@@ -3,8 +3,11 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { format } from "date-fns"
+import { CalendarIcon } from "lucide-react"
 import { useForm } from "react-hook-form"
 
+import { cn } from "@/lib/utils"
 import {
   CreateInterviewRequest,
   CreateInterviewRequestSchema,
@@ -32,12 +35,17 @@ import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
 import { Icons } from "@/components/icons"
+
+import { priority_options, type_options } from "../filters"
+import { Calendar } from "../ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 
 export function CreateInterviewDialog() {
   const [open, setOpen] = React.useState(false)
@@ -50,10 +58,10 @@ export function CreateInterviewDialog() {
     resolver: zodResolver(CreateInterviewRequestSchema),
     defaultValues: {
       name: "",
-      type: "live",
+      type: "mock",
       status: "pending",
       priority: "high",
-      date: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
     },
   })
 
@@ -128,9 +136,16 @@ export function CreateInterviewDialog() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="live">Live</SelectItem>
-                      <SelectItem value="technical">Technical</SelectItem>
-                      <SelectItem value="behavioral">Behavioral</SelectItem>
+                      <SelectGroup>
+                        {type_options.map((type, index) => (
+                          <SelectItem key={index} value={type.value}>
+                            <span className="flex items-center">
+                              <type.icon className="mr-2 size-5 text-muted-foreground" />
+                              {type.label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -153,9 +168,16 @@ export function CreateInterviewDialog() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
+                      <SelectGroup>
+                        {priority_options.map((priority, index) => (
+                          <SelectItem key={index} value={priority.value}>
+                            <span className="flex items-center">
+                              <priority.icon className="mr-2 size-5 text-muted-foreground" />
+                              {priority.label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -164,31 +186,47 @@ export function CreateInterviewDialog() {
             />
             <FormField
               control={form.control}
-              name="status"
+              name="dueDate"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="in-progress">In Progress</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <FormItem className="flex flex-col">
+                  <FormLabel>Due Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(new Date(field.value), "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto size-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="single"
+                        selected={
+                          field.value ? new Date(field.value) : undefined
+                        }
+                        onSelect={(date) => field.onChange(date)}
+                        disabled={(date) => date < new Date()}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="submit" disabled={isPending}>
+              <Button effect="gooeyRight" type="submit" disabled={isPending}>
                 {isPending && (
                   <Icons.spinner className="mr-2 size-4 animate-spin" />
                 )}

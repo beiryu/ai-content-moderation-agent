@@ -102,7 +102,7 @@ model Interview {
   name              String
   status            String
   priority          String
-  date              DateTime
+  dueDate           DateTime            @map(name: "due_date")
   type              String              // technical, behavioral, etc
   jobId             String?
   job               Job?                 @relation(fields: [jobId], references: [id])

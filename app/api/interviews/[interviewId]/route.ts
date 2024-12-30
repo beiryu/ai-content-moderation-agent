@@ -1,0 +1,97 @@
+import { NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import * as z from "zod"
+
+import { authOptions } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { UpdateInterviewRequestSchema } from "@/lib/validations/interview"
+
+export async function GET(
+  req: Request,
+  { params }: { params: { interviewId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 403 })
+    }
+
+    const interview = await db.interview.findUnique({
+      where: {
+        id: params.interviewId,
+      },
+      include: {
+        job: {
+          include: {
+            resume: true,
+          },
+        },
+      },
+    })
+
+    return NextResponse.json(interview)
+  } catch (error) {
+    return new NextResponse(null, { status: 500 })
+  }
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: { interviewId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 403 })
+    }
+
+    const json = await req.json()
+    const body = UpdateInterviewRequestSchema.parse(json)
+
+    const interview = await db.interview.update({
+      where: {
+        id: params.interviewId,
+      },
+      data: {
+        name: body.name,
+        status: body.status,
+        priority: body.priority,
+        dueDate: body.dueDate,
+        type: body.type,
+      },
+    })
+
+    return NextResponse.json(interview)
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return new NextResponse(JSON.stringify(error.issues), { status: 422 })
+    }
+
+    return new NextResponse(null, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { interviewId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 403 })
+    }
+
+    await db.interview.delete({
+      where: {
+        id: params.interviewId,
+      },
+    })
+
+    return new NextResponse(null, { status: 204 })
+  } catch (error) {
+    return new NextResponse(null, { status: 500 })
+  }
+}

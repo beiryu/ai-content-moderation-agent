@@ -1,7 +1,7 @@
 "use client"
 
 // * * This is just a demostration of delete modal, actual functionality may vary
-import { TaskType } from "@/lib/validations/task"
+import { Interview } from "@/lib/validations/interview"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -14,13 +14,13 @@ import {
 import { Button } from "@/components/ui/button"
 
 type DeleteProps = {
-  task: TaskType
+  interview: Interview
   isOpen: boolean
   showActionToggle: (open: boolean) => void
 }
 
 export default function DeleteDialog({
-  task,
+  interview,
   isOpen,
   showActionToggle,
 }: DeleteProps) {
@@ -30,8 +30,8 @@ export default function DeleteDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure absolutely sure ?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. You are about to delete Task Details
-            of <b>{task.title}</b>
+            This action cannot be undone. You are about to delete Interview
+            Details of <b>{interview.name}</b>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

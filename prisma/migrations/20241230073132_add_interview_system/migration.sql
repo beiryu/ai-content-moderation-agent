@@ -13,7 +13,7 @@ CREATE TABLE "interviews" (
     "name" TEXT NOT NULL,
     "status" TEXT NOT NULL,
     "priority" TEXT NOT NULL,
-    "date" TIMESTAMP(3) NOT NULL,
+    "due_date" TIMESTAMP(3) NOT NULL,
     "type" TEXT NOT NULL,
     "jobId" TEXT NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

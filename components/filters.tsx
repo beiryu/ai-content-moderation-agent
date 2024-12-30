@@ -5,22 +5,24 @@ import {
   Bug,
   CheckCircle2,
   Circle,
+  FlaskConical,
   HelpCircle,
   PackagePlus,
+  Radio,
   ScrollText,
   Timer,
   XCircle,
 } from "lucide-react"
 
 export const status_options = [
+  // {
+  //   value: "backlog",
+  //   label: "Backlog",
+  //   icon: HelpCircle,
+  // },
   {
-    value: "backlog",
-    label: "Backlog",
-    icon: HelpCircle,
-  },
-  {
-    value: "todo",
-    label: "Todo",
+    value: "pending",
+    label: "Pending",
     icon: Circle,
   },
   {
@@ -33,28 +35,23 @@ export const status_options = [
     label: "Done",
     icon: CheckCircle2,
   },
-  {
-    value: "canceled",
-    label: "Canceled",
-    icon: XCircle,
-  },
+  // {
+  //   value: "canceled",
+  //   label: "Canceled",
+  //   icon: XCircle,
+  // },
 ]
 
-export const label_options = [
+export const type_options = [
   {
-    value: "bug",
-    label: "Bug",
-    icon: Bug,
+    value: "mock",
+    label: "Mock",
+    icon: FlaskConical,
   },
   {
-    value: "feature",
-    label: "Feature",
-    icon: PackagePlus,
-  },
-  {
-    value: "documentation",
-    label: "Documentation",
-    icon: ScrollText,
+    value: "live",
+    label: "Live",
+    icon: Radio,
   },
 ]
 

@@ -23,8 +23,12 @@ const breadcrumbMap = {
 }
 
 export function BreadcrumbNav() {
-  const pathname = usePathname()
-  const breadcrumb = breadcrumbMap[pathname as keyof typeof breadcrumbMap]
+  const pathname = usePathname() || ""
+
+  const matchPath = Object.keys(breadcrumbMap).find((path) =>
+    pathname.startsWith(path)
+  )
+  const breadcrumb = breadcrumbMap[matchPath as keyof typeof breadcrumbMap]
 
   if (!breadcrumb) return null
 

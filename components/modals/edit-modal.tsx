@@ -1,6 +1,7 @@
 "use client"
 
 // * * This is just a demostration of edit modal, actual functionality may vary
+import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
@@ -8,10 +9,19 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { cn } from "@/lib/utils"
-import { TaskType, labels, priorities, statuses } from "@/lib/validations/task"
+import {
+  Interview,
+  UpdateInterviewRequest,
+  UpdateInterviewRequestSchema,
+} from "@/lib/validations/interview"
+import { useUpdateInterview } from "@/hooks/api/useUpdateInterview"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -35,55 +45,65 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import { label_options, priority_options, status_options } from "../filters"
+import { priority_options, status_options, type_options } from "../filters"
+import { toast } from "../ui/use-toast"
 
 type EditProps = {
-  task: TaskType
+  interview: Interview
 }
 
-const editSchema = z.object({
-  id: z.string(),
-  title: z.string().min(1, { message: "Title Required" }),
-  status: z.string(),
-  label: z.string(),
-  priority: z.string(),
-  due_date: z.date({
-    required_error: "Due date is required.",
-  }),
-})
+export default function EditDialog({ interview }: EditProps) {
+  const { mutate: updateInterview, isPending } = useUpdateInterview()
 
-type editSchemaType = z.infer<typeof editSchema>
+  const router = useRouter()
 
-export default function EditDialog({ task }: EditProps) {
-  const form = useForm<editSchemaType>({
-    resolver: zodResolver(editSchema),
+  const form = useForm<UpdateInterviewRequest>({
+    resolver: zodResolver(UpdateInterviewRequestSchema),
     defaultValues: {
-      id: task.id,
-      title: task.title,
-      status: task.status,
-      label: task.label,
-      priority: task.priority,
-      due_date: task.due_date,
+      id: interview.id,
+      name: interview.name,
+      status: interview.status,
+      type: interview.type,
+      priority: interview.priority,
+      dueDate: interview.dueDate,
     },
   })
 
-  function onSubmit(values: editSchemaType) {
-    console.log(values)
+  function onSubmit(values: UpdateInterviewRequest) {
+    updateInterview(values, {
+      onSuccess: () => {
+        toast({
+          title: "Interview updated",
+          description: "Interview details updated successfully",
+        })
+      },
+      onError: () => {
+        return toast({
+          title: "Error",
+          description: "Please try again.",
+          variant: "destructive",
+        })
+      },
+    })
   }
+
   return (
     <>
       <DialogHeader>
-        <DialogTitle>Edit Task Details</DialogTitle>
+        <DialogTitle>Edit Interview Details</DialogTitle>
+        <DialogDescription>
+          Update the interview details below
+        </DialogDescription>
       </DialogHeader>
       <div className="py-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
             <FormField
               control={form.control}
-              name="title"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input type="text" {...field} />
                   </FormControl>
@@ -125,26 +145,26 @@ export default function EditDialog({ task }: EditProps) {
             />
             <FormField
               control={form.control}
-              name="label"
+              name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Label</FormLabel>
+                  <FormLabel>Type</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a Label to Update" />
+                        <SelectValue placeholder="Select a Type to Update" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       <SelectGroup>
-                        {label_options.map((label, index) => (
-                          <SelectItem key={index} value={label.value}>
+                        {type_options.map((type, index) => (
+                          <SelectItem key={index} value={type.value}>
                             <span className="flex items-center">
-                              <label.icon className="mr-2 size-5 text-muted-foreground" />
-                              {label.label}
+                              <type.icon className="mr-2 size-5 text-muted-foreground" />
+                              {type.label}
                             </span>
                           </SelectItem>
                         ))}
@@ -189,7 +209,7 @@ export default function EditDialog({ task }: EditProps) {
             />
             <FormField
               control={form.control}
-              name="due_date"
+              name="dueDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Due Date</FormLabel>
@@ -204,7 +224,7 @@ export default function EditDialog({ task }: EditProps) {
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP")
+                            format(new Date(field.value), "PPP")
                           ) : (
                             <span>Pick a date</span>
                           )}
@@ -215,11 +235,11 @@ export default function EditDialog({ task }: EditProps) {
                     <PopoverContent className="w-auto p-0" align="end">
                       <Calendar
                         mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
+                        selected={
+                          field.value ? new Date(field.value) : undefined
                         }
+                        onSelect={(date) => field.onChange(date?.toISOString())}
+                        disabled={(date) => date < new Date()}
                         initialFocus
                       />
                     </PopoverContent>

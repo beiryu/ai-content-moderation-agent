@@ -1,6 +1,6 @@
 "use client"
 
-import { useTasks } from "@/hooks/api/useTasks"
+import { useGetInterviews } from "@/hooks/api/useGetInterviews"
 import { columns } from "@/components/data-table/columns"
 import { DataTable } from "@/components/data-table/data-table"
 import { DashboardHeader } from "@/components/header"
@@ -8,7 +8,9 @@ import { CreateInterviewDialog } from "@/components/modals/create-interview-dial
 import { DashboardShell } from "@/components/shell"
 
 export default function LiveInterviewPage() {
-  const { data: tasks } = useTasks()
+  const { data: interviews } = useGetInterviews()
+
+  if (!interviews) return null
 
   return (
     <DashboardShell>
@@ -18,7 +20,7 @@ export default function LiveInterviewPage() {
       >
         <CreateInterviewDialog />
       </DashboardHeader>
-      <DataTable data={tasks} columns={columns} />
+      <DataTable data={interviews} columns={columns} />
     </DashboardShell>
   )
 }

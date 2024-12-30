@@ -2,15 +2,15 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 
-import { TaskType } from "@/lib/validations/task"
+import { Interview } from "@/lib/validations/interview"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 
-import { label_options, priority_options, status_options } from "../filters"
+import { priority_options, status_options, type_options } from "../filters"
 import { DataTableColumnHeader } from "./data-table-column-header"
 import { DataTableRowActions } from "./data-table-row-actions"
 
-export const columns: ColumnDef<TaskType>[] = [
+export const columns: ColumnDef<Interview>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -37,27 +37,27 @@ export const columns: ColumnDef<TaskType>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Task" />
+      <DataTableColumnHeader column={column} title="ID" />
     ),
-    cell: ({ row }) => <div className="w-[80px]">{row.getValue("id")}</div>,
+    cell: ({ row }) => (
+      <div className="w-[80px] truncate">{row.getValue("id")}</div>
+    ),
     enableSorting: false,
     enableHiding: false,
   },
   {
-    accessorKey: "title",
+    accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Title" />
+      <DataTableColumnHeader column={column} title="Name" />
     ),
     cell: ({ row }) => {
-      const label = label_options.find(
-        (label) => label.value === row.original.label
-      )
+      const type = type_options.find((type) => type.value === row.original.type)
 
       return (
         <div className="flex space-x-2">
-          {label && <Badge variant="outline">{label.label}</Badge>}
+          {type && <Badge variant="outline">{type.label}</Badge>}
           <span className="max-w-[500px] truncate font-medium">
-            {row.getValue("title")}
+            {row.getValue("name")}
           </span>
         </div>
       )
@@ -118,13 +118,13 @@ export const columns: ColumnDef<TaskType>[] = [
     },
   },
   {
-    accessorKey: "due_date",
+    accessorKey: "dueDate",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Due Date" />
     ),
     cell: ({ row }) => {
-      const field = row.getValue("due_date") as Date
-      return <div>{field.toDateString()}</div>
+      const field = row.getValue("dueDate") as string
+      return <div>{new Date(field).toLocaleDateString()}</div>
     },
   },
   {
