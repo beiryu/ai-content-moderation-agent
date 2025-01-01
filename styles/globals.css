@@ -91,3 +91,24 @@ svg.lucide {
   width: 1rem !important;
   height: 1rem !important;
 }
+
+@layer components {
+  .ctaBaseStyling {
+    @apply px-4 py-2 rounded-lg font-medium inline-flex justify-center items-center gap-x-1 tracking-tight;
+  }
+  .cta-primary {
+    @apply bg-white text-black;
+  }
+  .cta-secondary {
+    @apply bg-white text-black;
+  }
+  .cta-tertiary {
+    @apply bg-transparent text-black;
+  }
+  .logo-ticker-image {
+    @apply h-8 w-auto;
+  }
+  .desktopNavList li a {
+    @apply opacity-60 hover:opacity-100 transition-all;
+  }
+}

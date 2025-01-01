@@ -1,57 +1,32 @@
 import * as React from "react"
+import Instagram from "@/assets/icons/insta.svg"
+import TikTok from "@/assets/icons/tiktok.svg"
+import Twitter from "@/assets/icons/x-social.svg"
+import Youtube from "@/assets/icons/youtube.svg"
 
-import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
-import { Icons } from "@/components/icons"
-import { ModeToggle } from "@/components/mode-toggle"
 
 export function SiteFooter({ className }: React.HTMLAttributes<HTMLElement>) {
   return (
-    <footer className={cn(className)}>
-      <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
-        <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-          <Icons.logo />
-          {/* <p className="text-center text-sm leading-loose md:text-left">
-            Built by{" "}
-            <a
-              href={siteConfig.links.twitter}
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium underline underline-offset-4"
-            >
-              shadcn
-            </a>
-            . Hosted on{" "}
-            <a
-              href="https://vercel.com"
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium underline underline-offset-4"
-            >
-              Vercel
-            </a>
-            . Illustrations by{" "}
-            <a
-              href="https://popsy.co"
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium underline underline-offset-4"
-            >
-              Popsy
-            </a>
-            . The source code is available on{" "}
-            <a
-              href={siteConfig.links.github}
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium underline underline-offset-4"
-            >
-              GitHub
-            </a>
-            .
-          </p> */}
-        </div>
-        <ModeToggle />
+    <footer className={cn(className, "border-t-2 border-white/20 bg-black/80")}>
+      <div className="container flex flex-col gap-y-3 md:gap-y-0 md:flex-row justify-between items-center py-5">
+        <p className="text-white/60">
+          © 2024 Let&apos;s Talk Wise, Inc. All rights reserved
+        </p>
+        <ul className="flex gap-2 text-white/60">
+          <li>
+            <Twitter />
+          </li>
+          <li>
+            <Instagram />
+          </li>
+          <li>
+            <TikTok />
+          </li>
+          <li>
+            <Youtube />
+          </li>
+        </ul>
       </div>
     </footer>
   )
