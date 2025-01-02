@@ -26,11 +26,13 @@ export function CallToAction() {
     <section ref={ctaRef} className="py-28">
       <div className="container relative flex justify-center items-center flex-col gap-7">
         <h2 className="text-5xl md:text-6xl text-center font-bold tracking-tighter">
-          Get instant access
+          Practice makes perfect
         </h2>
-        <p className="max-w-xl mx-auto text-center text-white/50 text-xl">
-          Celebrate the joy of accomplishment with an app designed to track your
-          progress and motivate your efforts.
+        <p className="max-w-2xl mx-auto text-center text-white/50 text-xl">
+          Start your interview preparation journey with AI-powered practice. Get
+          personalized feedback and build confidence for your next job
+          interview. Our advanced AI helps you prepare effectively and stand
+          out.
         </p>
         <form className="mx-auto">
           <input

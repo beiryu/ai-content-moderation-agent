@@ -17,15 +17,15 @@ export function Hero() {
             className="w-fit flex justify-center items-center gap-2 border-[1px] border-white/30 rounded-lg px-2 py-1"
           >
             <span className="bg-[linear-gradient(to_right,#F87AFF,#FB93D0,#FFDD99,#C3F0B2,#2FD8FE)] bg-clip-text text-transparent">
-              Version 2.0 is here
+              Best AI Tool for Interview Candidates
             </span>
             <span className="flex justify-center items-center gap-2">
               Read more <Arrow />
             </span>
           </a>
           <div className="inline-flex relative">
-            <h1 className="text-7xl md:text-9xl font-bold tracking-tighter w-[320px] md:w-[550px] text-center">
-              Unlock Interview
+            <h1 className="text-6xl md:text-8xl font-bold tracking-tighter w-[320px] md:w-[550px] text-center">
+              AI Interview for Job Interviews
             </h1>
             <motion.div
               className="hidden md:block absolute right-[507px] lg:right-[512px] top-[108px]"
@@ -57,8 +57,10 @@ export function Hero() {
             </motion.div>
           </div>
           <p className="text-xl max-w-[448px] text-center">
-            Master your interview skills with AI-powered practice sessions,
-            instant feedback, and personalized coaching.
+            Let&apos;s Take Wise is your AI-powered interview coach that helps
+            you prepare for your job interview by generating personalized Q&A.
+            It also provides real-time response assistance during your
+            interviews.
           </p>
           <button className="ctaBaseStyling cta-primary">Get for free</button>
         </article>

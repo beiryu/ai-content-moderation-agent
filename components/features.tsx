@@ -2,19 +2,34 @@ import { IndividualFeature } from "./individual-feature"
 
 const features = [
   {
-    title: "Real-time AI Feedback",
+    title: "Interview Buddy",
     description:
-      "Get instant feedback on your work, helping you improve and stay on top of your tasks.",
+      "Get real-time interview help and answers to interview questions.",
   },
   {
-    title: "Personalized Coaching",
+    title: "AI Interview Practice",
     description:
-      "Get personalized coaching from our AI, helping you improve and stay on top of your tasks.",
+      "Practice with AI-generated interviews to gain valuable insights and confidence.",
   },
   {
     title: "Performance Analytics",
     description:
-      "Track your progress and see how you're doing, helping you stay on top of your tasks.",
+      "Track your progress and see how you're doing, helping you get hired faster.",
+  },
+  {
+    title: "AI Cover Letter",
+    description:
+      "Generate a cover letter tailored to the job you're applying for.",
+  },
+  {
+    title: "Industry Knowledge",
+    description:
+      "Expert-level industry support to ace field-specific challenges.",
+  },
+  {
+    title: "Support 25+ languages",
+    description:
+      "Interviewing for language other than English, We've got you back.",
   },
 ]
 
@@ -25,10 +40,7 @@ export function Features() {
         <h2 className="text-5xl md:text-6xl text-center font-bold tracking-tighter">
           Everything you need
         </h2>
-        <p className="max-w-xl mx-auto text-center text-white/50 mt-5">
-          Get instant feedback, personalized coaching, and detailed analytics to
-          help you stay on track and achieve your goals faster than ever before.
-        </p>
+        <p className="max-w-xl mx-auto text-center text-white/50 mt-5"></p>
         <ul className="columns-1 md:columns-3 w-10/12 mx-auto mt-16 space-y-4">
           {features.map((feature, index) => (
             <IndividualFeature

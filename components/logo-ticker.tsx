@@ -36,7 +36,7 @@ export function LogoTicker() {
     <div className="container">
       <div className="relative w-screen max-w-full overflow-x-hidden py-24 [mask-image:linear-gradient(to_right,transparent,black,black,black,transparent)]">
         <h2 className="text-center text-lg text-white/50 mb-9">
-          Trusted by the world&apos; most innovative teams
+          Get hired by top companies worldwide
         </h2>
         <motion.div
           className="flex justify-center items-center gap-x-10"

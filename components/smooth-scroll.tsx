@@ -9,7 +9,7 @@ type Props = {
 
 function SmoothScrolling({ children }: Props) {
   return (
-    <ReactLenis root options={{ lerp: 0.1, duration: 2 }}>
+    <ReactLenis root options={{ lerp: 0.05, duration: 0.5 }}>
       {children}
     </ReactLenis>
   )

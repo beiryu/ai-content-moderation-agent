@@ -100,7 +100,7 @@ svg.lucide {
     @apply bg-white text-black;
   }
   .cta-secondary {
-    @apply bg-white text-black;
+    @apply bg-primary/20 text-white;
   }
   .cta-tertiary {
     @apply bg-transparent text-black;

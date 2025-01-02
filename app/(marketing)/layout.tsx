@@ -25,33 +25,30 @@ export default async function MarketingLayout({
     <SmoothScrolling>
       <div className="flex min-h-screen flex-col">
         <Banner />
-        <header className="z-40 sticky top-0 backdrop-blur-sm">
-          <div className="flex h-20 container items-center bg-black/80 justify-between py-6">
+        <header className="z-40 sticky top-0 backdrop-blur-sm bg-black/80">
+          <div className="flex h-20 container items-center justify-between py-6">
             <MainNav items={marketingConfig.mainNav} />
-            <div className="flex items-center gap-2">
-              <ModeToggle />
-              {user ? (
-                <UserAccountNav
-                  user={{
-                    name: user.name,
-                    image: user.image,
-                    email: user.email,
-                  }}
-                />
-              ) : (
-                <nav>
-                  <Link
-                    href="/login"
-                    className={cn(
-                      buttonVariants({ variant: "secondary", size: "sm" }),
-                      "px-4"
-                    )}
-                  >
-                    Login
-                  </Link>
-                </nav>
-              )}
-            </div>
+            {user ? (
+              <UserAccountNav
+                user={{
+                  name: user.name,
+                  image: user.image,
+                  email: user.email,
+                }}
+              />
+            ) : (
+              <nav>
+                <Link
+                  href="/login"
+                  className={cn(
+                    buttonVariants({ variant: "secondary", size: "sm" }),
+                    "px-4"
+                  )}
+                >
+                  Login
+                </Link>
+              </nav>
+            )}
           </div>
         </header>
         <main className="flex-1">{children}</main>
