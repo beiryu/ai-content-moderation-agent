@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 
-import RecorderTranscriber from "./recorder"
+import RecorderTranscriber from "./recorder-transcriber"
 
 export function LiveInterviewPlayground() {
   const [flag, setFlag] = useState<Flags>("interview-assistant")

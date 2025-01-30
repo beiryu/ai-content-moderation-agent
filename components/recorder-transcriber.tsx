@@ -6,10 +6,10 @@ import { useQueue } from "@/hooks/use-queue"
 
 import { RecordButton } from "./record-button"
 import { Button } from "./ui/button"
+import { VideoPreview } from "./video-preview"
 
 export default function RecorderTranscriber() {
   const { add, remove, first, size } = useQueue([])
-
   const { isListening, connection, status, error } = useDeepgramConnection()
 
   const handleDataAvailable = useCallback(
@@ -19,7 +19,8 @@ export default function RecorderTranscriber() {
     [add]
   )
 
-  const { micOpen, toggleMicrophone } = useMicrophone(handleDataAvailable)
+  const { micOpen, userMedia, toggleMicrophone } =
+    useMicrophone(handleDataAvailable)
 
   // Process queue
   useEffect(() => {
@@ -39,13 +40,22 @@ export default function RecorderTranscriber() {
 
   return (
     <div className="w-full relative">
-      <div className="grid align-middle items-center gap-2">
-        <RecordButton
-          micOpen={micOpen}
-          onClick={toggleMicrophone}
-          disabled={status !== "ready"}
-        />
-      </div>
+      {micOpen ? (
+        <div className="flex items-center gap-4 p-2">
+          <VideoPreview stream={userMedia} />
+        </div>
+      ) : (
+        <div className="m-4 flex flex-col items-center">
+          <div className="text-sm font-medium text-muted-foreground">
+            Connect to your interview meeting room
+          </div>
+          <RecordButton
+            micOpen={micOpen}
+            onClick={toggleMicrophone}
+            disabled={status !== "ready"}
+          />
+        </div>
+      )}
     </div>
   )
 }

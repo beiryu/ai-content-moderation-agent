@@ -1,6 +1,7 @@
-import { Button } from "@/components/ui/button"
+import { Cable } from "lucide-react"
 
 import { Icons } from "./icons"
+import { HoverBorderGradient } from "./ui/hover-border-gradient"
 
 interface RecordButtonProps {
   micOpen: boolean
@@ -14,11 +15,11 @@ export function RecordButton({
   disabled,
 }: RecordButtonProps) {
   return (
-    <Button
+    <HoverBorderGradient
       onClick={onClick}
-      disabled={disabled}
-      className="w-full"
-      effect="ringHover"
+      containerClassName="rounded-full m-4"
+      as="button"
+      className="dark:bg-black bg-white text-black dark:text-white "
     >
       <div className="flex items-center">
         {micOpen ? (
@@ -28,11 +29,13 @@ export function RecordButton({
           </>
         ) : (
           <>
-            <Icons.micOn className="size-4 -translate-x-0.5 mr-2" />
-            Start listening
+            {/* <Icons.micOn className="size-4 -translate-x-0.5 mr-2" />
+              Start listening */}
+            <Cable className="size-4 -translate-x-0.5 mr-2" />
+            <span className="text-sm font-medium">Select a meeting room</span>
           </>
         )}
       </div>
-    </Button>
+    </HoverBorderGradient>
   )
 }

@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react"
+import { useLiveInterviewStore } from "@/stores/live-interview.store"
 
 interface UseMicrophoneReturn {
   micOpen: boolean
@@ -14,14 +15,19 @@ export function useMicrophone(
   const [microphone, setMicrophone] = useState<MediaRecorder | null>(null)
   const [userMedia, setUserMedia] = useState<MediaStream | null>(null)
 
+  const { setMicrophoneStatus } = useLiveInterviewStore()
+
   const toggleMicrophone = useCallback(async () => {
     if (microphone && userMedia) {
       microphone.stop()
       setMicrophone(null)
+      setMicrophoneStatus("disconnected")
       return
     }
 
     try {
+      setMicrophoneStatus("connecting")
+
       const media = await navigator.mediaDevices.getDisplayMedia({
         audio: true,
         video: true,
@@ -30,16 +36,25 @@ export function useMicrophone(
       const mic = new MediaRecorder(media)
       mic.start(500)
 
-      mic.onstart = () => setMicOpen(true)
-      mic.onstop = () => setMicOpen(false)
+      mic.onstart = () => {
+        setMicOpen(true)
+        setMicrophoneStatus("connected")
+      }
+
+      mic.onstop = () => {
+        setMicOpen(false)
+        setMicrophoneStatus("disconnected")
+      }
+
       mic.ondataavailable = onDataAvailable
 
       setUserMedia(media)
       setMicrophone(mic)
     } catch (error) {
       console.error("Error accessing microphone:", error)
+      setMicrophoneStatus("disconnected")
     }
-  }, [microphone, userMedia, onDataAvailable])
+  }, [microphone, userMedia, onDataAvailable, setMicrophoneStatus])
 
   return {
     micOpen,

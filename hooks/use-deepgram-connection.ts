@@ -14,7 +14,8 @@ interface UseDeepgramConnectionReturn {
 }
 
 export function useDeepgramConnection(): UseDeepgramConnectionReturn {
-  const { addTranscribedText, setInterimText } = useLiveInterviewStore()
+  const { addTranscribedText, setInterimText, addMessage } =
+    useLiveInterviewStore()
 
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(
     "idle"
@@ -63,12 +64,17 @@ export function useDeepgramConnection(): UseDeepgramConnectionReturn {
 
       conn.on(LiveTranscriptionEvents.Transcript, (data) => {
         const words = data.channel.alternatives[0].words
-        const currentTranscript =
-          " " +
-          words.map((word: any) => word.punctuated_word ?? word.word).join(" ")
+
+        if (words.length === 0) return
+
+        const currentTranscript = words
+          .map((word: any) => word.punctuated_word ?? word.word)
+          .join(" ")
 
         if (data.is_final) {
           setInterimText("")
+
+          addMessage(currentTranscript)
           addTranscribedText(currentTranscript)
         } else {
           setInterimText(currentTranscript)
@@ -80,7 +86,7 @@ export function useDeepgramConnection(): UseDeepgramConnectionReturn {
       setError(err instanceof Error ? err : new Error("Unknown error"))
       setStatus("error")
     }
-  }, [setInterimText, addTranscribedText])
+  }, [setInterimText, addTranscribedText, addMessage])
 
   useEffect(() => {
     initializeConnection()

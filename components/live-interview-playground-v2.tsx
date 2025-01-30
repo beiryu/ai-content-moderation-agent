@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { INTERVIEW_RESPONSES_MOCKS, InterviewResponse } from "@/mocks/data"
+import { INTERVIEW_RESPONSES_MOCKS } from "@/mocks/data"
 import { Clock, Mic, Send, Settings } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { LiveInterviewResponses } from "@/components/live-interview-responses"
+import { MicrophoneConnectionStatus } from "@/components/microphone-connection-status"
 import { TranscriptionDisplay } from "@/components/transcription-display"
 
 interface LiveInterviewPlaygroundV2Props {
@@ -59,8 +60,7 @@ export function LiveInterviewPlaygroundV2({
           <div className="flex h-[52px] items-center justify-between px-4">
             <div className="flex items-center gap-2">
               <div className="text-sm font-medium">Interviewer says:</div>
-              <div className="flex size-2 rounded-full bg-green-500" />
-              <span className="text-sm text-muted-foreground">Ready</span>
+              <MicrophoneConnectionStatus />
             </div>
           </div>
           <Separator />
