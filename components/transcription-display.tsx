@@ -14,11 +14,11 @@ const useScrollToBottom = (ref: React.RefObject<HTMLElement>, deps: any[]) => {
 }
 
 export function TranscriptionDisplay() {
-  const { interimText, messages } = useLiveInterviewStore()
-
+  const { messages, transcriptionBuffer, interimText } = useLiveInterviewStore()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useScrollToBottom(scrollRef, [interimText])
+
   return (
     <div className="flex h-[calc(100vh-theme(spacing.40))] flex-col">
       <div className="sticky bottom-0">
@@ -27,6 +27,7 @@ export function TranscriptionDisplay() {
 
       <div className="flex-1 min-h-0 overflow-y-auto" ref={scrollRef}>
         <div className="p-4 space-y-2">
+          {/* Completed messages */}
           {messages.map((message) => (
             <TranscriptionMessage
               key={message.id}
@@ -35,9 +36,23 @@ export function TranscriptionDisplay() {
                 minute: "2-digit",
               })}
               text={message.text}
+              type="final"
             />
           ))}
 
+          {/* Current buffer */}
+          {transcriptionBuffer && (
+            <TranscriptionMessage
+              timestamp={new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              text={transcriptionBuffer}
+              type="buffer"
+            />
+          )}
+
+          {/* Interim text */}
           {interimText && (
             <TranscriptionMessage
               timestamp={new Date().toLocaleTimeString([], {
@@ -45,6 +60,7 @@ export function TranscriptionDisplay() {
                 minute: "2-digit",
               })}
               text={interimText}
+              type="interim"
             />
           )}
         </div>

@@ -22,8 +22,8 @@ export function LiveInterviewPlayground() {
   const {
     transcribedText,
     interimText,
-    clearTranscribedText,
-    setTranscribedText,
+    // clearTranscribedText,
+    // setTranscribedText,
   } = useLiveInterviewStore()
 
   const { completion, stop, isLoading, error, setInput, handleSubmit } =
@@ -44,7 +44,7 @@ export function LiveInterviewPlayground() {
 
   const clearTranscriptionChange = () => {
     setInput("")
-    clearTranscribedText()
+    // clearTranscribedText()
   }
 
   const saveChatHistory = () => {
@@ -102,7 +102,7 @@ export function LiveInterviewPlayground() {
             placeholder="Your transcribed text will appear here."
             value={transcribedText + interimText}
             onChange={(e) => {
-              setTranscribedText(e.target.value)
+              // setTranscribedText(e.target.value)
             }}
           />
         </div>
