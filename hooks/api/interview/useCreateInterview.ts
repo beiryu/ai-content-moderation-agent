@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   CreateInterviewRequest,
   Interview,
-} from "./../../lib/validations/interview"
+} from "../../../lib/validations/interview"
 
 const createInterview = async (
   payload: CreateInterviewRequest

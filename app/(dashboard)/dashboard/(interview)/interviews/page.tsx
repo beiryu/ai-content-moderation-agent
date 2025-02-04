@@ -1,6 +1,6 @@
 "use client"
 
-import { useGetInterviews } from "@/hooks/api/useGetInterviews"
+import { useGetInterviews } from "@/hooks/api/interview/useGetInterviews"
 import { columns } from "@/components/data-table/columns"
 import { DataTable } from "@/components/data-table/data-table"
 import { DashboardHeader } from "@/components/header"

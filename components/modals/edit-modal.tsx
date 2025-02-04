@@ -14,7 +14,7 @@ import {
   UpdateInterviewRequest,
   UpdateInterviewRequestSchema,
 } from "@/lib/validations/interview"
-import { useUpdateInterview } from "@/hooks/api/useUpdateInterview"
+import { useUpdateInterview } from "@/hooks/api/interview/useUpdateInterview"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import {
