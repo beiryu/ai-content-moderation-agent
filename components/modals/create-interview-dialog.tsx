@@ -12,7 +12,7 @@ import {
   CreateInterviewRequest,
   CreateInterviewRequestSchema,
 } from "@/lib/validations/interview"
-import useCreateInterview from "@/hooks/api/useCreateInterview"
+import useCreateInterview from "@/hooks/api/interview/useCreateInterview"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -59,7 +59,7 @@ export function CreateInterviewDialog() {
     defaultValues: {
       name: "",
       type: "mock",
-      status: "pending",
+      status: "in-progress",
       priority: "high",
       dueDate: new Date().toISOString(),
     },
