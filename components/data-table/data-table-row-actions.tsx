@@ -65,7 +65,7 @@ export function DataTableRowActions<TData>({
             Copy Interview ID
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DialogTrigger
+          {/* <DialogTrigger
             asChild
             onClick={() => {
               router.push(`/dashboard/interviews/${interview.id}`)
@@ -76,21 +76,21 @@ export function DataTableRowActions<TData>({
               <Eye className="mr-2 size-4" />
               View Details
             </DropdownMenuItem>
-          </DialogTrigger>
+          </DialogTrigger> */}
           <DialogTrigger asChild onClick={handleEditClick}>
             <DropdownMenuItem>
               <Pencil className="mr-2 size-4" />
               Edit Details
             </DropdownMenuItem>
           </DialogTrigger>
-          {/* <DropdownMenuItem
+          <DropdownMenuItem
             onSelect={() => setShowDeleteDialog(true)}
             className="text-red-600"
           >
             <Trash2 className="mr-2 size-4" />
-            Delete Details
+            Delete
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
+          {/* <DropdownMenuSeparator />
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>Labels</DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
@@ -107,11 +107,11 @@ export function DataTableRowActions<TData>({
         </DropdownMenuContent>
       </DropdownMenu>
       {dialogContent && <DialogContent>{dialogContent}</DialogContent>}
-      {/* <DeleteDialog
+      <DeleteDialog
         interview={interview}
         isOpen={showDeleteDialog}
         showActionToggle={setShowDeleteDialog}
-      /> */}
+      />
     </Dialog>
   )
 }

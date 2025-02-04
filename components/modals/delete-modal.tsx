@@ -2,6 +2,7 @@
 
 // * * This is just a demostration of delete modal, actual functionality may vary
 import { Interview } from "@/lib/validations/interview"
+import { useDeleteInterview } from "@/hooks/api/interview/useDeleteInterview"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -24,6 +25,8 @@ export default function DeleteDialog({
   isOpen,
   showActionToggle,
 }: DeleteProps) {
+  const { mutate: deleteInterview } = useDeleteInterview()
+
   return (
     <AlertDialog open={isOpen} onOpenChange={showActionToggle}>
       <AlertDialogContent>
@@ -40,6 +43,7 @@ export default function DeleteDialog({
             variant="destructive"
             onClick={() => {
               showActionToggle(false)
+              deleteInterview(interview.id)
             }}
           >
             Delete

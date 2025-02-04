@@ -1,9 +1,11 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
+import { Play } from "lucide-react"
 
 import { Interview } from "@/lib/validations/interview"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 
 import { priority_options, status_options, type_options } from "../filters"
@@ -126,6 +128,31 @@ export const columns: ColumnDef<Interview>[] = [
       const field = row.getValue("dueDate") as string
       return <div>{new Date(field).toLocaleDateString()}</div>
     },
+  },
+  {
+    id: "launch",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Playground" />
+    ),
+    cell: ({ row }) => {
+      const interview = row.original
+
+      return (
+        <Button
+          variant="secondary"
+          effect="gooeyRight"
+          size="sm"
+          className="flex items-center gap-2"
+          onClick={() => {
+            window.location.href = `/dashboard/interviews/${interview.id}`
+          }}
+        >
+          <Play className="size-4" />
+          Launch
+        </Button>
+      )
+    },
+    enableSorting: false,
   },
   {
     id: "actions",
