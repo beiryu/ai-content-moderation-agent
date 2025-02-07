@@ -1,4 +1,4 @@
-import { useLiveInterviewStore } from "@/stores/live-interview.store"
+import { useInterviewSessionStore } from "@/stores/interview-session.store"
 
 function getMicrophoneStatusDisplay(status: string) {
   switch (status) {
@@ -21,7 +21,7 @@ function getMicrophoneStatusDisplay(status: string) {
 }
 
 export function MicrophoneConnectionStatus() {
-  const microphoneStatus = useLiveInterviewStore(
+  const microphoneStatus = useInterviewSessionStore(
     (state) => state.microphoneStatus
   )
 

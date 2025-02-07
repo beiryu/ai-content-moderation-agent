@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import { useLiveInterviewStore } from "@/stores/live-interview.store"
+import { useInterviewSessionStore } from "@/stores/interview-session.store"
 
 import RecorderTranscriber from "./recorder-transcriber"
 import { TranscriptionMessage } from "./transcription-message"
@@ -14,7 +14,9 @@ const useScrollToBottom = (ref: React.RefObject<HTMLElement>, deps: any[]) => {
 }
 
 export function TranscriptionDisplay() {
-  const { messages, transcriptionBuffer, interimText } = useLiveInterviewStore()
+  const { messages, transcriptionBuffer, interimText } =
+    useInterviewSessionStore()
+
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useScrollToBottom(scrollRef, [interimText])
@@ -31,11 +33,11 @@ export function TranscriptionDisplay() {
           {messages.map((message) => (
             <TranscriptionMessage
               key={message.id}
-              timestamp={message.timestamp.toLocaleTimeString([], {
+              timestamp={message.createdAt.toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
               })}
-              text={message.text}
+              text={message.content}
               type="final"
             />
           ))}

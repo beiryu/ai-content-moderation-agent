@@ -21,4 +21,19 @@ export const InterviewSessionSchema = z.object({
   messages: z.array(InterviewMessageSchema),
 })
 
+export const CreateInterviewSessionRequestSchema = z.object({
+  interviewId: z.string(),
+})
+
+export const UpdateInterviewSessionRequestSchema = z.object({
+  id: z.string(),
+  status: z.string(),
+})
+
 export type InterviewSession = z.infer<typeof InterviewSessionSchema>
+export type CreateInterviewSessionRequest = z.infer<
+  typeof CreateInterviewSessionRequestSchema
+>
+export type UpdateInterviewSessionRequest = z.infer<
+  typeof UpdateInterviewSessionRequestSchema
+>

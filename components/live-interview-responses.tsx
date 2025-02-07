@@ -1,52 +1,52 @@
-import { InterviewResponse } from "@/mocks/data"
-import formatDistanceToNow from "date-fns/formatDistanceToNow"
+import { useInterviewSessionStore } from "@/stores/interview-session.store"
 
-import { cn } from "@/lib/utils"
-import { useInterviewResponse } from "@/hooks/use-interview-response"
-import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
-interface LiveInterviewResponsesProps {
-  items: InterviewResponse[]
-}
+export function LiveInterviewResponses() {
+  const { messages } = useInterviewSessionStore()
 
-export function LiveInterviewResponses({ items }: LiveInterviewResponsesProps) {
-  const [interviewResponse, setInterviewResponse] = useInterviewResponse()
+  // Get only analyzed messages
+  const analyzedResponses = messages
+    .map((m) => m.questionAnalysis)
+    .filter((analysis) => analysis !== null)
 
   return (
-    <ScrollArea className="h-screen">
+    <ScrollArea className="h-[calc(100vh-theme(spacing.52))]">
       <div className="flex flex-col gap-2 p-4 pt-0">
-        {items.map((item) => (
-          <button
-            key={item.id}
-            className={cn(
-              "flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all hover:bg-accent",
-              interviewResponse.selected === item.id && "bg-muted"
-            )}
-            onClick={() =>
-              setInterviewResponse({
-                ...interviewResponse,
-                selected: item.id,
-              })
-            }
+        {analyzedResponses.map((message) => (
+          <div
+            key={message.id}
+            className="space-y-2 flex flex-col items-start gap-2 border p-3 rounded-md text-left text-sm transition-all hover:bg-accent"
           >
-            <div className="flex w-full flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="font-medium text-muted-foreground">
-                    Response {item.id}
-                  </div>
-                  <Badge variant="outline">AI Assistant</Badge>
+            <div className="flex items-start gap-2">
+              <div className="min-w-14 text-xs text-muted-foreground">
+                {message.createdAt.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </div>
+              <div className="flex-1">
+                <div className="font-medium text-sm">{message.question}</div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {message.suggestedAnswerPoints.map((suggestion, index) => (
+                    <div key={index} className="mb-2">
+                      • {suggestion}
+                    </div>
+                  ))}
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(item.date), {
-                    addSuffix: true,
-                  })}
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  {message.keywords.map((keyword, index) => (
+                    <div
+                      key={index}
+                      className="px-2 py-1 bg-muted rounded-full text-xs"
+                    >
+                      {keyword}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-            <div className="text-sm">{item.text}</div>
-          </button>
+          </div>
         ))}
       </div>
     </ScrollArea>

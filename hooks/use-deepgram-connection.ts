@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { useLiveInterviewStore } from "@/stores/live-interview.store"
+import { useInterviewSessionStore } from "@/stores/interview-session.store"
 import {
   LiveClient,
   LiveTranscriptionEvents,
@@ -14,7 +14,7 @@ interface UseDeepgramConnectionReturn {
 }
 
 export function useDeepgramConnection(): UseDeepgramConnectionReturn {
-  const { processTranscript } = useLiveInterviewStore()
+  const { processTranscript } = useInterviewSessionStore()
 
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(
     "idle"

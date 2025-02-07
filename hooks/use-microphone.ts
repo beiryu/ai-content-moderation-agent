@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react"
-import { useLiveInterviewStore } from "@/stores/live-interview.store"
+import { useInterviewSessionStore } from "@/stores/interview-session.store"
 
 interface UseMicrophoneReturn {
   micOpen: boolean
@@ -15,7 +15,7 @@ export function useMicrophone(
   const [microphone, setMicrophone] = useState<MediaRecorder | null>(null)
   const [userMedia, setUserMedia] = useState<MediaStream | null>(null)
 
-  const { setMicrophoneStatus } = useLiveInterviewStore()
+  const { setMicrophoneStatus } = useInterviewSessionStore()
 
   const toggleMicrophone = useCallback(async () => {
     if (microphone && userMedia) {

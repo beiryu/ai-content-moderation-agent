@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { useChatHistoryStore } from "@/stores/chat-history.store"
-import { useLiveInterviewStore } from "@/stores/live-interview.store"
+import { useInterviewSessionStore } from "@/stores/interview-session.store"
 import { Flags } from "@/types"
 import { useCompletion } from "ai/react"
 
@@ -20,11 +20,11 @@ export function LiveInterviewPlayground() {
   const { addChatHistory } = useChatHistoryStore()
 
   const {
-    transcribedText,
     interimText,
+    // transcribedText,
     // clearTranscribedText,
     // setTranscribedText,
-  } = useLiveInterviewStore()
+  } = useInterviewSessionStore()
 
   const { completion, stop, isLoading, error, setInput, handleSubmit } =
     useCompletion({
@@ -55,9 +55,9 @@ export function LiveInterviewPlayground() {
     })
   }
 
-  useEffect(() => {
-    setInput(transcribedText)
-  }, [transcribedText, setInput])
+  // useEffect(() => {
+  //   setInput(transcribedText)
+  // }, [transcribedText, setInput])
 
   return (
     <div className="flex flex-col gap-4">
@@ -100,7 +100,7 @@ export function LiveInterviewPlayground() {
             id="transcription"
             className="overflow-hidden"
             placeholder="Your transcribed text will appear here."
-            value={transcribedText + interimText}
+            // value={transcribedText + interimText}
             onChange={(e) => {
               // setTranscribedText(e.target.value)
             }}

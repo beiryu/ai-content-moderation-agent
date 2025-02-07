@@ -159,9 +159,8 @@ model QuestionAnalysis {
   messageId       String    @unique
   message         InterviewMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
   
+  question        String
   questionType    String    // "technical" | "behavioral" | "general"
-  difficulty      Int       // 1-5
-  topics         String[]
   suggestedAnswerPoints String[] // Các điểm chính nên đề cập
   keywords       String[]   // Từ khóa quan trọng
   

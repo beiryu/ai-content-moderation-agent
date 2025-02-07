@@ -1,6 +1,7 @@
 import { InterviewMessage } from "./interview-message"
 
 export type InterviewSessionStatus = "active" | "completed" | "paused"
+export type MicrophoneStatus = "disconnected" | "connecting" | "connected"
 
 export interface InterviewSession {
   id: string

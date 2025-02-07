@@ -1,9 +1,11 @@
 "use client"
 
-import * as React from "react"
-import { INTERVIEW_RESPONSES_MOCKS } from "@/mocks/data"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { useInterviewSessionStore } from "@/stores/interview-session.store"
 import { Clock, Mic, Send, Settings } from "lucide-react"
 
+import useCreateInterviewSession from "@/hooks/api/interview-session/useCreateInterviewSession"
+import useUpdateInterviewSession from "@/hooks/api/interview-session/useUpdateInterviewSession"
 import { Button } from "@/components/ui/button"
 import {
   ResizableHandle,
@@ -19,19 +21,34 @@ import { MicrophoneConnectionStatus } from "@/components/microphone-connection-s
 import { TranscriptionDisplay } from "@/components/transcription-display"
 
 interface LiveInterviewPlaygroundV2Props {
+  interviewId: string
   defaultLayout: number[] | undefined
 }
 
 export function LiveInterviewPlaygroundV2({
+  interviewId,
   defaultLayout = [30, 40, 30],
 }: LiveInterviewPlaygroundV2Props) {
-  const [timer, setTimer] = React.useState("00:00")
-  const [message, setMessage] = React.useState("")
+  const { setCurrentSessionId } = useInterviewSessionStore()
 
-  React.useEffect(() => {
-    // Timer implementation
+  const { mutateAsync: createSession } = useCreateInterviewSession()
+  const { mutateAsync: updateSession } = useUpdateInterviewSession()
+
+  const [timer, setTimer] = useState("00:00")
+  const timerRef = useRef<NodeJS.Timeout>()
+  const cleanupRef = useRef<(() => void) | null>(null)
+
+  const [message, setMessage] = useState("")
+
+  // Reset and start timer
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+    }
+
+    setTimer("00:00")
     let seconds = 0
-    const interval = setInterval(() => {
+    timerRef.current = setInterval(() => {
       seconds++
       const minutes = Math.floor(seconds / 60)
       const remainingSeconds = seconds % 60
@@ -41,19 +58,71 @@ export function LiveInterviewPlaygroundV2({
           .padStart(2, "0")}`
       )
     }, 1000)
-
-    return () => clearInterval(interval)
   }, [])
+
+  // Start new session when component mounts
+  useEffect(() => {
+    let mounted = true
+
+    const initSession = async () => {
+      try {
+        createSession(
+          { interviewId },
+          {
+            onSuccess: (result) => {
+              if (mounted) {
+                setCurrentSessionId(result.id)
+              }
+            },
+          }
+        )
+      } catch (error) {
+        console.error("Failed to create session:", error)
+      }
+    }
+
+    initSession()
+    resetTimer()
+
+    return () => {
+      mounted = false
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
+
+      // Store cleanup function to avoid running during unmount
+      if (cleanupRef.current) {
+        cleanupRef.current()
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interviewId])
+
+  // Setup cleanup effect separately
+  useEffect(() => {
+    cleanupRef.current = async () => {
+      try {
+        updateSession(
+          {
+            id: interviewId,
+            status: "completed",
+          },
+          {
+            onSettled: () => {
+              setCurrentSessionId(null)
+            },
+          }
+        )
+      } catch (error) {
+        console.error("Failed to cleanup session:", error)
+      }
+    }
+  }, [interviewId, updateSession, setCurrentSessionId])
 
   return (
     <TooltipProvider delayDuration={0}>
       <ResizablePanelGroup
         direction="horizontal"
-        onLayout={(sizes: number[]) => {
-          document.cookie = `react-resizable-panels:layout:mail=${JSON.stringify(
-            sizes
-          )}`
-        }}
         className="max-h-[calc(100vh-100px)] items-stretch rounded-lg border"
       >
         <ResizablePanel defaultSize={defaultLayout[0]} minSize={25}>
@@ -97,7 +166,7 @@ export function LiveInterviewPlaygroundV2({
               <span className="text-sm text-muted-foreground">Ready</span>
             </div>
           </div>
-          <LiveInterviewResponses items={INTERVIEW_RESPONSES_MOCKS} />
+          <LiveInterviewResponses />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[2]} minSize={25}>
@@ -108,7 +177,6 @@ export function LiveInterviewPlaygroundV2({
           <div className="flex h-full flex-col justify-between">
             <div className="flex-1 overflow-y-auto p-4">
               <div className="space-y-4">
-                {/* Chat messages will go here */}
                 <div className="flex flex-col space-y-2">
                   <div className="bg-muted w-max max-w-[75%] rounded-lg px-4 py-2 text-sm">
                     Hello! I&apos;m your AI interview assistant. How can I help

@@ -1,14 +1,20 @@
 export type QuestionType = "technical" | "behavioral" | "general" | "other"
 export type RoleType = "interviewer" | "candidate" | "ai" | "system"
-export type MessageType = "question" | "answer" | "feedback" | "suggestion"
+export type MessageType =
+  | "question"
+  | "answer"
+  | "feedback"
+  | "suggestion"
+  | "other"
 
 export interface InterviewMessage {
   id: string
 
-  timestamp: Date
   role: RoleType
   content: string
   messageType: MessageType
+  questionAnalysis: QuestionAnalysis | null
+  answerAnalysis: AnswerAnalysis | null
 
   createdAt: Date
   updatedAt: Date
@@ -19,9 +25,8 @@ export interface InterviewMessage {
 export interface QuestionAnalysis {
   id: string
 
+  question: string
   questionType: QuestionType
-  difficulty: number
-  topics: string[]
   suggestedAnswerPoints: string[]
   keywords: string[]
 

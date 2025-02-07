@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 
-import { AnalyzedQuestion } from "@/types/interview"
+import { QuestionAnalysis } from "@/types/interview-message"
 import openai from "@/lib/openai"
 
 export async function POST(req: Request) {
@@ -20,10 +20,10 @@ export async function POST(req: Request) {
             
             Format response as JSON with fields:
             {
-              "type": "technical" | "behavioral" | "general" | "other",
               "question": "extracted question",
-              "suggestions": ["suggestion1", "suggestion2"],
-              "keywords": ["keyword1", "keyword2"]
+              "questionType": "technical" | "behavioral" | "general" | "other",
+              "suggestedAnswerPoints": ["suggestion1", "suggestion2"],
+              "keywords": ["keyword1", "keyword2"],
             }
             
             Keep responses professional and concise.`,
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     })
 
     const content = response.choices[0].message.content!
-    const analysis = JSON.parse(content) as AnalyzedQuestion
+    const analysis = JSON.parse(content) as QuestionAnalysis
     return NextResponse.json(analysis)
   } catch (error) {
     console.error("Error analyzing interview:", error)

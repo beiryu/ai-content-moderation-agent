@@ -18,8 +18,10 @@ const updateInterviewSession = async (
   return response.json()
 }
 
-export function useUpdateInterviewSession() {
+const useUpdateInterviewSession = () => {
   return useMutation({
     mutationFn: updateInterviewSession,
   })
 }
+
+export default useUpdateInterviewSession
