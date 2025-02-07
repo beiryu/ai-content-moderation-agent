@@ -114,19 +114,84 @@ model Interview {
 }
 
 model InterviewSession {
-  id                String                      @id @default(cuid()) 
-  interviewId       String
-  interview         Interview                   @relation(fields: [interviewId], references: [id])
-  conversation      Json                        // Stores role and content
-  completionRate    Float                       @map(name: "completion_rate")
-  performanceScore  Float                       @map(name: "performance_score")
-  feedbackSummary   String                      @map(name: "feedback_summary")
-  duration          Int                         // in minutes
-  performance       InterviewSessionPerformance?
-  createdAt         DateTime                    @default(now()) @map(name: "created_at")
-  updatedAt         DateTime                    @updatedAt @map(name: "updated_at")
+  id              String    @id @default(cuid())
+  interviewId     String
+  interview       Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  messages        InterviewMessage[]  // Tách messages thành bảng riêng
+  analysis        Json?     // Kết quả phân tích tổng thể của buổi phỏng vấn
+  metadata        Json?     // Thông tin bổ sung của buổi phỏng vấn
+  completionRate  Float     @map(name: "completion_rate") 
+  performanceScore Float    @map(name: "performance_score")
+  feedbackSummary String    @map(name: "feedback_summary")
+  duration        Int      
+  status          String    @default("active")
+  performance     InterviewSessionPerformance?
+  createdAt       DateTime  @default(now()) @map(name: "created_at")
+  updatedAt       DateTime  @updatedAt @map(name: "updated_at")
 
   @@map("interview_sessions")
+}
+
+// Bảng mới để lưu từng message trong cuộc phỏng vấn
+model InterviewMessage {
+  id              String    @id @default(cuid())
+  sessionId       String
+  session         InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role            String    // "interviewer" | "candidate" | "ai" | "system"
+  content         String    @db.Text
+  messageType     String    // "question" | "answer" | "feedback" | "suggestion"
+  
+  // Phân tích của AI cho câu hỏi của interviewer
+  questionAnalysis QuestionAnalysis?
+
+  // Phân tích của AI cho câu trả lời của candidate
+  answerAnalysis   AnswerAnalysis?
+
+  createdAt        DateTime @default(now()) @map(name: "created_at")
+  updatedAt        DateTime @updatedAt @map(name: "updated_at")
+
+  @@map("interview_messages")
+}
+
+// Bảng lưu phân tích của AI cho câu hỏi
+model QuestionAnalysis {
+  id              String    @id @default(cuid())
+  messageId       String    @unique
+  message         InterviewMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  
+  questionType    String    // "technical" | "behavioral" | "general"
+  difficulty      Int       // 1-5
+  topics         String[]
+  suggestedAnswerPoints String[] // Các điểm chính nên đề cập
+  keywords       String[]   // Từ khóa quan trọng
+  
+  createdAt      DateTime  @default(now()) @map(name: "created_at")
+  updatedAt      DateTime  @updatedAt @map(name: "updated_at")
+
+  @@map("question_analyses")
+}
+
+// Bảng lưu phân tích của AI cho câu trả lời
+model AnswerAnalysis {
+  id              String    @id @default(cuid())
+  messageId       String    @unique
+  message         InterviewMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  
+  relevanceScore  Float     // Độ liên quan với câu hỏi (0-1)
+  completenessScore Float   // Độ đầy đủ của câu trả lời (0-1)
+  clarityScore    Float     // Độ rõ ràng của câu trả lời (0-1)
+  technicalAccuracy Float?  // Độ chính xác kỹ thuật (0-1)
+  
+  coveredPoints  String[]   // Các điểm đã đề cập
+  missedPoints   String[]   // Các điểm quan trọng bị bỏ qua
+  improvements   String[]   // Đề xuất cải thiện
+  
+  metadata       Json?      // Thông tin thêm như tốc độ nói, ngắt quãng, etc.
+  
+  createdAt      DateTime  @default(now()) @map(name: "created_at")
+  updatedAt      DateTime  @updatedAt @map(name: "updated_at")
+
+  @@map("answer_analyses")
 }
 
 model InterviewSessionPerformance {

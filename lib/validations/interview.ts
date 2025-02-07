@@ -2,17 +2,18 @@ import { z } from "zod"
 
 export const InterviewSchema = z.object({
   id: z.string(),
+
   name: z.string(),
   status: z.string(),
   priority: z.string(),
   dueDate: z.string(),
   type: z.string(),
-  jobId: z.string().nullable(),
+
   createdAt: z.string(),
   updatedAt: z.string(),
-})
 
-export type Interview = z.infer<typeof InterviewSchema>
+  jobId: z.string().nullable(),
+})
 
 export const CreateInterviewRequestSchema = z.object({
   name: z.string(),
@@ -22,9 +23,9 @@ export const CreateInterviewRequestSchema = z.object({
   type: z.string(),
 })
 
-// Update Interview Request Schema
 export const UpdateInterviewRequestSchema = z.object({
   id: z.string(),
+
   name: z.string().optional(),
   status: z.string().optional(),
   priority: z.string().optional(),
@@ -32,6 +33,7 @@ export const UpdateInterviewRequestSchema = z.object({
   type: z.string().optional(),
 })
 
+export type Interview = z.infer<typeof InterviewSchema>
 export type CreateInterviewRequest = z.infer<
   typeof CreateInterviewRequestSchema
 >
