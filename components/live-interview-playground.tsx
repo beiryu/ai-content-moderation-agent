@@ -1,7 +1,9 @@
+// TODO: Remove this file
+
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { useChatHistoryStore } from "@/stores/chat-history.store"
+// import { useChatHistoryStore } from "@/stores/chat-history.store"
 import { useInterviewSessionStore } from "@/stores/interview-session.store"
 import { Flags } from "@/types"
 import { useCompletion } from "ai/react"
@@ -17,7 +19,7 @@ export function LiveInterviewPlayground() {
   const [flag, setFlag] = useState<Flags>("interview-assistant")
   const [backgroundText, setBackgroundText] = useState<string>("")
 
-  const { addChatHistory } = useChatHistoryStore()
+  // const { addChatHistory } = useChatHistoryStore()
 
   const {
     interimText,
@@ -28,7 +30,7 @@ export function LiveInterviewPlayground() {
 
   const { completion, stop, isLoading, error, setInput, handleSubmit } =
     useCompletion({
-      api: "/api/completion",
+      api: "/api/assistant/completion",
       body: {
         backgroundText,
         flag,
@@ -48,11 +50,11 @@ export function LiveInterviewPlayground() {
   }
 
   const saveChatHistory = () => {
-    addChatHistory({
-      createdAt: new Date().toISOString(),
-      data: completion,
-      tag: flag === "interview-assistant" ? "interview-assistant" : "summarize",
-    })
+    // addChatHistory({
+    //   createdAt: new Date().toISOString(),
+    //   data: completion,
+    //   tag: flag === "interview-assistant" ? "interview-assistant" : "summarize",
+    // })
   }
 
   // useEffect(() => {

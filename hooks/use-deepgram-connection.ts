@@ -6,19 +6,19 @@ import {
   createClient,
 } from "@deepgram/sdk"
 
+type DeepgramConnectionStatus = "idle" | "loading" | "ready" | "error"
+
 interface UseDeepgramConnectionReturn {
   isListening: boolean
   connection: LiveClient | null
-  status: "idle" | "loading" | "ready" | "error"
+  status: DeepgramConnectionStatus
   error: Error | null
 }
 
 export function useDeepgramConnection(): UseDeepgramConnectionReturn {
   const { processTranscript } = useInterviewSessionStore()
 
-  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(
-    "idle"
-  )
+  const [status, setStatus] = useState<DeepgramConnectionStatus>("idle")
   const [error, setError] = useState<Error | null>(null)
   const [isListening, setIsListening] = useState(false)
   const [connection, setConnection] = useState<LiveClient | null>(null)

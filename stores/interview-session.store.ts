@@ -9,6 +9,7 @@ interface InterviewSessionStore {
   transcriptionBuffer: string
   interimText: string
   lastSpeakTime: number
+
   messages: InterviewMessage[]
   currentAnalysis: QuestionAnalysis | null
 
@@ -28,6 +29,7 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
     transcriptionBuffer: "",
     interimText: "",
     lastSpeakTime: Date.now(),
+
     messages: [],
     currentAnalysis: null,
 
@@ -126,7 +128,7 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
       if (!message) return
 
       try {
-        const response = await fetch("/api/analyze-interview", {
+        const response = await fetch("/api/assistant/analyze-message", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: message.content }),
@@ -136,8 +138,21 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
 
         set((state) => ({
           messages: state.messages.map((m) =>
-            m.id === messageId ? { ...m, questionAnalysis: analysis } : m
+            m.id === messageId
+              ? {
+                  ...m,
+                  questionAnalysis: {
+                    ...analysis,
+
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+
+                    messageId: messageId,
+                  },
+                }
+              : m
           ),
+
           currentAnalysis: analysis,
         }))
       } catch (error) {
