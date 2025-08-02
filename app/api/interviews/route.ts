@@ -29,7 +29,7 @@ export async function POST(req: Request) {
         type: body.type,
         status: body.status,
         priority: body.priority,
-        dueDate: new Date(body.dueDate),
+        dueDate: new Date(body.dueDate).toISOString(),
         jobTitle: body.jobTitle,
         companyName: body.companyName,
         user: {
