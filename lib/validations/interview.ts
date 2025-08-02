@@ -12,11 +12,11 @@ export const InterviewSchema = z.object({
   priority: z.string(),
   dueDate: z.string(),
   type: z.string(),
+  jobTitle: z.string(),
+  companyName: z.string(),
 
   createdAt: z.string(),
   updatedAt: z.string(),
-
-  jobId: z.string().nullable(),
 })
 
 export const CreateInterviewRequestSchema = z.object({

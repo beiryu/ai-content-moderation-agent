@@ -1,13 +1,19 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
-import { NextAuthOptions } from "next-auth"
-import EmailProvider from "next-auth/providers/email"
-import GitHubProvider from "next-auth/providers/github"
-import { Resend } from "resend"
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { NextAuthOptions } from "next-auth";
+import EmailProvider from "next-auth/providers/email";
+import GitHubProvider from "next-auth/providers/github";
+import { Resend } from "resend";
 
-import { env } from "@/env.mjs"
-import { siteConfig } from "@/config/site"
-import { db } from "@/lib/db"
-import { EmailTemplate } from "@/components/email-template"
+
+
+import { env } from "@/env.mjs";
+import { siteConfig } from "@/config/site";
+import { db } from "@/lib/db";
+import { EmailTemplate } from "@/components/email-template";
+
+
+
+
 
 const resend = new Resend(env.RESEND_API_KEY)
 
@@ -40,7 +46,8 @@ export const authOptions: NextAuthOptions = {
         })
 
         // Determine email type based on whether user is verified
-        const emailType = user?.emailVerified ? "sign-in" : "activation"
+        // const emailType = user?.emailVerified ? "sign-in" : "activation"
+        const emailType = "sign-in"
 
         // Create email subject based on email type
         const subject = user?.emailVerified
