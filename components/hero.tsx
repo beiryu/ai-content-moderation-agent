@@ -9,6 +9,7 @@ import { motion } from "framer-motion"
 
 export function Hero() {
   return (
+    // eslint-disable-next-line tailwindcss/migration-from-tailwind-2
     <section className="relative bg-[linear-gradient(to_bottom,#000,#200d42_34%,#4f21a1_65%,#a46ed8_82%)] py-[72px] overflow-clip">
       <div className="container relative z-10">
         <article className="flex flex-col justify-center items-center gap-y-8">

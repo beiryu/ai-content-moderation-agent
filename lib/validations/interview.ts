@@ -1,4 +1,8 @@
-import { z } from "zod"
+import { z } from "zod";
+
+
+
+
 
 export const InterviewSchema = z.object({
   id: z.string(),
@@ -17,10 +21,9 @@ export const InterviewSchema = z.object({
 
 export const CreateInterviewRequestSchema = z.object({
   name: z.string(),
-  status: z.string(),
-  priority: z.string(),
-  dueDate: z.string(),
   type: z.string(),
+  jobTitle: z.string(),
+  companyName: z.string(),
 })
 
 export const UpdateInterviewRequestSchema = z.object({

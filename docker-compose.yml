@@ -2,23 +2,23 @@ version: "3.8"
 services:
   postgres:
     image: postgres:15
-    container_name: ai_content_moderation_agent_postgres
+    container_name: ai_interview_assistant
     restart: always
     environment:
       POSTGRES_PASSWORD: root
       POSTGRES_USER: postgres
-      POSTGRES_DB: ai_content_moderation
+      POSTGRES_DB: ai_interview_assistant
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - ai_content_moderation_agent_network
+      - ai_interview_assistant_network
 
 volumes:
   postgres_data:
     driver: local
 
 networks:
-  ai_content_moderation_agent_network:
+  ai_interview_assistant_network:
     driver: bridge

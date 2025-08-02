@@ -1,10 +1,16 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import * as z from "zod"
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import * as z from "zod";
 
-import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
-import { UpdateInterviewRequestSchema } from "@/lib/validations/interview"
+
+
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { UpdateInterviewRequestSchema } from "@/lib/validations/interview";
+
+
+
+
 
 export async function GET(
   req: Request,
@@ -22,11 +28,7 @@ export async function GET(
         id: params.interviewId,
       },
       include: {
-        job: {
-          include: {
-            resume: true,
-          },
-        },
+        sessions: true,
       },
     })
 
@@ -56,10 +58,6 @@ export async function PATCH(
       },
       data: {
         name: body.name,
-        status: body.status,
-        priority: body.priority,
-        dueDate: body.dueDate,
-        type: body.type,
       },
     })
 

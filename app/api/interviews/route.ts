@@ -20,10 +20,14 @@ export async function POST(req: Request) {
     const interview = await db.interview.create({
       data: {
         name: body.name,
-        status: body.status,
-        priority: body.priority,
-        dueDate: new Date(body.dueDate),
         type: body.type,
+        jobTitle: body.jobTitle,
+        companyName: body.companyName,
+        user: {
+          connect: {
+            id: session.user.id,
+          },
+        },
       },
     })
 
@@ -47,7 +51,7 @@ export async function GET() {
 
     const interviews = await db.interview.findMany({
       include: {
-        job: true,
+        sessions: true,
       },
     })
 

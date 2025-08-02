@@ -1,8 +1,14 @@
-import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
+
+
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+
+
+
+
 
 export async function POST(req: Request) {
   try {
@@ -16,11 +22,9 @@ export async function POST(req: Request) {
     // Create new session
     const interviewSession = await db.interviewSession.create({
       data: {
-        completionRate: 0,
         performanceScore: 0,
-        feedbackSummary: "",
+        feedback: "",
         duration: 0,
-        status: "active",
         interviewId,
       },
     })

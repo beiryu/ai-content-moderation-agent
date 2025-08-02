@@ -9,7 +9,7 @@ import { Testimonials } from "@/components/testimonials"
 
 export default async function IndexPage() {
   return (
-    <div className="bg-black text-white overflow-clip">
+    <div className="bg-black text-white text-clip">
       <Hero />
       <LogoTicker />
       <Features />

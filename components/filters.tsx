@@ -1,18 +1,8 @@
-import {
-  ArrowDown,
-  ArrowRight,
-  ArrowUp,
-  Bug,
-  CheckCircle2,
-  Circle,
-  FlaskConical,
-  HelpCircle,
-  PackagePlus,
-  Radio,
-  ScrollText,
-  Timer,
-  XCircle,
-} from "lucide-react"
+import { ArrowDown, ArrowRight, ArrowUp, Bug, CheckCircle2, Circle, FlaskConical, HelpCircle, PackagePlus, Radio, ScrollText, Timer, XCircle } from "lucide-react";
+
+
+
+
 
 export const status_options = [
   // {
@@ -57,7 +47,7 @@ export const type_options = [
 
 export const priority_options = [
   {
-    value: "low",
+    value: "junior",
     label: "Low",
     icon: ArrowDown,
   },
