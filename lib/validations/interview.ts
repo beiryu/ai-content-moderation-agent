@@ -22,6 +22,9 @@ export const InterviewSchema = z.object({
 export const CreateInterviewRequestSchema = z.object({
   name: z.string(),
   type: z.string(),
+  status: z.string(),
+  priority: z.string(),
+  dueDate: z.string(),
   jobTitle: z.string(),
   companyName: z.string(),
 })
