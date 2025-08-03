@@ -49,15 +49,7 @@ const data = {
       icon: Bot,
       items: [
         {
-          title: "Cover Letter Generator",
-          url: "#",
-        },
-        {
-          title: "AI Career Coach",
-          url: "#",
-        },
-        {
-          title: "Speak with Recruiters",
+          title: "Speak with Buddy",
           url: "#",
         },
       ],

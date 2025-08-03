@@ -7,7 +7,7 @@ const updateDocument = async (
   data: UpdateDocumentRequest
 ): Promise<any> => {
   const response = await fetch(`/api/documents/${id}`, {
-    method: "PATCH",
+    method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
