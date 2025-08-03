@@ -129,14 +129,17 @@ export function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar> & { user: User }) {
   const pathname = usePathname()
-  
+
   // Dynamically determine which navigation item is active based on current path
-  const navMainWithActiveState = data.navMain.map(item => ({
+  const navMainWithActiveState = data.navMain.map((item) => ({
     ...item,
-    isActive: pathname ? (
-      (item.url !== "#" && pathname.startsWith(item.url)) || 
-      (item.items && item.items.some(subItem => subItem.url !== "#" && pathname.startsWith(subItem.url)))
-    ) : false
+    isActive: pathname
+      ? (item.url !== "#" && pathname.startsWith(item.url)) ||
+        (item.items &&
+          item.items.some(
+            (subItem) => subItem.url !== "#" && pathname.startsWith(subItem.url)
+          ))
+      : false,
   }))
 
   return (

@@ -1,6 +1,7 @@
 "use client"
 
 import { format } from "date-fns"
+import { MoreHorizontal } from "lucide-react"
 
 import { useGetDocuments } from "@/hooks/api/document/useGetDocuments"
 import { Badge } from "@/components/ui/badge"
@@ -223,41 +224,41 @@ export function DocumentsListV2() {
                 className="hover:shadow-md transition-shadow"
               >
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1 flex-1">
-                      <CardTitle className="text-base line-clamp-2 flex items-center space-x-2">
-                        <IconComponent className="size-4 text-muted-foreground" />
-                        <span>{document.title}</span>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <CardTitle className="text-base">
+                        <div className="flex items-center space-x-2 min-w-0">
+                          <IconComponent className="size-4 text-muted-foreground shrink-0" />
+                          <span className="truncate flex-1 min-w-0">
+                            {document.title}
+                          </span>
+                          <Badge
+                            variant="secondary"
+                            className={`shrink-0 ${
+                              documentTypeColors[
+                                document.type as keyof typeof documentTypeColors
+                              ]
+                            }`}
+                          >
+                            {
+                              documentTypeLabels[
+                                document.type as keyof typeof documentTypeLabels
+                              ]
+                            }
+                          </Badge>
+                        </div>
                       </CardTitle>
-                      <Badge
-                        variant="secondary"
-                        className={
-                          documentTypeColors[
-                            document.type as keyof typeof documentTypeColors
-                          ]
-                        }
-                      >
-                        {
-                          documentTypeLabels[
-                            document.type as keyof typeof documentTypeLabels
-                          ]
-                        }
-                      </Badge>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <Icons.ellipsis className="size-4" />
-                        </Button>
+                        <div className="flex items-center p-1 hover:bg-muted/50 rounded cursor-pointer">
+                          <MoreHorizontal className="size-4" />
+                        </div>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
                           <Icons.edit className="mr-2 size-4" />
                           Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Icons.eye className="mr-2 size-4" />
-                          View Details
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
