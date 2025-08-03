@@ -243,7 +243,9 @@ export function CreateInterviewDialog() {
                         selected={
                           field.value ? new Date(field.value) : undefined
                         }
-                        onSelect={(date) => field.onChange(date ? date.toISOString() : "")}
+                        onSelect={(date) =>
+                          field.onChange(date ? date.toISOString() : "")
+                        }
                         disabled={(date) => date < new Date()}
                         initialFocus
                       />

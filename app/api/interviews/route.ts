@@ -1,16 +1,10 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import * as z from "zod";
+import { NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import * as z from "zod"
 
-
-
-import { authOptions } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { CreateInterviewRequestSchema } from "@/lib/validations/interview";
-
-
-
-
+import { authOptions } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { CreateInterviewRequestSchema } from "@/lib/validations/interview"
 
 export async function POST(req: Request) {
   try {
