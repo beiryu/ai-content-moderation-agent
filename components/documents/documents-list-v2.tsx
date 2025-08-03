@@ -1,20 +1,15 @@
 "use client"
 
+import { useState } from "react"
 import { format } from "date-fns"
 import { MoreHorizontal } from "lucide-react"
 
+import { Document } from "@/lib/validations/document"
 import { useGetDocuments } from "@/hooks/api/document/useGetDocuments"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +27,8 @@ import {
 } from "@/components/ui/select"
 import { EmptyPlaceholder } from "@/components/empty-placeholder"
 import { Icons } from "@/components/icons"
+import DeleteDocumentDialog from "@/components/modals/delete-document-modal"
+import EditDocumentDialog from "@/components/modals/edit-document-modal"
 
 const documentTypeLabels = {
   RESUME: "Resume",
@@ -67,6 +64,11 @@ const getDocumentIcon = (type: string) => {
 }
 
 export function DocumentsListV2() {
+  const [editingDocument, setEditingDocument] = useState<Document | null>(null)
+  const [deletingDocument, setDeletingDocument] = useState<Document | null>(
+    null
+  )
+
   const {
     documents,
     filteredDocuments,
@@ -256,13 +258,15 @@ export function DocumentsListV2() {
                         </div>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setEditingDocument(document)}
+                        >
                           <Icons.edit className="mr-2 size-4" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onClick={() => alert(document.id)}
+                          onClick={() => setDeletingDocument(document)}
                           className="text-destructive"
                         >
                           <Icons.trash className="mr-2 size-4" />
@@ -300,6 +304,32 @@ export function DocumentsListV2() {
             )
           })}
         </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingDocument && (
+        <Dialog
+          open={!!editingDocument}
+          onOpenChange={() => setEditingDocument(null)}
+        >
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <EditDocumentDialog
+              document={editingDocument}
+              onClose={() => setEditingDocument(null)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Modal */}
+      {deletingDocument && (
+        <DeleteDocumentDialog
+          document={deletingDocument}
+          isOpen={!!deletingDocument}
+          showActionToggle={(open) =>
+            setDeletingDocument(open ? deletingDocument : null)
+          }
+        />
       )}
     </div>
   )
