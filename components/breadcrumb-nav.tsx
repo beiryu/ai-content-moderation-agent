@@ -14,11 +14,11 @@ import {
 const breadcrumbMap = {
   "/dashboard/interviews": {
     parent: { title: "Interview", href: "/dashboard/interviews" },
-    current: "Interview Buddy",
-  },
-  "/dashboard/interview-sessions": {
-    parent: { title: "Interview", href: "/dashboard/interview-sessions" },
     current: "Interview Sessions",
+  },
+  "/dashboard/documents": {
+    parent: { title: "Documents", href: "/dashboard/documents" },
+    current: "Resource Center",
   },
 }
 
