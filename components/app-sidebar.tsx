@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
+import { usePathname } from "next/navigation"
 import {
   BookOpen,
   Bot,
-  Command,
   Frame,
   Fullscreen,
   LifeBuoy,
@@ -36,15 +36,10 @@ const data = {
       title: "Interview",
       url: "/dashboard/interviews",
       icon: Fullscreen,
-      isActive: true,
       items: [
         {
-          title: "Interview Buddy",
-          url: "/dashboard/interviews",
-        },
-        {
           title: "Interview Sessions",
-          url: "/dashboard/interview-sessions",
+          url: "/dashboard/interviews",
         },
       ],
     },
@@ -69,31 +64,27 @@ const data = {
     },
     {
       title: "Documentation",
-      url: "#",
+      url: "/dashboard/documents",
       icon: BookOpen,
       items: [
         {
-          title: "Preparation Hub",
-          url: "#",
-        },
-        {
           title: "Resource Center",
-          url: "#",
+          url: "/dashboard/documents",
         },
       ],
     },
     {
       title: "Settings",
-      url: "#",
+      url: "/dashboard/settings",
       icon: Settings2,
       items: [
         {
           title: "General",
-          url: "#",
+          url: "/dashboard/settings",
         },
         {
           title: "Billing",
-          url: "#",
+          url: "/dashboard/billing",
         },
         {
           title: "Limits",
@@ -137,6 +128,17 @@ export function AppSidebar({
   user,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { user: User }) {
+  const pathname = usePathname()
+  
+  // Dynamically determine which navigation item is active based on current path
+  const navMainWithActiveState = data.navMain.map(item => ({
+    ...item,
+    isActive: pathname ? (
+      (item.url !== "#" && pathname.startsWith(item.url)) || 
+      (item.items && item.items.some(subItem => subItem.url !== "#" && pathname.startsWith(subItem.url)))
+    ) : false
+  }))
+
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -159,7 +161,7 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMainWithActiveState} />
         <NavProjects projects={data.projects} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>

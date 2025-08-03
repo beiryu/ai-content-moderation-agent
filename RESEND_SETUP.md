@@ -5,6 +5,7 @@ This project has been updated to use Resend for email delivery instead of Postma
 ## 1. Update your environment variables
 
 Replace the following Postmark environment variables:
+
 ```
 SMTP_FROM=khanhnguyen@hachium.com
 POSTMARK_API_TOKEN=6d1a0cac-ccae-4aa0-a23a-04b9cd6bcc53
@@ -13,6 +14,7 @@ POSTMARK_ACTIVATION_TEMPLATE=38336674
 ```
 
 With this single Resend environment variable:
+
 ```
 SMTP_FROM=khanhnguyen@hachium.com
 RESEND_API_KEY=your-resend-api-key
@@ -33,6 +35,7 @@ For production use, Resend requires that you verify your domain. This means:
 2. During development, you can use Resend's test domain: `onboarding@resend.dev`
 
 If you're getting authentication errors, try changing your `SMTP_FROM` to use Resend's test domain temporarily:
+
 ```
 SMTP_FROM=onboarding@resend.dev
 ```
@@ -47,6 +50,7 @@ If you encounter errors during email sending:
 4. Make sure your Resend account is in good standing
 
 Common errors:
+
 - "Domain not verified" - Use `onboarding@resend.dev` or verify your domain
 - "Invalid API key" - Check your API key in the Resend dashboard
 - "Rate limit exceeded" - Reduce sending frequency or upgrade your plan
