@@ -25,7 +25,7 @@ export default async function MarketingLayout({
     <SmoothScrolling>
       <div className="flex min-h-screen flex-col">
         <Banner />
-        <header className="z-40 sticky top-0 backdrop-blur-sm bg-black/80">
+        <header className="z-40 sticky top-0 backdrop-blur-sm bg-black/100">
           <div className="flex h-20 container items-center justify-between py-6">
             <MainNav items={marketingConfig.mainNav} />
             {user ? (

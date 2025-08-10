@@ -1,12 +1,19 @@
+import Link from "next/link"
 import { redirect } from "next/navigation"
+import {
+  CalendarIcon,
+  FileText,
+  LineChart,
+  MessageSquare,
+  Settings,
+} from "lucide-react"
 
 import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
-import { EmptyPlaceholder } from "@/components/empty-placeholder"
+import { cn } from "@/lib/utils"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { DashboardHeader } from "@/components/header"
-import { PostCreateButton } from "@/components/post-create-button"
-import { PostItem } from "@/components/post-item"
 import { DashboardShell } from "@/components/shell"
 
 export const metadata = {
@@ -20,43 +27,127 @@ export default async function DashboardPage() {
     redirect(authOptions?.pages?.signIn || "/login")
   }
 
-  const posts = await db.post.findMany({
-    where: {
-      authorId: user.id,
-    },
-    select: {
-      id: true,
-      title: true,
-      published: true,
-      createdAt: true,
-    },
-    orderBy: {
-      updatedAt: "desc",
-    },
-  })
-
   return (
     <DashboardShell>
-      <DashboardHeader heading="Posts" text="Create and manage posts.">
-        <PostCreateButton />
-      </DashboardHeader>
-      <div>
-        {posts?.length ? (
-          <div className="divide-y divide-border rounded-md border">
-            {posts.map((post) => (
-              <PostItem key={post.id} post={post} />
-            ))}
+      <DashboardHeader
+        heading="Dashboard"
+        text={`Welcome back, ${user.name || "there"}!`}
+      />
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-lg">Interviews</h3>
+            <MessageSquare className="size-5 text-muted-foreground" />
           </div>
-        ) : (
-          <EmptyPlaceholder>
-            <EmptyPlaceholder.Icon name="post" />
-            <EmptyPlaceholder.Title>No posts created</EmptyPlaceholder.Title>
-            <EmptyPlaceholder.Description>
-              You don&apos;t have any posts yet. Start creating content.
-            </EmptyPlaceholder.Description>
-            <PostCreateButton variant="outline" />
-          </EmptyPlaceholder>
-        )}
+          <p className="text-muted-foreground mb-4">
+            Practice interviews with AI assistant feedback.
+          </p>
+          <Link
+            className={cn(
+              buttonVariants({ variant: "outline", className: "w-full" })
+            )}
+            href="/dashboard/interviews"
+          >
+            Start Interview
+          </Link>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-lg">Documents</h3>
+            <FileText className="size-5 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground mb-4">
+            Manage your documents for interview preparation.
+          </p>
+          <Link
+            className={cn(
+              buttonVariants({ variant: "outline", className: "w-full" })
+            )}
+            href="/dashboard/documents"
+          >
+            View Documents
+          </Link>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-lg">Analytics</h3>
+            <LineChart className="size-5 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground mb-4">
+            Track your progress and performance.
+          </p>
+          <Link
+            className={cn(
+              buttonVariants({ variant: "outline", className: "w-full" })
+            )}
+            href="/dashboard/analytics"
+          >
+            View Analytics
+          </Link>
+        </Card>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="font-medium text-xl mb-4">Getting Started</h2>
+        <div className="bg-muted rounded-lg p-6">
+          <ol className="space-y-4 list-decimal list-inside">
+            <li>
+              Upload your resume and documents in the{" "}
+              <a href="/dashboard/documents" className="font-medium underline">
+                Documents section
+              </a>
+            </li>
+            <li>
+              Create your first interview in the{" "}
+              <a href="/dashboard/interviews" className="font-medium underline">
+                Interviews section
+              </a>
+            </li>
+            <li>Practice with our AI interview coach and receive feedback</li>
+            <li>Review your performance in Analytics</li>
+          </ol>
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-lg">Upcoming Sessions</h3>
+            <CalendarIcon className="size-5 text-muted-foreground" />
+          </div>
+          <div className="text-center py-8 text-muted-foreground">
+            No upcoming sessions scheduled.
+          </div>
+          <Link
+            className={cn(
+              buttonVariants({ variant: "outline", className: "w-full" })
+            )}
+            href="/dashboard/interviews"
+          >
+            Schedule Practice
+          </Link>
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-medium text-lg">Account Settings</h3>
+            <Settings className="size-5 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground mb-4">
+            Manage your profile, subscription and preferences.
+          </p>
+          <Link
+            className={cn(
+              buttonVariants({ variant: "outline", className: "w-full" })
+            )}
+            href="/dashboard/settings"
+          >
+            Manage Settings
+          </Link>
+        </Card>
       </div>
     </DashboardShell>
   )

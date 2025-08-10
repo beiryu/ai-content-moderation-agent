@@ -20,7 +20,7 @@ export function MainNav({ items, children }: MainNavProps) {
   const [showMobileMenu, setShowMobileMenu] = React.useState<boolean>(false)
 
   return (
-    <div className="flex gap-6 md:gap-10">
+    <div className="flex gap-6 md:gap-10 text-primary">
       <Link href="/#hero" className="hidden items-center space-x-2 md:flex">
         <Icons.logo />
         <span className="hidden font-bold sm:inline-block">
@@ -34,10 +34,10 @@ export function MainNav({ items, children }: MainNavProps) {
               key={index}
               href={item.disabled ? "#hero" : item.href}
               className={cn(
-                "flex items-center text-lg font-medium transition-colors hover:text-foreground/80 sm:text-sm",
+                "flex items-center text-lg font-medium transition-colors hover:text-background/80 sm:text-sm",
                 item.href.startsWith(`/${segment}`)
-                  ? "text-foreground"
-                  : "text-foreground/60",
+                  ? "text-background"
+                  : "text-background/60",
                 item.disabled && "cursor-not-allowed opacity-80"
               )}
             >
