@@ -58,7 +58,7 @@ export function Hero() {
             </motion.div>
           </div>
           <p className="text-xl max-w-[448px] text-center">
-            Let&apos;s Take Wise is your AI-powered interview coach that helps
+            Let&apos;s Talk Wise is your AI-powered interview coach that helps
             you prepare for your job interview by generating personalized Q&A.
             It also provides real-time response assistance during your
             interviews.

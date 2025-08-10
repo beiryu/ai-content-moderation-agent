@@ -3,15 +3,15 @@ import { redirect } from "next/navigation"
 import {
   CalendarIcon,
   FileText,
-  LineChart,
   MessageSquare,
   Settings,
+  Wrench,
 } from "lucide-react"
 
 import { authOptions } from "@/lib/auth"
 import { getCurrentUser } from "@/lib/session"
 import { cn } from "@/lib/utils"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { DashboardHeader } from "@/components/header"
 import { DashboardShell } from "@/components/shell"
@@ -73,19 +73,19 @@ export default async function DashboardPage() {
 
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-lg">Analytics</h3>
-            <LineChart className="size-5 text-muted-foreground" />
+            <h3 className="font-medium text-lg">Tools</h3>
+            <Wrench className="size-5 text-muted-foreground" />
           </div>
           <p className="text-muted-foreground mb-4">
-            Track your progress and performance.
+            Use our tools to help you prepare for your interview.
           </p>
           <Link
             className={cn(
               buttonVariants({ variant: "outline", className: "w-full" })
             )}
-            href="/dashboard/analytics"
+            href="/dashboard/tools"
           >
-            View Analytics
+            View Tools
           </Link>
         </Card>
       </div>

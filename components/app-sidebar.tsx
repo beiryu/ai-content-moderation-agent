@@ -1,34 +1,21 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { usePathname } from "next/navigation"
-import {
-  BookOpen,
-  Bot,
-  Frame,
-  Fullscreen,
-  LifeBuoy,
-  Map,
-  PieChart,
-  Podcast,
-  Send,
-  Settings2,
-} from "lucide-react"
-import { User } from "next-auth"
+import * as React from "react";
+import { usePathname } from "next/navigation";
+import { BookOpen, Bot, Frame, Fullscreen, LifeBuoy, Map, PieChart, Podcast, Send, Settings2 } from "lucide-react";
+import { User } from "next-auth";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
+
+
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { NavMain } from "@/components/nav-main";
+import { NavProjects } from "@/components/nav-projects";
+import { NavSecondary } from "@/components/nav-secondary";
+import { NavUser } from "@/components/nav-user";
+
+
+
+
 
 const data = {
   navMain: [
@@ -77,10 +64,6 @@ const data = {
         {
           title: "Billing",
           url: "/dashboard/billing",
-        },
-        {
-          title: "Limits",
-          url: "#",
         },
       ],
     },
@@ -140,13 +123,13 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="#">
+              <a href="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <Podcast className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
-                    Let&apos;s Take Wise
+                    Let&apos;s Talk Wise
                   </span>
                   <span className="truncate text-xs">Enterprise</span>
                 </div>

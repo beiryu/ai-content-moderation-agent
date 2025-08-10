@@ -77,7 +77,7 @@ export function NavUser({ user }: NavUserProps) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard">
+                <Link href="/dashboard/billing">
                   <Sparkles />
                   Upgrade to Pro
                 </Link>
@@ -86,7 +86,7 @@ export function NavUser({ user }: NavUserProps) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard">
+                <Link href="/dashboard/settings">
                   <BadgeCheck />
                   Account
                 </Link>
@@ -95,12 +95,6 @@ export function NavUser({ user }: NavUserProps) {
                 <Link href="/dashboard/billing">
                   <CreditCard />
                   Billing
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/notifications">
-                  <Bell />
-                  Notifications
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
