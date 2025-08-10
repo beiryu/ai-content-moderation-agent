@@ -105,12 +105,6 @@ Utilize existing Prisma models:
 - `PUT /api/documents/:id`: Update existing document
 - `DELETE /api/documents/:id`: Remove document and all chunks
 
-#### Document Processing
-
-- `POST /api/documents/:id/reprocess`: Reprocess document with new content
-- `GET /api/documents/:id/status`: Get processing status
-- `GET /api/documents/:id/summary`: Get extracted information summary
-
 ## 6. Implementation Plan
 
 ### Sprint 3: Core Document Management

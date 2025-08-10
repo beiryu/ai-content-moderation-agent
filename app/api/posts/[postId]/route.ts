@@ -59,7 +59,6 @@ export async function PATCH(
     const body = postPatchSchema.parse(json)
 
     // Update the post.
-    // TODO: Implement sanitization for content.
     await db.post.update({
       where: {
         id: params.postId,

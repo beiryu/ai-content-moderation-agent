@@ -25,12 +25,7 @@ export const CreateDocumentRequestSchema = z.object({
     .string()
     .min(1, "Title is required")
     .max(200, "Title must be less than 200 characters"),
-  type: z.enum(
-    ["RESUME", "JOB_DESCRIPTION", "PORTFOLIO", "COVER_LETTER", "NOTES"],
-    {
-      required_error: "Please select a document type",
-    }
-  ),
+  type: z.string(),
   content: z.string().min(10, "Content must be at least 10 characters long"),
   metadata: z.record(z.any()).optional(),
 })

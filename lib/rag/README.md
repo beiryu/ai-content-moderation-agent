@@ -109,27 +109,11 @@ npx tsx scripts/init-rag.ts
 
 ### Processing Documents
 
-```typescript
+````typescript
 import { ragSystem } from "@/lib/rag"
 
 // Initialize the system
 await ragSystem.initialize()
-
-// Process a resume
-const resumeId = await ragSystem.processResume(
-  userId,
-  resumeContent,
-  parsedResumeData
-)
-
-// Process job description
-const jobId = await ragSystem.processJobDescription(
-  userId,
-  "Senior Software Engineer",
-  "TechCorp",
-  jobDescriptionContent
-)
-```
 
 ### Generating Response Suggestions
 
@@ -145,7 +129,7 @@ const suggestions = await ragSystem.generateResponseSuggestions(
 console.log(suggestions.suggestions) // Response suggestions
 console.log(suggestions.frameworks) // STAR method, etc.
 console.log(suggestions.relevantExperience) // From resume
-```
+````
 
 ### Managing Memory
 
