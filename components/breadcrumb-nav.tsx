@@ -20,6 +20,14 @@ const breadcrumbMap = {
     parent: { title: "Documents", href: "/dashboard/documents" },
     current: "Resource Center",
   },
+  "/dashboard/settings": {
+    parent: { title: "Settings", href: "/dashboard/settings" },
+    current: "User Settings",
+  },
+  "/dashboard/billing": {
+    parent: { title: "Billing", href: "/dashboard/billing" },
+    current: "Billing Overview",
+  },
 }
 
 export function BreadcrumbNav() {

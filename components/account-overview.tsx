@@ -1,0 +1,117 @@
+"use client"
+
+import * as React from "react"
+import { User } from "@prisma/client"
+import { formatDistance } from "date-fns"
+import { useSession } from "next-auth/react"
+
+import { Badge } from "@/components/ui/badge"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Icons } from "@/components/icons"
+
+interface AccountOverviewProps {
+  user: Pick<
+    User,
+    "id" | "name" | "email" | "emailVerified" | "createdAt" | "updatedAt"
+  >
+}
+
+export function AccountOverview({ user }: AccountOverviewProps) {
+  const { data: session } = useSession()
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Account Overview</CardTitle>
+        <CardDescription>Your account information and status.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Account Status */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Account Status</span>
+          <Badge variant="secondary" className="flex items-center space-x-1 text-green-600">
+            <Icons.check className="size-3" />
+            <span>Active</span>
+          </Badge>
+        </div>
+
+        <Separator />
+
+        {/* Email Verification */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Email Verification</span>
+          {user.emailVerified ? (
+            <Badge
+              variant="secondary"
+              className="flex items-center space-x-1 text-green-600"
+            >
+              <Icons.check className="size-3" />
+              <span>Verified</span>
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className="flex items-center space-x-1 text-yellow-600"
+            >
+              <Icons.warning className="size-3" />
+              <span>Pending</span>
+            </Badge>
+          )}
+        </div>
+
+        <Separator />
+
+        {/* Account Created */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Member Since</span>
+          <span className="text-sm text-muted-foreground">
+            {formatDistance(new Date(user.createdAt), new Date(), {
+              addSuffix: true,
+            })}
+          </span>
+        </div>
+
+        {/* Last Updated */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Last Updated</span>
+          <span className="text-sm text-muted-foreground">
+            {formatDistance(new Date(user.updatedAt), new Date(), {
+              addSuffix: true,
+            })}
+          </span>
+        </div>
+
+        <Separator />
+
+        {/* Session Info */}
+        {session && (
+          <div className="space-y-2">
+            <span className="text-sm font-medium">Current Session</span>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <div className="flex items-center space-x-2">
+                <Icons.user className="size-3" />
+                <span>User ID: {user.id}</span>
+              </div>
+              {session.expires && (
+                <div className="flex items-center space-x-2">
+                  <Icons.settings className="size-3" />
+                  <span>
+                    Session expires:{" "}
+                    {new Date(session.expires).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}

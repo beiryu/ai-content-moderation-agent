@@ -80,7 +80,7 @@
     "cmdk": "^0.1.22",
     "concurrently": "^8.0.1",
     "contentlayer": "^0.3.4",
-    "date-fns": "^2.29.3",
+    "date-fns": "^2.30.0",
     "docx-parser": "^0.2.1",
     "framer-motion": "^11.15.0",
     "jotai": "^2.11.0",

@@ -1,21 +1,34 @@
-"use client";
+"use client"
 
-import * as React from "react";
-import { usePathname } from "next/navigation";
-import { BookOpen, Bot, Frame, Fullscreen, LifeBuoy, Map, PieChart, Podcast, Send, Settings2 } from "lucide-react";
-import { User } from "next-auth";
+import * as React from "react"
+import { usePathname } from "next/navigation"
+import {
+  BookOpen,
+  Bot,
+  Frame,
+  Fullscreen,
+  LifeBuoy,
+  Map,
+  PieChart,
+  Podcast,
+  Send,
+  Settings2,
+} from "lucide-react"
+import { User } from "next-auth"
 
-
-
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
-import { NavMain } from "@/components/nav-main";
-import { NavProjects } from "@/components/nav-projects";
-import { NavSecondary } from "@/components/nav-secondary";
-import { NavUser } from "@/components/nav-user";
-
-
-
-
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar"
+import { NavMain } from "@/components/nav-main"
+import { NavProjects } from "@/components/nav-projects"
+import { NavSecondary } from "@/components/nav-secondary"
+import { NavUser } from "@/components/nav-user"
 
 const data = {
   navMain: [
