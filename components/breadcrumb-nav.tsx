@@ -16,6 +16,10 @@ const breadcrumbMap = {
     parent: { title: "Interview", href: "/dashboard/interviews" },
     current: "Interview Sessions",
   },
+  "/dashboard/tools": {
+    parent: { title: "AI Tools", href: "/dashboard/tools" },
+    current: "Speak with Buddy",
+  },
   "/dashboard/documents": {
     parent: { title: "Documents", href: "/dashboard/documents" },
     current: "Resource Center",

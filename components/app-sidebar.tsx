@@ -45,12 +45,12 @@ const data = {
     },
     {
       title: "AI Tools",
-      url: "#",
+      url: "/dashboard/tools",
       icon: Bot,
       items: [
         {
           title: "Speak with Buddy",
-          url: "#",
+          url: "/dashboard/tools",
         },
       ],
     },
