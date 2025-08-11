@@ -36,7 +36,10 @@ export function AccountOverview({ user }: AccountOverviewProps) {
         {/* Account Status */}
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium">Account Status</span>
-          <Badge variant="secondary" className="flex items-center space-x-1 text-green-600">
+          <Badge
+            variant="secondary"
+            className="flex items-center space-x-1 text-green-600"
+          >
             <Icons.check className="size-3" />
             <span>Active</span>
           </Badge>

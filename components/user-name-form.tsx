@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 
 import { cn } from "@/lib/utils"
-import { userNameSchema } from "@/lib/validations/user"
+import { UserNameSchema } from "@/lib/validations/user"
 import { buttonVariants } from "@/components/ui/button"
 import {
   Card,
@@ -27,7 +27,7 @@ interface UserNameFormProps extends React.HTMLAttributes<HTMLFormElement> {
   user: Pick<User, "id" | "name">
 }
 
-type FormData = z.infer<typeof userNameSchema>
+type FormData = z.infer<typeof UserNameSchema>
 
 export function UserNameForm({ user, className, ...props }: UserNameFormProps) {
   const router = useRouter()
@@ -36,7 +36,7 @@ export function UserNameForm({ user, className, ...props }: UserNameFormProps) {
     register,
     formState: { errors },
   } = useForm<FormData>({
-    resolver: zodResolver(userNameSchema),
+    resolver: zodResolver(UserNameSchema),
     defaultValues: {
       name: user?.name || "",
     },

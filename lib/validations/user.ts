@@ -1,5 +1,12 @@
 import * as z from "zod"
 
+export const UserNameSchema = z.object({
+  name: z
+    .string()
+    .min(3, "Name must be at least 3 characters")
+    .max(32, "Name must be less than 32 characters"),
+})
+
 export const UserProfileSchema = z.object({
   name: z
     .string()
