@@ -11,17 +11,17 @@ datasource db {
 }
 
 model Account {
-  id                String   @id @default(cuid())
+  id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?  @db.Text
-  access_token      String?  @db.Text
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?  @db.Text
+  id_token          String? @db.Text
   session_state     String?
   createdAt         DateTime @default(now()) @map(name: "created_at")
   updatedAt         DateTime @default(now()) @map(name: "updated_at")
@@ -54,7 +54,6 @@ model User {
 
   accounts Account[]
   sessions Session[]
-  Post     Post[]
 
   stripeCustomerId       String?   @unique @map(name: "stripe_customer_id")
   stripeSubscriptionId   String?   @unique @map(name: "stripe_subscription_id")
@@ -67,8 +66,17 @@ model User {
   momoPriceId         String?   @map(name: "momo_price_id") 
   momoCurrentPeriodEnd DateTime? @map(name: "momo_current_period_end")
 
-  resume Resume?
-  interviews Interview[]
+  // Relations
+  interviews         Interview[]          @relation("UserInterviews")
+  interviewSessions  InterviewSession[]   @relation("UserInterviewSessions")
+  documents          Document[]           @relation("UserDocuments")
+  knowledgeBases     KnowledgeBase[]      @relation("UserKnowledgeBase")
+  memories           InterviewMemory[]    @relation("UserMemory")
+  ragQueries         RAGQueryLog[]        @relation("UserRAGQueries")
+  conversations      ChatConversation[]   @relation("UserChatConversations")
+  sessionMemories    SessionMemory[]      @relation("UserSessionMemories")
+  longTermMemories   LongTermMemory[]     @relation("UserLongTermMemories")
+  retrievalLogs      RetrievalLog[]       @relation("UserRetrievalLogs")
 
   @@map(name: "users")
 }
@@ -89,66 +97,249 @@ model Post {
   published Boolean  @default(false)
   createdAt DateTime @default(now()) @map(name: "created_at")
   updatedAt DateTime @default(now()) @map(name: "updated_at")
-  authorId  String
-
-  author User @relation(fields: [authorId], references: [id])
 
   @@map(name: "posts")
 }
 
 model Interview {
-  id                String              @id @default(cuid())
-  name              String
-  type              String
-  status            String
-  priority          String
-  dueDate           DateTime  
-  jobTitle          String
-  companyName       String
-  notes             String?             @db.Text
-  sessions          InterviewSession[]
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt @map(name: "updated_at")
-  userId            String
-  user              User                @relation(fields: [userId], references: [id])
+  id          String   @id @default(cuid())
+  name        String
+  type        String
+  status      String
+  priority    String
+  dueDate     DateTime
+  jobTitle    String
+  companyName String
+  notes       String? @db.Text
+  sessions    InterviewSession[]
+  createdAt   DateTime @default(now()) @map(name: "created_at")
+  updatedAt   DateTime @default(now()) @map(name: "updated_at")
+  userId      String
+  user        User     @relation("UserInterviews", fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("interviews")
+  @@map(name: "interviews")
 }
 
 model InterviewSession {
-  id              String    @id @default(cuid())
-  interviewId     String
-  interview       Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
-  messages        InterviewMessage[]  // Tách messages thành bảng riêng
-  performanceScore Float?    @map(name: "performance_score")
-  feedback        String?    @db.Text
-  duration        Int?
-  createdAt       DateTime  @default(now()) @map(name: "created_at")
-  updatedAt       DateTime  @updatedAt @map(name: "updated_at")
+  id           String   @id @default(cuid())
+  interviewId  String
+  interview    Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation("UserInterviewSessions", fields: [userId], references: [id], onDelete: Cascade)
+  title        String?
+  status       String   @default("in_progress") // in_progress, completed
+  transcripts  String?  @db.Text
+  feedback     Json?
+  duration     Int?     // in seconds
+  messages     InterviewMessage[]
+  memories     InterviewMemory[]
+  ragQueries   RAGQueryLog[]
+  createdAt    DateTime @default(now()) @map(name: "created_at")
+  updatedAt    DateTime @updatedAt @map(name: "updated_at")
 
   @@map("interview_sessions")
 }
 
 model InterviewMessage {
-  id              String    @id @default(cuid())
-  sessionId       String
-  session         InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  role            String    // "interviewer" | "candidate" | "ai" | "system"
-  content         String    @db.Text
-  analysis        Json?
-  createdAt        DateTime @default(now()) @map(name: "created_at")
-  updatedAt        DateTime @updatedAt @map(name: "updated_at")
+  id        String   @id @default(cuid())
+  sessionId String
+  session   InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      MessageRole
+  content   String   @db.Text
+  metadata  Json?
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @default(now()) @map(name: "updated_at")
 
-  @@map("interview_messages")
+  @@map(name: "interview_messages")
 }
 
-model Resume {
+// RAG Infrastructure Models
+model Document {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("UserDocuments", fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  type        DocumentType
+  content     String   @db.Text
+  metadata    Json?
+  fileUrl     String?
+  chunks      DocumentChunk[]
+  createdAt   DateTime @default(now()) @map(name: "created_at")
+  updatedAt   DateTime @updatedAt @map(name: "updated_at")
+
+  @@map("documents")
+}
+
+model DocumentChunk {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content    String   @db.Text
+  metadata   Json?
+  embedding  String?  @db.Text
+  chunkIndex Int
+  createdAt  DateTime @default(now()) @map(name: "created_at")
+  updatedAt  DateTime @default(now()) @map(name: "updated_at")
+
+  @@map(name: "document_chunks")
+}
+
+model KnowledgeBase {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("UserKnowledgeBase", fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  entries     KnowledgeEntry[]
+  createdAt   DateTime @default(now()) @map(name: "created_at")
+  updatedAt   DateTime @updatedAt @map(name: "updated_at")
+
+  @@map("knowledge_bases")
+}
+
+model KnowledgeEntry {
+  id              String        @id @default(cuid())
+  knowledgeBaseId String
+  knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  title           String
+  content         String        @db.Text
+  category        String
+  tags            String[]
+  metadata        Json?
+  embedding       String?       @db.Text
+  relevanceScore  Float?
+  createdAt       DateTime      @default(now()) @map(name: "created_at")
+  updatedAt       DateTime      @updatedAt @map(name: "updated_at")
+
+  @@map("knowledge_entries")
+}
+
+model InterviewMemory {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation("UserMemory", fields: [userId], references: [id], onDelete: Cascade)
+  sessionId    String?
+  session      InterviewSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  memoryType   MemoryType
+  content      String   @db.Text
+  context      Json?
+  importance   Float    @default(1.0)
+  lastAccessed DateTime @default(now()) @map(name: "last_accessed")
+  createdAt    DateTime @default(now()) @map(name: "created_at")
+  updatedAt    DateTime @updatedAt @map(name: "updated_at")
+
+  @@map("interview_memories")
+}
+
+model RAGQueryLog {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation("UserRAGQueries", fields: [userId], references: [id], onDelete: Cascade)
+  sessionId     String?
+  session       InterviewSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  query         String   @db.Text
+  results       Json?
+  responseTime  Int?     // in milliseconds
+  relevanceScore Float?
+  createdAt     DateTime @default(now()) @map(name: "created_at")
+
+  @@map("rag_query_logs")
+}
+
+// Chat Infrastructure Models
+model ChatConversation {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("UserChatConversations", fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  documentIds String[] // Array of document IDs associated with this conversation
+  messages    ChatMessage[]
+  createdAt   DateTime @default(now()) @map(name: "created_at")
+  updatedAt   DateTime @updatedAt @map(name: "updated_at")
+
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole // user, assistant, system
+  content        String   @db.Text
+  sources        Json?    // Array of source documents/chunks referenced
+  createdAt      DateTime @default(now()) @map(name: "created_at")
+
+  @@map("chat_messages")
+}
+
+// Memory System Models
+model SessionMemory {
   id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  content   Json     // Stores structured resume data
+  userId    String
+  user      User     @relation("UserSessionMemories", fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String
+  role      String
+  content   String   @db.Text
+  metadata  Json?
   createdAt DateTime @default(now()) @map(name: "created_at")
   updatedAt DateTime @updatedAt @map(name: "updated_at")
 
-  @@map("resumes")
+  @@index([userId, sessionId])
+  @@map("session_memories")
+}
+
+model LongTermMemory {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation("UserLongTermMemories", fields: [userId], references: [id], onDelete: Cascade)
+  category   String
+  content    String   @db.Text
+  embedding  String?  @db.Text
+  importance Float    @default(0.5)
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map(name: "created_at")
+  updatedAt  DateTime @updatedAt @map(name: "updated_at")
+
+  @@index([userId, category])
+  @@map("long_term_memories")
+}
+
+model RetrievalLog {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("UserRetrievalLogs", fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String?
+  query       String   @db.Text
+  resultCount Int
+  topScore    Float
+  avgScore    Float
+  results     Json
+  createdAt   DateTime @default(now()) @map(name: "created_at")
+
+  @@index([userId])
+  @@map("retrieval_logs")
+}
+
+enum DocumentType {
+  RESUME
+  COVER_LETTER
+  PORTFOLIO
+  JOB_DESCRIPTION
+  NOTES
+  PROJECT_DOCUMENTATION
+  TRANSCRIPT
+}
+
+enum MemoryType {
+  SHORT_TERM
+  LONG_TERM
+  PATTERN
+  INSIGHT
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
 }
