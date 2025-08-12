@@ -51,7 +51,12 @@ export async function PATCH(
         id: params.interviewId,
       },
       data: {
-        name: body.name,
+        ...body,
+        user: {
+          connect: {
+            id: session.user.id,
+          },
+        },
       },
     })
 

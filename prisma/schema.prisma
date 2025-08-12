@@ -267,7 +267,7 @@ model ChatMessage {
   conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   role           MessageRole // user, assistant, system
   content        String   @db.Text
-  sources        Json?    // Array of source documents/chunks referenced
+  sources        Json[]   // Array of source documents/chunks referenced
   createdAt      DateTime @default(now()) @map(name: "created_at")
 
   @@map("chat_messages")

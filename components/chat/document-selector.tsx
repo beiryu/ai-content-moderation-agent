@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useDocumentSelectionStore } from "@/stores/document-selection.store"
+import { useChatDocumentStore } from "@/stores/chat-document-store"
 import { Check, ExternalLink, FileText, Search } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -26,7 +26,7 @@ const documentTypeColors = {
 }
 
 export default function DocumentSelector() {
-  const { selectedDocuments, toggleDocument } = useDocumentSelectionStore()
+  const { selectedDocuments, toggleDocument } = useChatDocumentStore()
 
   const { documents, isLoading } = useGetDocuments()
 

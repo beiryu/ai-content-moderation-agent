@@ -2,6 +2,7 @@ import { ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
 import { env } from "@/env.mjs"
+import { Conversation } from "@/hooks/api/chat/useChatMessages"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -104,4 +105,41 @@ Content:
 ${text}
 Summary:
 `
+}
+
+export function formatChatSessionDate(d: Date) {
+  const date = new Date(d)
+  const now = new Date()
+
+  // If it's today, just show the time
+  if (date.toDateString() === now.toDateString()) {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  }
+
+  // If it's this year, show month and day
+  if (date.getFullYear() === now.getFullYear()) {
+    return date.toLocaleDateString([], { month: "short", day: "numeric" })
+  }
+
+  // Otherwise show full date
+  return date.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
+}
+
+export function formatChatSessionTitle(session: Conversation) {
+  if (session.title && session.title !== "New Conversation") {
+    return session.title
+  }
+
+  if (session.messages && session.messages.length > 0) {
+    const firstMessage = session.messages[0].content
+    return firstMessage.length > 20
+      ? `${firstMessage.substring(0, 20)}...`
+      : firstMessage
+  }
+
+  return "New Conversation"
 }

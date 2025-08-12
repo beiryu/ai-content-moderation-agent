@@ -1,19 +1,31 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useDocumentSelectionStore } from "@/stores/document-selection.store"
+import { useRouter } from "next/navigation"
+import { useChatDocumentStore } from "@/stores/chat-document-store"
 import { FileText, Paperclip, Send, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import {
+  useRagChatMessages,
+  useSendRagChatMessage,
+} from "@/hooks/api/chat/useRagChatMessages"
 import { useGetDocuments } from "@/hooks/api/document/useGetDocuments"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { ChatMessage } from "@/components/chat/chat-message"
 
+import { Icons } from "../icons"
+import { toast } from "../ui/use-toast"
+
 export default function Chat() {
-  const { selectedDocuments, deselectDocument } = useDocumentSelectionStore()
+  const {
+    selectedDocuments,
+    deselectDocument,
+    activeSessionId,
+    setActiveSession,
+  } = useChatDocumentStore()
 
   const { documents } = useGetDocuments()
   const selectedDocumentDetails =
@@ -22,16 +34,68 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [message, setMessage] = useState("")
 
+  const router = useRouter()
+
+  // Use the new hooks with proper refetching
+  const {
+    data: messages = [],
+    isLoading: isLoadingMessages,
+    refetch: refetchMessages,
+  } = useRagChatMessages(activeSessionId)
+  const { mutate: sendMessage, isPending: isSending } = useSendRagChatMessage()
+
+  // Combined loading state
+  const isLoading = isLoadingMessages || isSending
+
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [])
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+    }
+  }, [messages])
+
+  // Ensure messages are up-to-date when activeSessionId changes
+  useEffect(() => {
+    if (activeSessionId) {
+      refetchMessages()
+    }
+  }, [activeSessionId, refetchMessages])
 
   const handleSendMessage = () => {
-    if (!message.trim() || selectedDocuments.length === 0) return
+    if (!message.trim() || selectedDocuments.length === 0 || isLoading) return
 
-    // Implement your send message logic here
-    console.log("Sending message:", message)
+    const trimmedMessage = message.trim()
     setMessage("")
+
+    sendMessage(
+      {
+        message: trimmedMessage,
+        selectedDocuments,
+        sessionId: activeSessionId,
+        options: {
+          includeCitations: true,
+          tonePreference: "professional",
+        },
+      },
+      {
+        onSuccess: (chatResponse) => {
+          // Set the session ID if this is a new conversation
+          if (!activeSessionId && chatResponse.conversationId) {
+            setActiveSession(chatResponse.conversationId)
+            // Update URL with the session ID
+            router.push(`?sessionId=${chatResponse.conversationId}`)
+          }
+        },
+        onError: (error) => {
+          toast({
+            title: "Error sending message",
+            description: error.message,
+            variant: "destructive",
+          })
+          console.error("Error sending message:", error)
+        },
+      }
+    )
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -42,9 +106,9 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-b p-4 flex items-center justify-between">
+      <div className="border-b p-4 flex items-center justify-between shrink-0">
         <div className="inline-flex items-center gap-2">
           <FileText className="size-4 text-primary" />
           <h3 className="font-medium">Document Chat</h3>
@@ -58,8 +122,16 @@ export default function Chat() {
       </div>
 
       {/* Chat Messages */}
-      <ScrollArea className="flex-1 px-4 py-6">
-        <div className="max-w-3xl space-y-6">
+      <div
+        className="flex-1 overflow-y-auto px-4 py-6 scroll-smooth"
+        style={{
+          scrollBehavior: "smooth",
+          overflowAnchor: "none",
+          msOverflowStyle: "none",
+          scrollbarWidth: "thin",
+        }}
+      >
+        <div className="w-full space-y-6 h-80">
           <ChatMessage>
             <p>
               Hello! I can help you analyze and answer questions about your
@@ -79,12 +151,62 @@ export default function Chat() {
             </ul>
           </ChatMessage>
 
+          {/* Display chat messages */}
+          {messages.map((msg) => (
+            <ChatMessage key={msg.id} isUser={msg.role === "user"}>
+              <div className="space-y-2">
+                <p>{msg.content}</p>
+                {/* Error handling for optimistic updates happens in the hook */}
+
+                {/* Show sources for assistant messages */}
+                {msg.role === "assistant" &&
+                  msg.sources &&
+                  msg.sources.length > 0 && (
+                    <div className="mt-4 border-t pt-3">
+                      <p className="text-sm font-medium text-muted-foreground mb-2">
+                        Sources ({msg.sources.length}):
+                      </p>
+                      <div className="space-y-2">
+                        {msg.sources.slice(0, 3).map((source: any, index) => (
+                          <div
+                            key={index}
+                            className="text-xs bg-muted p-2 rounded border-l-2 border-primary/30"
+                          >
+                            <div className="font-medium">
+                              {source.documentTitle}
+                            </div>
+                            <div className="text-muted-foreground truncate mt-1">
+                              {source.chunkContent.substring(0, 100)}...
+                            </div>
+                            <div className="text-muted-foreground mt-1">
+                              Relevance:{" "}
+                              {(source.relevanceScore * 100).toFixed(0)}%
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+              </div>
+            </ChatMessage>
+          ))}
+
+          {/* Loading indicator */}
+          {isLoading && (
+            <ChatMessage>
+              <div className="flex items-center space-x-2">
+                <Icons.spinner className="size-6 animate-spin" />
+                <span>Analyzing your documents...</span>
+              </div>
+            </ChatMessage>
+          )}
+
           <div ref={messagesEndRef} aria-hidden="true" />
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Chat Input */}
-      <div className="border-t p-4">
+      <div className="border-t p-4 shrink-0">
         <div className="mx-auto">
           <div className="relative rounded-lg border bg-background transition-colors focus-within:ring-1 focus-within:ring-ring">
             {/* Selected Documents Context */}
@@ -127,7 +249,7 @@ export default function Chat() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              disabled={selectedDocuments.length === 0}
+              disabled={selectedDocuments.length === 0 || isLoading}
             />
 
             {/* Input Actions */}
@@ -147,11 +269,22 @@ export default function Chat() {
               <Button
                 size="sm"
                 className={cn("h-8 px-3", !message.trim() && "opacity-70")}
-                disabled={!message.trim() || selectedDocuments.length === 0}
+                disabled={
+                  !message.trim() || selectedDocuments.length === 0 || isLoading
+                }
                 onClick={handleSendMessage}
               >
-                <Send className="size-4 mr-1.5" />
-                Send
+                {isLoading ? (
+                  <>
+                    <Icons.spinner className="size-6 animate-spin mr-1.5" />
+                    Sending
+                  </>
+                ) : (
+                  <>
+                    <Send className="size-4 mr-1.5" />
+                    Send
+                  </>
+                )}
               </Button>
             </div>
           </div>

@@ -16,10 +16,18 @@ export async function POST(req: Request) {
     // Create new session
     const interviewSession = await db.interviewSession.create({
       data: {
-        performanceScore: 0,
         feedback: "",
         duration: 0,
-        interviewId,
+        interview: {
+          connect: {
+            id: interviewId,
+          },
+        },
+        user: {
+          connect: {
+            id: session.user.id,
+          },
+        },
       },
     })
 
