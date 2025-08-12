@@ -34,7 +34,7 @@ export default function ChatWithDocuments() {
       <ResizableHandle withHandle />
 
       {/* Document Selector Panel */}
-      <ResizablePanel defaultSize={30} minSize={15}>
+      <ResizablePanel defaultSize={30} minSize={20}>
         <DocumentSelector />
       </ResizablePanel>
     </ResizablePanelGroup>

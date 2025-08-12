@@ -163,7 +163,7 @@ export default function Chat() {
                   msg.sources &&
                   msg.sources.length > 0 && (
                     <div className="mt-4 border-t pt-3">
-                      <p className="text-sm font-medium text-muted-foreground mb-2">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">
                         Sources ({msg.sources.length}):
                       </p>
                       <div className="space-y-2">
@@ -175,7 +175,7 @@ export default function Chat() {
                             <div className="font-medium">
                               {source.documentTitle}
                             </div>
-                            <div className="text-muted-foreground truncate mt-1">
+                            <div className="text-muted-foreground whitespace-pre-wrap mt-1">
                               {source.chunkContent.substring(0, 100)}...
                             </div>
                             <div className="text-muted-foreground mt-1">
@@ -206,40 +206,38 @@ export default function Chat() {
       </div>
 
       {/* Chat Input */}
-      <div className="border-t p-4 shrink-0">
+      <div className="border-t p-4 shrink-0 mt-6">
         <div className="mx-auto">
-          <div className="relative rounded-lg border bg-background transition-colors focus-within:ring-1 focus-within:ring-ring">
-            {/* Selected Documents Context */}
-            {selectedDocuments.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 px-3 pt-3 pb-1">
-                {selectedDocumentDetails.map((doc) => (
-                  <Badge
-                    key={doc.id}
-                    variant="outline"
-                    className="bg-muted/50 text-xs flex items-center gap-1 pl-1.5 pr-1 py-0.5 h-6"
+          {/* Selected Documents Context */}
+          {selectedDocuments.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pb-2">
+              {selectedDocumentDetails.map((doc) => (
+                <Badge
+                  key={doc.id}
+                  variant="outline"
+                  className="bg-muted/50 text-xs flex items-center gap-1 pl-1.5 pr-1 py-0.5 h-6"
+                >
+                  <FileText className="size-3 mr-1 text-muted-foreground" />
+                  <span className="truncate max-w-[120px]">{doc.title}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="size-4 p-0 ml-1 hover:bg-transparent hover:text-foreground rounded-full"
+                    onClick={() => deselectDocument(doc.id)}
                   >
-                    <FileText className="size-3 mr-1 text-muted-foreground" />
-                    <span className="truncate max-w-[120px]">{doc.title}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="size-4 p-0 ml-1 hover:bg-transparent hover:text-foreground rounded-full"
-                      onClick={() => deselectDocument(doc.id)}
-                    >
-                      <X className="size-3" />
-                      <span className="sr-only">Remove {doc.title}</span>
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-            )}
+                    <X className="size-3" />
+                    <span className="sr-only">Remove {doc.title}</span>
+                  </Button>
+                </Badge>
+              ))}
+            </div>
+          )}
 
+          <div className="relative rounded-lg border bg-background transition-colors focus-within:ring-1 focus-within:ring-ring">
             <Textarea
               className={cn(
                 "w-full resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0",
-                selectedDocuments.length > 0
-                  ? "min-h-[60px] p-3 pt-1"
-                  : "min-h-[80px] p-3"
+                "min-h-10 p-3"
               )}
               placeholder={
                 selectedDocuments.length === 0

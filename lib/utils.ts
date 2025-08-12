@@ -130,15 +130,12 @@ export function formatChatSessionDate(d: Date) {
 }
 
 export function formatChatSessionTitle(session: Conversation) {
-  if (session.title && session.title !== "New Conversation") {
-    return session.title
-  }
-
-  if (session.messages && session.messages.length > 0) {
-    const firstMessage = session.messages[0].content
-    return firstMessage.length > 20
-      ? `${firstMessage.substring(0, 20)}...`
-      : firstMessage
+  // Always use the conversation title from the database
+  // This will be the first message that started the conversation
+  if (session.title) {
+    return session.title.length > 20
+      ? `${session.title.substring(0, 20)}...`
+      : session.title
   }
 
   return "New Conversation"

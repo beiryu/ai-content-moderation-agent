@@ -2,15 +2,7 @@ import { ChatMessage } from "@prisma/client"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { v4 as uuidv4 } from "uuid"
 
-export interface SendRagChatRequest {
-  message: string
-  selectedDocuments: string[]
-  sessionId?: string
-  options?: {
-    includeCitations: boolean
-    tonePreference: string
-  }
-}
+import { RagChatRequest } from "@/lib/validations/chat-message"
 
 export interface OptimisticMessage extends ChatMessage {
   error?: boolean
@@ -45,7 +37,7 @@ export function useRagChatMessages(sessionId?: string) {
 
 // Send a message to the RAG chat endpoint
 const sendRagChatMessage = async (
-  request: SendRagChatRequest
+  request: RagChatRequest
 ): Promise<ChatMessage> => {
   const response = await fetch("/api/rag/chat", {
     method: "POST",

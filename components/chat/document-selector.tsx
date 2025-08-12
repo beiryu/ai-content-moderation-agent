@@ -129,11 +129,14 @@ export default function DocumentSelector() {
               </EmptyPlaceholder.Description>
               <Link
                 className={cn(
-                  buttonVariants({ variant: "outline", className: "w-full" })
+                  buttonVariants({
+                    variant: "outline",
+                    className: "w-full whitespace-pre-wrap",
+                  })
                 )}
                 href="/dashboard/documents"
               >
-                Upload Documents <ExternalLink className="size-4" />
+                Upload <ExternalLink className="size-4" />
               </Link>
             </EmptyPlaceholder>
           )}

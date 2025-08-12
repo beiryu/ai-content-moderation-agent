@@ -23,21 +23,7 @@ export function ChatMessage({ isUser, children }: ChatMessageProps) {
         isUser && "justify-end"
       )}
     >
-      <div
-        className={cn(
-          "rounded-full size-8 flex items-center justify-center",
-          isUser
-            ? "order-1 bg-primary text-primary-foreground"
-            : "bg-muted/50 border"
-        )}
-      >
-        {isUser ? (
-          <User size={14} className="text-primary-foreground" />
-        ) : (
-          <FileText size={14} className="text-muted-foreground" />
-        )}
-      </div>
-      <div className="flex-1 max-w-[90%]">
+      <div className="flex-1">
         <Card
           className={cn(
             "px-4 py-3",
