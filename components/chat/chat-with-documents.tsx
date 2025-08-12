@@ -6,13 +6,22 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import Chat from "@/components/chat/chat"
+import ChatSessions from "@/components/chat/chat-sessions"
 import DocumentSelector from "@/components/chat/document-selector"
 
 export default function ChatWithDocuments() {
   return (
     <ResizablePanelGroup direction="horizontal" className="h-full rounded-lg">
+      {/* Sessions Panel */}
+      <ResizablePanel defaultSize={25} minSize={20} maxSize={30}>
+        <ChatSessions />
+      </ResizablePanel>
+
+      {/* Resizable Handle */}
+      <ResizableHandle withHandle />
+
       {/* Chat Panel */}
-      <ResizablePanel defaultSize={70} minSize={50}>
+      <ResizablePanel defaultSize={45} minSize={40}>
         <div className="flex flex-col h-full">
           {/* Chat Component */}
           <div className="flex-1">
@@ -25,7 +34,7 @@ export default function ChatWithDocuments() {
       <ResizableHandle withHandle />
 
       {/* Document Selector Panel */}
-      <ResizablePanel defaultSize={30} minSize={30}>
+      <ResizablePanel defaultSize={30} minSize={15}>
         <DocumentSelector />
       </ResizablePanel>
     </ResizablePanelGroup>
