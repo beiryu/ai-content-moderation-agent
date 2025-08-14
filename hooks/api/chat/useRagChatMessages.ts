@@ -1,14 +1,8 @@
-import { ChatMessage } from "@prisma/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { v4 as uuidv4 } from "uuid";
+import { ChatMessage } from "@prisma/client"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { v4 as uuidv4 } from "uuid"
 
-
-
-import { RagChatRequest } from "@/lib/validations/chat-message";
-
-
-
-
+import { RagChatRequest } from "@/lib/validations/chat-message"
 
 export interface OptimisticMessage extends ChatMessage {
   error?: boolean

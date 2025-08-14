@@ -1,22 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
-import { DocumentType } from "@prisma/client";
-import { z } from "zod";
+import { NextRequest, NextResponse } from "next/server"
+import { DocumentType } from "@prisma/client"
+import { z } from "zod"
 
-
-
-import { db } from "@/lib/db";
+import { db } from "@/lib/db"
 import {
   loadDocumentFromBuffer,
   loadDocumentFromString,
 } from "@/lib/langchain/document-loaders"
-import { processDocumentRAG } from "@/lib/langchain/rag-pipeline";
-import { splitDocuments } from "@/lib/langchain/text-splitter";
-import { getCurrentUser } from "@/lib/session";
+import { processDocumentRAG } from "@/lib/langchain/rag-pipeline"
+import { splitDocuments } from "@/lib/langchain/text-splitter"
+import { getCurrentUser } from "@/lib/session"
 import { CreateDocumentRequestSchema } from "@/lib/validations/document"
-
-
-
-
 
 // Define request schema for document upload via form data
 const DocumentUploadSchema = z.object({

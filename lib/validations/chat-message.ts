@@ -1,8 +1,4 @@
-import * as z from "zod";
-
-
-
-
+import * as z from "zod"
 
 export const RagChatRequestSchema = z.object({
   message: z.string().min(1, "Message is required"),

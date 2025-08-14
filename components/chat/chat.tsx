@@ -136,9 +136,9 @@ export default function Chat() {
         <div className="w-full space-y-6 h-80">
           <ChatMessage>
             <p>
-              Hello! I&apos;m your LangChain-powered document assistant. I can help analyze and 
-              answer questions about your uploaded documents using advanced 
-              Retrieval Augmented Generation.
+              Hello! I&apos;m your LangChain-powered document assistant. I can
+              help analyze and answer questions about your uploaded documents
+              using advanced Retrieval Augmented Generation.
               {selectedDocuments.length === 0
                 ? " Please select documents to get started."
                 : ` I'm currently working with ${
@@ -147,8 +147,13 @@ export default function Chat() {
             </p>
             <p className="mt-2">How I work:</p>
             <ul className="list-disc list-inside space-y-1 ml-4">
-              <li>Your documents are embedded using LangChain + OpenAI embeddings</li>
-              <li>When you ask a question, I find relevant document chunks in Pinecone</li>
+              <li>
+                Your documents are embedded using LangChain + OpenAI embeddings
+              </li>
+              <li>
+                When you ask a question, I find relevant document chunks in
+                Pinecone
+              </li>
               <li>I use the retrieved context to generate precise answers</li>
               <li>Your chat history is preserved for better conversations</li>
             </ul>
@@ -242,7 +247,7 @@ export default function Chat() {
                 "w-full resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0",
                 "min-h-10 p-3"
               )}
-                                placeholder={
+              placeholder={
                 selectedDocuments.length === 0
                   ? "Select documents, then ask questions..."
                   : "Ask questions about your documents using LangChain..."

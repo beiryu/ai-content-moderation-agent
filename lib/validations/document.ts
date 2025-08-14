@@ -1,9 +1,5 @@
-import { DocumentType } from "@prisma/client";
-import { z } from "zod";
-
-
-
-
+import { DocumentType } from "@prisma/client"
+import { z } from "zod"
 
 export const DocumentSchema = z.object({
   id: z.string(),

@@ -1,13 +1,13 @@
-"use client";
+"use client"
 
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import Chat from "@/components/chat/chat";
-import ChatSessions from "@/components/chat/chat-sessions";
-import DocumentSelector from "@/components/chat/document-selector";
-
-
-
-
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
+import Chat from "@/components/chat/chat"
+import ChatSessions from "@/components/chat/chat-sessions"
+import DocumentSelector from "@/components/chat/document-selector"
 
 export function ChatWithDocuments() {
   return (

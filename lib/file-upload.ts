@@ -3,11 +3,7 @@
  * Simplified for plain text handling with LangChain RAG pipeline
  */
 
-import { toast } from "@/components/ui/use-toast";
-
-
-
-
+import { toast } from "@/components/ui/use-toast"
 
 export interface FileUploadResult {
   title?: string
@@ -36,14 +32,13 @@ export const handleFileUpload = async (
   }
 
   // Validate file type - only accept plain text for LangChain
-  const allowedTypes = [
-    "text/plain",
-  ]
+  const allowedTypes = ["text/plain"]
 
   if (!allowedTypes.includes(file.type)) {
     toast({
       title: "Invalid file type",
-      description: "Please upload a plain text (TXT) file for LangChain processing",
+      description:
+        "Please upload a plain text (TXT) file for LangChain processing",
       variant: "destructive",
     })
     onError("Invalid file type - only plain text files are supported")
@@ -57,9 +52,9 @@ export const handleFileUpload = async (
 
     // Process text file for LangChain
     const content = await file.text()
-    onSuccess({ 
-      title, 
-      content 
+    onSuccess({
+      title,
+      content,
     })
   } catch (error) {
     console.error("File upload error:", error)

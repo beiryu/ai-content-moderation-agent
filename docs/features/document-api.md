@@ -23,8 +23,8 @@ Creates a new document and processes it through the RAG pipeline.
   "title": "Document Title",
   "type": "RESUME | JOB_DESCRIPTION | PORTFOLIO | COVER_LETTER | NOTES",
   "content": "Document content text",
-  "metadata": { 
-    // Optional additional data 
+  "metadata": {
+    // Optional additional data
   }
 }
 ```
@@ -203,6 +203,7 @@ Errors are returned in a standardized format:
 ```
 
 Common HTTP status codes:
+
 - 200: Success
 - 400: Bad Request (invalid input)
 - 401: Unauthorized
