@@ -75,6 +75,8 @@ export default function Chat() {
         options: {
           includeCitations: true,
           tonePreference: "professional",
+          modelName: "gpt-4o", // Use GPT-4o for better results
+          temperature: 0.2, // Lower temperature for more focused responses
         },
       },
       {
@@ -111,7 +113,7 @@ export default function Chat() {
       <div className="border-b p-4 flex items-center justify-between shrink-0">
         <div className="inline-flex items-center gap-2">
           <FileText className="size-4 text-primary" />
-          <h3 className="font-medium">Document Chat</h3>
+          <h3 className="font-medium">LangChain RAG Chat</h3>
         </div>
         <div className="flex items-center">
           <div className="inline-flex items-center bg-muted rounded-full border text-xs py-1 px-3 text-muted-foreground">
@@ -134,20 +136,21 @@ export default function Chat() {
         <div className="w-full space-y-6 h-80">
           <ChatMessage>
             <p>
-              Hello! I can help you analyze and answer questions about your
-              uploaded documents.
+              Hello! I&apos;m your LangChain-powered document assistant. I can help analyze and 
+              answer questions about your uploaded documents using advanced 
+              Retrieval Augmented Generation.
               {selectedDocuments.length === 0
                 ? " Please select documents to get started."
                 : ` I'm currently working with ${
                     selectedDocuments.length
                   } document${selectedDocuments.length > 1 ? "s" : ""}.`}
             </p>
-            <p className="mt-2">You can ask me to:</p>
+            <p className="mt-2">How I work:</p>
             <ul className="list-disc list-inside space-y-1 ml-4">
-              <li>Summarize key points from your documents</li>
-              <li>Find specific information or topics</li>
-              <li>Compare content across multiple documents</li>
-              <li>Extract important insights</li>
+              <li>Your documents are embedded using LangChain + OpenAI embeddings</li>
+              <li>When you ask a question, I find relevant document chunks in Pinecone</li>
+              <li>I use the retrieved context to generate precise answers</li>
+              <li>Your chat history is preserved for better conversations</li>
             </ul>
           </ChatMessage>
 
@@ -196,7 +199,7 @@ export default function Chat() {
             <ChatMessage>
               <div className="flex items-center space-x-2">
                 <Icons.spinner className="size-6 animate-spin" />
-                <span>Analyzing your documents...</span>
+                <span>Processing with LangChain...</span>
               </div>
             </ChatMessage>
           )}
@@ -239,10 +242,10 @@ export default function Chat() {
                 "w-full resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0",
                 "min-h-10 p-3"
               )}
-              placeholder={
+                                placeholder={
                 selectedDocuments.length === 0
                   ? "Select documents, then ask questions..."
-                  : "Ask questions about your documents..."
+                  : "Ask questions about your documents using LangChain..."
               }
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -275,7 +278,7 @@ export default function Chat() {
                 {isLoading ? (
                   <>
                     <Icons.spinner className="size-6 animate-spin mr-1.5" />
-                    Sending
+                    Processing
                   </>
                 ) : (
                   <>

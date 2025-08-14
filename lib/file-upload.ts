@@ -1,9 +1,13 @@
 /**
- * File Upload Utility
- * Basic file upload and content extraction
+ * File Upload Utility for LangChain
+ * Simplified for plain text handling with LangChain RAG pipeline
  */
 
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "@/components/ui/use-toast";
+
+
+
+
 
 export interface FileUploadResult {
   title?: string
@@ -31,21 +35,18 @@ export const handleFileUpload = async (
     return
   }
 
-  // Validate file type
+  // Validate file type - only accept plain text for LangChain
   const allowedTypes = [
-    "application/pdf",
     "text/plain",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/msword",
   ]
 
-  if (!allowedTypes.includes(file.type) && !file.name.endsWith(".docx")) {
+  if (!allowedTypes.includes(file.type)) {
     toast({
       title: "Invalid file type",
-      description: "Please upload a PDF, DOC, DOCX, or TXT file",
+      description: "Please upload a plain text (TXT) file for LangChain processing",
       variant: "destructive",
     })
-    onError("Invalid file type")
+    onError("Invalid file type - only plain text files are supported")
     return
   }
 
@@ -54,36 +55,18 @@ export const handleFileUpload = async (
     let title = file.name.split(".").slice(0, -1).join(".")
     if (!title) title = file.name
 
-    // For text files, handle directly
-    if (file.type === "text/plain") {
-      const content = await file.text()
-      onSuccess({ title, content })
-      return
-    }
-
-    // For other file types, return dummy content
-    // This is a simplification - no actual processing
-    const content = `Content from ${file.name} would be processed here.
-    
-This is a placeholder for actual document processing.
-In a production environment, you would need to implement:
-- PDF processing
-- DOCX processing
-- Other document format handling
-
-File type: ${file.type}
-File size: ${(file.size / 1024).toFixed(2)} KB`
-
-    onSuccess({
-      title,
-      content,
+    // Process text file for LangChain
+    const content = await file.text()
+    onSuccess({ 
+      title, 
+      content 
     })
   } catch (error) {
     console.error("File upload error:", error)
 
     toast({
-      title: "Content extraction failed",
-      description: "Could not extract text from the uploaded file.",
+      title: "LangChain text processing failed",
+      description: "Could not process the text file for LangChain.",
       variant: "destructive",
     })
 

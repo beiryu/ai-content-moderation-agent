@@ -1,4 +1,8 @@
-import * as z from "zod"
+import * as z from "zod";
+
+
+
+
 
 export const RagChatRequestSchema = z.object({
   message: z.string().min(1, "Message is required"),
@@ -12,6 +16,8 @@ export const RagChatRequestSchema = z.object({
         .enum(["professional", "conversational", "technical", "simple"])
         .optional(),
       includeCitations: z.boolean().optional(),
+      modelName: z.string().optional(),
+      temperature: z.number().min(0).max(2).optional(),
     })
     .optional(),
 })

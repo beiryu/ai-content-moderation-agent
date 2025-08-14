@@ -7,7 +7,7 @@ import { getCurrentUser } from "@/lib/session";
 import { db } from "@/lib/db";
 
 // Define request schema
-const LangChainRAGRequestSchema = z.object({
+const RAGRequestSchema = z.object({
   message: z.string().min(1, "Message cannot be empty"),
   selectedDocuments: z.array(z.string()).optional(),
   sessionId: z.string().optional(),
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     // Parse request body
     const body = await req.json();
     const { message, selectedDocuments, sessionId, options } =
-      LangChainRAGRequestSchema.parse(body);
+      RAGRequestSchema.parse(body);
 
     // Create or retrieve the chat conversation
     let conversationId = sessionId;
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       createdAt: new Date(),
     });
   } catch (error) {
-    console.error("Error in LangChain RAG endpoint:", error);
+    console.error("Error in RAG endpoint:", error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

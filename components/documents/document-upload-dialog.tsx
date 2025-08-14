@@ -1,48 +1,29 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
-import { FileUploadResult, handleFileUpload } from "@/lib/file-upload"
-import {
-  CreateDocumentRequest,
-  CreateDocumentRequestSchema,
-} from "@/lib/validations/document"
-import useUploadDocument from "@/hooks/api/document/useUploadDocument"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { toast } from "@/components/ui/use-toast"
-import { Icons } from "@/components/icons"
+
+
+import { FileUploadResult, handleFileUpload } from "@/lib/file-upload";
+import { CreateDocumentRequest, CreateDocumentRequestSchema } from "@/lib/validations/document";
+import useUploadDocument from "@/hooks/api/document/useUploadDocument";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/use-toast";
+import { Icons } from "@/components/icons";
+
+
+
+
 
 const documentTypes = [
   {
@@ -85,11 +66,11 @@ const processingStages: Record<
   { label: string; progress: number }
 > = {
   uploading: { label: "Uploading document...", progress: 20 },
-  processing: { label: "Processing content...", progress: 40 },
-  chunking: { label: "Creating chunks...", progress: 60 },
-  embedding: { label: "Generating embeddings...", progress: 80 },
-  indexing: { label: "Indexing in knowledge base...", progress: 90 },
-  complete: { label: "Complete!", progress: 100 },
+  processing: { label: "Processing document content...", progress: 40 },
+  chunking: { label: "Creating document chunks for RAG...", progress: 60 },
+  embedding: { label: "Generating OpenAI embeddings...", progress: 80 },
+  indexing: { label: "Indexing in Pinecone vector store...", progress: 90 },
+  complete: { label: "Document ready for RAG queries!", progress: 100 },
 }
 
 export function DocumentUploadDialog() {
@@ -154,10 +135,10 @@ export function DocumentUploadDialog() {
           setIsOpen(false)
           resetForm()
           toast({
-            title: "Document uploaded successfully",
+            title: "Document processed successfully",
             description: `Your ${documentTypes
               .find((t) => t.value === data.type)
-              ?.label.toLowerCase()} has been processed and added to your knowledge base.`,
+              ?.label.toLowerCase()} has been embedded and indexed for RAG queries.`,
           })
           router.refresh()
         },
@@ -220,8 +201,8 @@ export function DocumentUploadDialog() {
         <DialogHeader>
           <DialogTitle>Upload Document</DialogTitle>
           <DialogDescription>
-            Add a new document to your knowledge base for personalized interview
-            assistance.
+            Add a new document to your knowledge base for enhanced RAG
+            (Retrieval Augmented Generation) capabilities.
           </DialogDescription>
         </DialogHeader>
 
@@ -351,7 +332,7 @@ export function DocumentUploadDialog() {
                           Click to upload a file
                         </span>
                         <span className="mt-1 block text-sm text-gray-500">
-                          PDF, DOC, DOCX, or TXT up to 10MB
+                          Plain text (TXT) files up to 10MB
                         </span>
                       </label>
                       <input
@@ -359,7 +340,7 @@ export function DocumentUploadDialog() {
                         name="file-upload"
                         type="file"
                         className="sr-only"
-                        accept=".pdf,.doc,.docx,.txt"
+                        accept=".txt"
                         onChange={handleFileUploadEvent}
                         disabled={isPending}
                       />
@@ -396,7 +377,7 @@ export function DocumentUploadDialog() {
                 {isPending && (
                   <Icons.spinner className="mr-2 size-4 animate-spin" />
                 )}
-                {isPending ? "Processing..." : "Upload Document"}
+                {isPending ? "Processing document..." : "Upload Document"}
               </Button>
             </DialogFooter>
           </form>

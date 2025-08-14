@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { getCurrentUser } from "@/lib/session"
 import { Card } from "@/components/ui/card"
-import LangChainChatWithDocuments from "@/components/chat/langchain-chat-with-documents"
+import { ChatWithDocuments } from "@/components/chat/chat-with-documents"
 import { DashboardHeader } from "@/components/header"
 import { DashboardShell } from "@/components/shell"
 
@@ -27,7 +27,7 @@ export default async function LangChainToolsPage() {
         text="Interact with your documents using LangChain's powerful RAG pipeline and Pinecone vector storage."
       />
       <Card className="h-[calc(100vh-12rem)] overflow-hidden bg-background p-0">
-        <LangChainChatWithDocuments />
+        <ChatWithDocuments />
       </Card>
     </DashboardShell>
   )

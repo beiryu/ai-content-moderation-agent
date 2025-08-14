@@ -42,11 +42,10 @@ export function useRagChatMessages(sessionId?: string) {
 }
 
 // Send a message to the RAG chat endpoint
-// Now using the LangChain endpoint
 const sendRagChatMessage = async (
   request: RagChatRequest
 ): Promise<ChatMessage> => {
-  const response = await fetch("/api/langchain/rag", {
+  const response = await fetch("/api/chat/rag", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
