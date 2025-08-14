@@ -107,8 +107,22 @@ export async function searchSimilarDocuments(
 
     const { k = RAG_CONFIG.vectorDb.topK, filter, namespace } = options || {}
 
+    console.log("Vector Search - Query:", query.substring(0, 50) + "...")
+    console.log("Vector Search - Filter:", JSON.stringify(filter, null, 2))
+    console.log("Vector Search - Top K:", k)
+
     // Search for similar documents
     const results = await store.similaritySearch(query, k, filter)
+
+    console.log("Vector Search - Results count:", results.length)
+    if (results.length > 0) {
+      console.log(
+        "Vector Search - Document IDs found:",
+        results.map((doc) => doc.metadata.documentId || "unknown")
+      )
+    } else {
+      console.log("Vector Search - No documents found matching criteria")
+    }
 
     return results
   } catch (error) {

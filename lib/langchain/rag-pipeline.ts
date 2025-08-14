@@ -67,6 +67,7 @@ export async function createRAGChain(
     modelName?: string
     temperature?: number
     streaming?: boolean
+    documentIds?: string[]
   }
 ) {
   // Create the LLM
@@ -87,13 +88,35 @@ export async function createRAGChain(
         return memoryVariables.chat_history || []
       },
       context: async (query) => {
-        // Retrieve relevant documents
+        // Create filter based on user ID and optional document IDs
+        const filter: Record<string, any> = {
+          userId: { $eq: userId },
+        }
+
+        // If document IDs are provided, filter by those specific documents
+        if (options?.documentIds && options.documentIds.length > 0) {
+          filter["documentId"] = { $in: options.documentIds }
+          console.log(
+            "RAG Pipeline - Using document filter:",
+            options.documentIds
+          )
+        }
+
+        console.log("RAG Pipeline - Full filter:", filter)
+
+        // Retrieve relevant documents with combined filter
         const docs = await searchSimilarDocuments(query, {
-          k: RAG_CONFIG.vectorDb.topK,
-          filter: { userId: { $eq: userId } },
+          // Increase k if we have multiple documents to ensure we get enough context from each
+          k:
+            options?.documentIds && options.documentIds.length > 1
+              ? Math.min(
+                  RAG_CONFIG.vectorDb.topK * options.documentIds.length,
+                  20
+                )
+              : RAG_CONFIG.vectorDb.topK,
+          filter: filter,
         })
 
-        // Format documents as string
         return formatDocumentsAsString(docs)
       },
     },
@@ -123,11 +146,10 @@ export async function executeRAGPipeline(
   }
 ) {
   try {
-    const { chain, memory } = await createRAGChain(
-      userId,
-      conversationId,
-      options
-    )
+    const { chain, memory } = await createRAGChain(userId, conversationId, {
+      ...options,
+      documentIds: options?.documentIds,
+    })
 
     // Execute the chain
     const response = await chain.invoke(query)
@@ -157,13 +179,22 @@ export async function processDocumentRAG(
   }
 ) {
   try {
-    // Add userId to metadata
+    // Add userId and ensure all required metadata is present
     const documentWithUserId = {
       ...document,
       metadata: {
         ...document.metadata,
         userId,
         documentId: options?.documentId || document.metadata.documentId,
+        // Ensure we have document title/name for better identification in search results
+        documentTitle:
+          document.metadata.documentTitle ||
+          document.metadata.title ||
+          "Unnamed Document",
+        // Add chunk identifier for better tracking
+        chunkId:
+          document.metadata.chunkId ||
+          `chunk-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       },
     }
 
