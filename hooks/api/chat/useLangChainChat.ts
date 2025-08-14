@@ -1,14 +1,10 @@
-import { ChatMessage } from "@prisma/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { v4 as uuidv4 } from "uuid";
+"use client"
 
+import { ChatMessage } from "@prisma/client"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { v4 as uuidv4 } from "uuid"
 
-
-import { RagChatRequest } from "@/lib/validations/chat-message";
-
-
-
-
+import { RagChatRequest } from "@/lib/validations/chat-message"
 
 export interface OptimisticMessage extends ChatMessage {
   error?: boolean
@@ -30,9 +26,9 @@ const getSessionMessages = async (
 }
 
 // Hook for fetching messages
-export function useRagChatMessages(sessionId?: string) {
+export function useLangChainMessages(sessionId?: string) {
   return useQuery({
-    queryKey: ["chatMessages", sessionId],
+    queryKey: ["langchainMessages", sessionId],
     queryFn: () => getSessionMessages(sessionId),
     enabled: !!sessionId,
     refetchOnWindowFocus: true,
@@ -41,9 +37,8 @@ export function useRagChatMessages(sessionId?: string) {
   })
 }
 
-// Send a message to the RAG chat endpoint
-// Now using the LangChain endpoint
-const sendRagChatMessage = async (
+// Send a message to the LangChain RAG endpoint
+const sendLangChainMessage = async (
   request: RagChatRequest
 ): Promise<ChatMessage> => {
   const response = await fetch("/api/langchain/rag", {
@@ -62,11 +57,11 @@ const sendRagChatMessage = async (
 }
 
 // Hook for sending messages
-export function useSendRagChatMessage() {
+export function useSendLangChainMessage() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: sendRagChatMessage,
+    mutationFn: sendLangChainMessage,
     onMutate: async (variables) => {
       // Create optimistic user message to show immediately
       const tempId = uuidv4()
@@ -80,16 +75,16 @@ export function useSendRagChatMessage() {
 
       // Cancel any outgoing refetches to avoid overwriting our optimistic update
       await queryClient.cancelQueries({
-        queryKey: ["chatMessages", variables.sessionId],
+        queryKey: ["langchainMessages", variables.sessionId],
       })
 
       // Snapshot the previous messages
       const previousMessages =
-        queryClient.getQueryData(["chatMessages", variables.sessionId]) || []
+        queryClient.getQueryData(["langchainMessages", variables.sessionId]) || []
 
       // Optimistically update the cache with our new message
       queryClient.setQueryData(
-        ["chatMessages", variables.sessionId],
+        ["langchainMessages", variables.sessionId],
         (old: OptimisticMessage[] = []) => {
           return [...old, optimisticUserMessage]
         }
@@ -102,7 +97,7 @@ export function useSendRagChatMessage() {
       if (data.conversationId) {
         // Remove the optimistic message as the real one will be fetched
         queryClient.setQueryData(
-          ["chatMessages", data.conversationId],
+          ["langchainMessages", data.conversationId],
           (old: OptimisticMessage[] = []) => {
             // Filter out the temporary message
             return old.filter((msg) => msg.id !== context?.tempId)
@@ -111,7 +106,7 @@ export function useSendRagChatMessage() {
 
         // Invalidate to get fresh data including the AI response
         queryClient.invalidateQueries({
-          queryKey: ["chatMessages", data.conversationId],
+          queryKey: ["langchainMessages", data.conversationId],
         })
 
         // Also invalidate any session lists to ensure new conversations appear
@@ -124,7 +119,7 @@ export function useSendRagChatMessage() {
       // Revert to previous messages on error, but mark the user message as error
       if (variables.sessionId && context) {
         queryClient.setQueryData(
-          ["chatMessages", variables.sessionId],
+          ["langchainMessages", variables.sessionId],
           (old: OptimisticMessage[] = []) => {
             return old.map((msg) => {
               if (msg.id === context.tempId) {

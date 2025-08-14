@@ -1,6 +1,9 @@
 /**
  * RAG Configuration
  * Centralized configuration for the RAG system
+ * 
+ * Note: This configuration is used by both the legacy RAG implementation
+ * and the new LangChain-based implementation.
  */
 
 export const RAG_CONFIG = {

@@ -1,9 +1,13 @@
-import { NextRequest, NextResponse } from "next/server"
-import { DocumentType } from "@prisma/client"
-import { z } from "zod"
+import { NextRequest, NextResponse } from "next/server";
+import { DocumentType } from "@prisma/client";
+import { z } from "zod";
+
+
 
 import { db } from "@/lib/db"
-import { processDocument } from "@/lib/rag/system"
+import { loadDocumentFromString } from "@/lib/langchain/document-loaders"
+import { processDocumentRAG } from "@/lib/langchain/rag-pipeline"
+import { splitDocuments } from "@/lib/langchain/text-splitter"
 import { getCurrentUser } from "@/lib/session"
 import { CreateDocumentRequestSchema } from "@/lib/validations/document"
 
@@ -18,14 +22,37 @@ export async function POST(req: NextRequest) {
     const { title, content, type, metadata } =
       CreateDocumentRequestSchema.parse(body)
 
-    // Process the document
-    const documentId = await processDocument(
-      user.id,
-      title,
-      content,
-      type as DocumentType,
-      metadata
-    )
+    // Create document in database first
+    const document = await db.document.create({
+      data: {
+        userId: user.id,
+        title,
+        type,
+        content,
+        metadata: metadata || {},
+      },
+    })
+
+    // Load document with LangChain
+    const langchainDocs = loadDocumentFromString(content, {
+      documentId: document.id,
+      documentTitle: title,
+      documentType: type,
+      userId: user.id,
+      ...metadata,
+    })
+
+    // Split documents into chunks
+    const splitDocs = await splitDocuments(langchainDocs)
+
+    // Process each chunk through the RAG pipeline
+    for (const doc of splitDocs) {
+      await processDocumentRAG(doc, user.id, {
+        documentId: document.id,
+      })
+    }
+
+    const documentId = document.id
 
     return NextResponse.json(documentId)
   } catch (error) {

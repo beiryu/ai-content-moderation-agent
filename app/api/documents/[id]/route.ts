@@ -1,7 +1,12 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server";
+
+
 
 import { db } from "@/lib/db"
-import { processDocumentContent } from "@/lib/rag/system"
+import { loadDocumentFromString } from "@/lib/langchain/document-loaders"
+import { processDocumentRAG } from "@/lib/langchain/rag-pipeline"
+import { splitDocuments } from "@/lib/langchain/text-splitter"
+import { deleteDocumentsFromPinecone } from "@/lib/langchain/vector-store"
 import { getCurrentUser } from "@/lib/session"
 
 interface Params {
@@ -75,13 +80,25 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       return new NextResponse("Document not found", { status: 404 })
     }
 
-    // Delete document and chunks
+    // Delete document chunks from database
     await db.documentChunk.deleteMany({
       where: {
         documentId: params.id,
       },
     })
 
+    // Delete document chunks from Pinecone
+    try {
+      await deleteDocumentsFromPinecone(
+        [params.id], // Using document ID as the namespace filter
+        `doc-${params.id}` // Use document-specific namespace
+      )
+    } catch (deleteError) {
+      console.error("Error deleting from vector store:", deleteError)
+      // Continue with database deletion even if vector store deletion fails
+    }
+
+    // Delete the document from database
     await db.document.delete({
       where: {
         id: params.id,
@@ -136,13 +153,31 @@ export async function PUT(req: NextRequest, { params }: Params) {
         },
       })
 
-      // Reprocess document chunks (this will handle chunk deletion and recreation)
-      await processDocumentContent(
-        params.id,
-        content,
-        existingDocument.type,
-        metadata || existingDocument.metadata || {}
-      )
+      // Delete existing chunks
+      await db.documentChunk.deleteMany({
+        where: {
+          documentId: params.id,
+        },
+      })
+
+      // Load document with LangChain
+      const langchainDocs = loadDocumentFromString(content, {
+        documentId: params.id,
+        documentTitle: title || existingDocument.title,
+        documentType: existingDocument.type,
+        userId: user.id,
+        ...(metadata || existingDocument.metadata || {}),
+      })
+
+      // Split documents into chunks
+      const splitDocs = await splitDocuments(langchainDocs)
+
+      // Process each chunk through the RAG pipeline
+      for (const doc of splitDocs) {
+        await processDocumentRAG(doc, user.id, {
+          documentId: params.id,
+        })
+      }
     } else {
       // Just update metadata and title
       await db.document.update({
