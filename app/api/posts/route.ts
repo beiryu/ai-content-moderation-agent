@@ -27,9 +27,6 @@ export async function GET() {
         published: true,
         createdAt: true,
       },
-      where: {
-        authorId: user.id,
-      },
     })
 
     return new Response(JSON.stringify(posts))
@@ -52,11 +49,7 @@ export async function POST(req: Request) {
     // If user is on a free plan.
     // Check if user has reached limit of 3 posts.
     if (!subscriptionPlan?.isPro) {
-      const count = await db.post.count({
-        where: {
-          authorId: user.id,
-        },
-      })
+      const count = await db.post.count({})
 
       if (count >= 3) {
         throw new RequiresProPlanError()
@@ -70,7 +63,6 @@ export async function POST(req: Request) {
       data: {
         title: body.title,
         content: body.content,
-        authorId: session.user.id,
       },
       select: {
         id: true,
