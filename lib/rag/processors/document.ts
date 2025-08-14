@@ -1,11 +1,16 @@
-import { DocumentType } from "@prisma/client"
-import { Document as LangChainDocument } from "langchain/document"
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter"
+import { DocumentType } from "@prisma/client";
+import { Document as LangChainDocument } from "langchain/document";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 
-import { db } from "@/lib/db"
 
-import { RAG_CONFIG } from "../config"
-import { embedText, embeddingToString } from "../embedding"
+
+import { db } from "@/lib/db";
+
+
+
+import { RAG_CONFIG } from "../config";
+import { embedText, embeddingToString } from "../embedding";
+
 
 /**
  * Document Processor
@@ -16,7 +21,7 @@ import { embedText, embeddingToString } from "../embedding"
 const textSplitter = new RecursiveCharacterTextSplitter({
   chunkSize: RAG_CONFIG.chunking.chunkSize,
   chunkOverlap: RAG_CONFIG.chunking.chunkOverlap,
-  separators: RAG_CONFIG.chunking.separators,
+  // separators: RAG_CONFIG.chunking.separators,
 })
 
 /**

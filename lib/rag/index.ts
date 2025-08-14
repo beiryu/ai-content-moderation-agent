@@ -1,5 +1,3 @@
-export { longTermMemory, shortTermMemory } from "./memory"
-
 export {
   processDocument,
   processDocumentContent,

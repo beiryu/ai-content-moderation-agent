@@ -93,6 +93,18 @@ export async function searchSimilar(
   filter?: Record<string, any>
 ): Promise<any[]> {
   try {
+    // Validate input vector
+    if (!queryVector || !Array.isArray(queryVector)) {
+      throw new Error(`Invalid query vector: ${queryVector}`)
+    }
+
+    // Ensure vector has correct dimensions
+    if (queryVector.length !== RAG_CONFIG.embedding.dimensions) {
+      console.warn(
+        `Query vector dimension mismatch: got ${queryVector.length}, expected ${RAG_CONFIG.embedding.dimensions}`
+      )
+    }
+
     const queryRequest = {
       vector: queryVector,
       topK,
@@ -100,14 +112,27 @@ export async function searchSimilar(
       ...(filter && { filter }),
     }
 
+    // Log query request for debugging
+    console.log(
+      `Vector search request: topK=${topK}, namespace=${RAG_CONFIG.vectorDb.namespace}`
+    )
+
     const response = await index
       .namespace(RAG_CONFIG.vectorDb.namespace)
       .query(queryRequest)
 
-    return response.matches || []
+    // Log response for debugging
+    const matches = response.matches || []
+    console.log(`Pinecone returned ${matches.length} matches`)
+
+    return matches
   } catch (error) {
     console.error("Error searching vectors:", error)
-    throw new Error("Failed to search vectors")
+    throw new Error(
+      `Failed to search vectors: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    )
   }
 }
 
@@ -120,7 +145,7 @@ export async function searchByText(
   filter?: Record<string, any>
 ): Promise<any[]> {
   try {
-    // Generate embedding for the query
+    // Generate fresh embedding for the query (ensuring consistent embedding method)
     const queryEmbedding = await embedText(query)
 
     // Search for similar vectors

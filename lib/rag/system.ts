@@ -33,27 +33,31 @@ export async function syncDocumentToVectorStore(
     }
 
     // Prepare vectors for upsert
-    const vectors = chunks.map((chunk) => {
-      // Convert embedding string back to array
-      const embeddingArray = stringToEmbedding(chunk.embedding || "")
+    const vectors = await Promise.all(
+      chunks.map(async (chunk) => {
+        // Convert embedding string back to array
+        const embeddingArray = await stringToEmbedding(chunk.embedding || "")
 
-      // Extract metadata as an object, or use empty object if null
-      const chunkMetadata = (chunk.metadata as Record<string, any>) || {}
+        // Extract metadata as an object, or use empty object if null
+        const chunkMetadata = (chunk.metadata as Record<string, any>) || {}
 
-      return {
-        id: chunk.id,
-        values: embeddingArray,
-        metadata: {
-          chunkId: chunk.id,
-          documentId: chunk.documentId,
-          content: chunk.content.substring(0, 1000), // Include truncated content in metadata
-          userId: chunk.document.userId,
-          documentType: chunk.document.type,
-          chunkIndex: chunk.chunkIndex,
-          ...chunkMetadata,
-        },
-      }
-    })
+        return {
+          id: chunk.id,
+          values: embeddingArray,
+          metadata: {
+            chunkId: chunk.id,
+            documentId: chunk.documentId,
+            content: chunk.content.substring(0, 1000), // Include truncated content in metadata
+            userId: chunk.document.userId,
+            documentType: chunk.document.type,
+            chunkIndex: chunk.chunkIndex,
+            documentTitle:
+              chunkMetadata.documentTitle || chunk.document.title || "Unknown",
+            ...chunkMetadata,
+          },
+        }
+      })
+    )
 
     // Upsert vectors in batches
     const batchSize = 100

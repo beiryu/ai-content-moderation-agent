@@ -6,7 +6,7 @@
 export const RAG_CONFIG = {
   // Embedding Configuration
   embedding: {
-    model: "text-embedding-3-small",
+    model: "text-embedding-3-large",
     dimensions: 1536,
     batchSize: 100,
   },
@@ -21,9 +21,9 @@ export const RAG_CONFIG = {
 
   // Chunking Configuration
   chunking: {
-    chunkSize: 1000,
-    chunkOverlap: 200,
-    separators: ["\n\n", "\n", ".", "!", "?", ",", " ", ""] as string[],
+    chunkSize: 256,
+    chunkOverlap: 20,
+    // separators: ["\n\n", "\n", ".", "!", "?", ",", " ", ""] as string[],
   },
 
   // Memory Configuration
@@ -36,9 +36,9 @@ export const RAG_CONFIG = {
 
   // Search Configuration
   search: {
-    similarityThreshold: 0.7,
+    similarityThreshold: 0.35, // Lowered from 0.7 to match typical scores
     maxResults: 10,
-    hybridSearchWeight: 0.7, // Weight for vector search vs keyword search
+    hybridSearchWeight: 0.6, // Reduced vector search weight from 0.7 to 0.6 (keyword is now 0.4)
   },
 
   // Tools Configuration

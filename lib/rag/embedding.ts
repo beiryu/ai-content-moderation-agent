@@ -69,8 +69,22 @@ export function embeddingToString(embedding: number[]): string {
 /**
  * Convert base64 string back to embedding
  */
-export function stringToEmbedding(embeddingString: string): number[] {
-  if (!embeddingString) return []
-  const buffer = Buffer.from(embeddingString, "base64")
-  return Array.from(new Float32Array(buffer.buffer))
+export async function stringToEmbedding(text: string): Promise<number[]> {
+  // If input is already an embedding string in base64 format, convert it back
+  if (text.match(/^[A-Za-z0-9+/=]+$/)) {
+    try {
+      const buffer = Buffer.from(text, "base64")
+      const embedding = Array.from(new Float32Array(buffer.buffer))
+
+      // Check if the embedding has the correct dimension, if not, generate a new one
+      if (embedding.length === RAG_CONFIG.embedding.dimensions) {
+        return embedding
+      }
+    } catch (error) {
+      console.warn("Invalid embedding string, generating new embedding instead")
+    }
+  }
+
+  // Generate a new embedding if the input is text or the stored embedding is invalid
+  return await embedText(text)
 }
