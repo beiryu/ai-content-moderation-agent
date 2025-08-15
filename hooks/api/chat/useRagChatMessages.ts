@@ -93,24 +93,44 @@ export function useSendRagChatMessage() {
     },
     onSuccess: (data, variables, context) => {
       if (data.conversationId) {
-        // Remove the optimistic message as the real one will be fetched
+        // Add the AI response to existing messages instead of removing optimistic message
         queryClient.setQueryData(
           ["chatMessages", data.conversationId],
           (old: OptimisticMessage[] = []) => {
-            // Filter out the temporary message
-            return old.filter((msg) => msg.id !== context?.tempId)
+            // Keep all existing messages including the optimistic one
+            return [
+              ...old,
+              {
+                id: data.id,
+                content: data.content,
+                role: data.role,
+                createdAt: data.createdAt,
+                conversationId: data.conversationId,
+                sources: data.sources,
+              },
+            ]
           }
         )
 
-        // Invalidate to get fresh data including the AI response
+        // Quietly refresh in the background without causing UI flicker
         queryClient.invalidateQueries({
           queryKey: ["chatMessages", data.conversationId],
+          exact: true,
+          refetchType: "none", // Don't trigger an immediate refetch
         })
 
         // Also invalidate any session lists to ensure new conversations appear
         queryClient.invalidateQueries({
           queryKey: ["conversations"],
+          refetchType: "none",
         })
+
+        // Schedule a background refresh after a short delay
+        setTimeout(() => {
+          queryClient.invalidateQueries({
+            queryKey: ["chatMessages", data.conversationId],
+          })
+        }, 2000)
       }
     },
     onError: (error, variables, context) => {

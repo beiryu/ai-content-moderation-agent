@@ -124,7 +124,7 @@ export async function saveChatInteraction(
     })
 
     // Save assistant message with sources if available
-    await db.chatMessage.create({
+    const assistantMessage = await db.chatMessage.create({
       data: {
         conversationId,
         role: "assistant",
@@ -139,9 +139,9 @@ export async function saveChatInteraction(
       data: { updatedAt: new Date() },
     })
 
-    return true
+    return assistantMessage
   } catch (error) {
     console.error("Error saving chat interaction:", error)
-    return false
+    return null
   }
 }

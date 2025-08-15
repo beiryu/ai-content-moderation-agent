@@ -1,27 +1,13 @@
-import { NextRequest, NextResponse } from "next/server"
-import { z } from "zod"
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
-import { db } from "@/lib/db"
-import { saveChatInteraction } from "@/lib/langchain/memory"
-import { executeRAGPipeline } from "@/lib/langchain/rag-pipeline"
+
+
+import { db } from "@/lib/db";
+import { saveChatInteraction } from "@/lib/langchain/memory";
+import { executeRAGPipeline } from "@/lib/langchain/rag-pipeline";
 import { getCurrentUser } from "@/lib/session"
-
-// Define request schema
-const RAGRequestSchema = z.object({
-  message: z.string().min(1, "Message cannot be empty"),
-  selectedDocuments: z.array(z.string()).optional(),
-  sessionId: z.string().optional(),
-  options: z
-    .object({
-      includeCitations: z.boolean().optional(),
-      tonePreference: z
-        .enum(["professional", "conversational", "technical"])
-        .optional(),
-      modelName: z.string().optional(),
-      temperature: z.number().min(0).max(2).optional(),
-    })
-    .optional(),
-})
+import { RagChatRequestSchema } from "@/lib/validations/chat-message"
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,7 +20,7 @@ export async function POST(req: NextRequest) {
     // Parse request body
     const body = await req.json()
     const { message, selectedDocuments, sessionId, options } =
-      RAGRequestSchema.parse(body)
+      RagChatRequestSchema.parse(body)
 
     // Create or retrieve the chat conversation
     let conversationId = sessionId
@@ -63,7 +49,7 @@ export async function POST(req: NextRequest) {
     })
 
     // Save the interaction in the database
-    await saveChatInteraction(
+    const assistantMessage = await saveChatInteraction(
       user.id,
       conversationId,
       message,
@@ -71,21 +57,8 @@ export async function POST(req: NextRequest) {
       result.sources
     )
 
-    // Update the conversation's updatedAt timestamp
-    await db.chatConversation.update({
-      where: { id: conversationId },
-      data: { updatedAt: new Date() },
-    })
-
     // Return response
-    return NextResponse.json({
-      id: conversationId,
-      conversationId,
-      role: "assistant",
-      content: result.response,
-      sources: result.sources || [],
-      createdAt: new Date(),
-    })
+    return NextResponse.json(assistantMessage)
   } catch (error) {
     console.error("Error in RAG endpoint:", error)
 

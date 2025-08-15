@@ -194,8 +194,8 @@ export default function Chat() {
           )}
 
           {/* Loading indicator */}
-          {isLoading && (
-            <ChatMessage>
+          {isSending && (
+            <ChatMessage isUser={false}>
               <div className="flex items-center space-x-2">
                 <Icons.spinner className="size-6 animate-spin" />
                 <span>Processing...</span>
