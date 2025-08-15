@@ -1,3 +1,4 @@
+import { useCopyToClipboard } from "@uidotdev/usehooks"
 import { Copy } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -10,6 +11,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+
+import { toast } from "../ui/use-toast"
 
 interface ChatMessageProps {
   isUser?: boolean
@@ -46,13 +49,16 @@ export function ChatMessage({ isUser, children, content }: ChatMessageProps) {
             </div>
           </Card>
         )}
-        {!isUser && <MessageActions />}
+        {!isUser && <MessageActions content={content} />}
       </div>
     </article>
   )
 }
 
-function MessageActions() {
+function MessageActions({ content }: { content?: string }) {
+  const [copiedText, copyToClipboard] = useCopyToClipboard()
+  const hasCopiedText = Boolean(copiedText)
+
   return (
     <div className="flex mt-1.5 ml-1">
       <TooltipProvider delayDuration={300}>
@@ -62,6 +68,15 @@ function MessageActions() {
               variant="ghost"
               size="sm"
               className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                copyToClipboard(content || "")
+                toast({
+                  title: "Copied to clipboard",
+                  description: "The message has been copied to your clipboard.",
+                  variant: "default",
+                })
+              }}
+              disabled={hasCopiedText}
             >
               <Copy className="size-3 mr-1.5" />
               Copy

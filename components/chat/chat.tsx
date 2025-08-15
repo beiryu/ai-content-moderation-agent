@@ -132,28 +132,22 @@ export default function Chat() {
       {/* Conversation Area with ScrollArea */}
       <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
         <div className="space-y-6 max-w-4xl mx-auto">
-          <ChatMessage>
-            <p>
-              Hello! I&apos;m your document assistant. I can help analyze and
-              answer questions about your uploaded documents using advanced
-              Retrieval Augmented Generation.
-              {selectedDocuments.length === 0
-                ? " Please select documents to get started."
-                : ` I'm currently working with ${
-                    selectedDocuments.length
-                  } document${selectedDocuments.length > 1 ? "s" : ""}.`}
-            </p>
-            <p className="mt-2">How I work:</p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li>Your documents are embedded using OpenAI embeddings</li>
-              <li>
-                When you ask a question, I find relevant document chunks in
-                Pinecone
-              </li>
-              <li>I use the retrieved context to generate precise answers</li>
-              <li>Your chat history is preserved for better conversations</li>
-            </ul>
-          </ChatMessage>
+          {messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-64 text-center p-8">
+              <FileText className="size-10 text-primary/60 mb-4" />
+              <h3 className="text-lg font-medium mb-2">Document Assistant</h3>
+              <p className="text-muted-foreground mb-4 max-w-md">
+                {selectedDocuments.length === 0
+                  ? "Please select documents to begin analyzing your content with advanced retrieval augmented generation."
+                  : `Ready to analyze ${selectedDocuments.length} document${selectedDocuments.length > 1 ? "s" : ""}.`}
+              </p>
+              {selectedDocuments.length > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Ask questions about your documents to get AI-powered insights.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Display chat messages */}
           {messages.map((msg) =>

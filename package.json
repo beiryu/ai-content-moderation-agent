@@ -74,6 +74,7 @@
     "@tanstack/react-query-devtools": "^5.62.11",
     "@tanstack/react-table": "^8.20.6",
     "@typescript-eslint/parser": "^8.19.0",
+    "@uidotdev/usehooks": "^2.4.1",
     "@vercel/analytics": "^1.0.0",
     "@vercel/og": "^0.0.21",
     "ai": "^4.0.22",
