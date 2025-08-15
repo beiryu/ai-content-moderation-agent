@@ -13,6 +13,7 @@ import {
 import { useGetDocuments } from "@/hooks/api/document/useGetDocuments"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { ChatMessage } from "@/components/chat/chat-message"
 
@@ -31,7 +32,7 @@ export default function Chat() {
   const selectedDocumentDetails =
     documents?.filter((doc) => selectedDocuments.includes(doc.id)) || []
 
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
   const [message, setMessage] = useState("")
 
   const router = useRouter()
@@ -49,10 +50,15 @@ export default function Chat() {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      )
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight
+      }
     }
-  }, [messages])
+  }, [messages, isLoading])
 
   // Ensure messages are up-to-date when activeSessionId changes
   useEffect(() => {
@@ -108,12 +114,12 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <>
       {/* Header */}
-      <div className="border-b p-4 flex items-center justify-between shrink-0">
+      <div className="p-4 border-b border-border flex items-center justify-between shrink-0">
         <div className="inline-flex items-center gap-2">
           <FileText className="size-4 text-primary" />
-          <h3 className="font-medium">LangChain RAG Chat</h3>
+          <h3 className="font-medium">RAG Chat</h3>
         </div>
         <div className="flex items-center">
           <div className="inline-flex items-center bg-muted rounded-full border text-xs py-1 px-3 text-muted-foreground">
@@ -123,22 +129,14 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Chat Messages */}
-      <div
-        className="flex-1 overflow-y-auto px-4 py-6 scroll-smooth"
-        style={{
-          scrollBehavior: "smooth",
-          overflowAnchor: "none",
-          msOverflowStyle: "none",
-          scrollbarWidth: "thin",
-        }}
-      >
-        <div className="w-full space-y-6 h-80">
+      {/* Conversation Area with ScrollArea */}
+      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+        <div className="space-y-6 max-w-4xl mx-auto">
           <ChatMessage>
             <p>
-              Hello! I&apos;m your LangChain-powered document assistant. I can
-              help analyze and answer questions about your uploaded documents
-              using advanced Retrieval Augmented Generation.
+              Hello! I&apos;m your document assistant. I can help analyze and
+              answer questions about your uploaded documents using advanced
+              Retrieval Augmented Generation.
               {selectedDocuments.length === 0
                 ? " Please select documents to get started."
                 : ` I'm currently working with ${
@@ -147,9 +145,7 @@ export default function Chat() {
             </p>
             <p className="mt-2">How I work:</p>
             <ul className="list-disc list-inside space-y-1 ml-4">
-              <li>
-                Your documents are embedded using LangChain + OpenAI embeddings
-              </li>
+              <li>Your documents are embedded using OpenAI embeddings</li>
               <li>
                 When you ask a question, I find relevant document chunks in
                 Pinecone
@@ -160,16 +156,19 @@ export default function Chat() {
           </ChatMessage>
 
           {/* Display chat messages */}
-          {messages.map((msg) => (
-            <ChatMessage key={msg.id} isUser={msg.role === "user"}>
-              <div className="space-y-2">
+          {messages.map((msg) =>
+            msg.role === "user" ? (
+              <ChatMessage key={msg.id} isUser={true}>
                 <p>{msg.content}</p>
-                {/* Error handling for optimistic updates happens in the hook */}
+              </ChatMessage>
+            ) : (
+              <ChatMessage key={msg.id} isUser={false} content={msg.content}>
+                <div className="space-y-2">
+                  <p>{msg.content}</p>
+                  {/* Error handling for optimistic updates happens in the hook */}
 
-                {/* Show sources for assistant messages */}
-                {msg.role === "assistant" &&
-                  msg.sources &&
-                  msg.sources.length > 0 && (
+                  {/* Show sources for assistant messages */}
+                  {msg.sources && msg.sources.length > 0 && (
                     <div className="mt-4 border-t pt-3">
                       <p className="text-xs font-medium text-muted-foreground mb-2">
                         Sources ({msg.sources.length}):
@@ -195,26 +194,25 @@ export default function Chat() {
                       </div>
                     </div>
                   )}
-              </div>
-            </ChatMessage>
-          ))}
+                </div>
+              </ChatMessage>
+            )
+          )}
 
           {/* Loading indicator */}
           {isLoading && (
             <ChatMessage>
               <div className="flex items-center space-x-2">
                 <Icons.spinner className="size-6 animate-spin" />
-                <span>Processing with LangChain...</span>
+                <span>Processing...</span>
               </div>
             </ChatMessage>
           )}
-
-          <div ref={messagesEndRef} aria-hidden="true" />
         </div>
-      </div>
+      </ScrollArea>
 
       {/* Chat Input */}
-      <div className="border-t p-4 shrink-0 mt-6">
+      <div className="p-4 border-t border-border">
         <div className="mx-auto">
           {/* Selected Documents Context */}
           {selectedDocuments.length > 0 && (
@@ -250,7 +248,7 @@ export default function Chat() {
               placeholder={
                 selectedDocuments.length === 0
                   ? "Select documents, then ask questions..."
-                  : "Ask questions about your documents using LangChain..."
+                  : "Ask questions about your documents..."
               }
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -296,6 +294,6 @@ export default function Chat() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

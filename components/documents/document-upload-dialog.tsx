@@ -87,8 +87,8 @@ const processingStages: Record<
   uploading: { label: "Uploading document...", progress: 20 },
   processing: { label: "Processing document content...", progress: 40 },
   chunking: { label: "Creating document chunks for RAG...", progress: 60 },
-  embedding: { label: "Generating OpenAI embeddings...", progress: 80 },
-  indexing: { label: "Indexing in Pinecone vector store...", progress: 90 },
+  embedding: { label: "Generating embeddings...", progress: 80 },
+  indexing: { label: "Indexing in vector store...", progress: 90 },
   complete: { label: "Document ready for RAG queries!", progress: 100 },
 }
 
@@ -157,7 +157,7 @@ export function DocumentUploadDialog() {
             title: "Document processed successfully",
             description: `Your ${documentTypes
               .find((t) => t.value === data.type)
-              ?.label.toLowerCase()} has been embedded and indexed for RAG queries.`,
+              ?.label.toLowerCase()} has been processed and indexed for queries.`,
           })
           router.refresh()
         },
@@ -220,8 +220,8 @@ export function DocumentUploadDialog() {
         <DialogHeader>
           <DialogTitle>Upload Document</DialogTitle>
           <DialogDescription>
-            Add a new document to your knowledge base for enhanced RAG
-            (Retrieval Augmented Generation) capabilities.
+            Add a new document to your knowledge base for enhanced search and
+            question answering capabilities.
           </DialogDescription>
         </DialogHeader>
 

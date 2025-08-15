@@ -1,8 +1,9 @@
-import { Copy, FileText, User } from "lucide-react"
+import { Copy } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { MarkdownMessage } from "@/components/ui/markdown-message"
 import {
   Tooltip,
   TooltipContent,
@@ -13,9 +14,10 @@ import {
 interface ChatMessageProps {
   isUser?: boolean
   children: React.ReactNode
+  content?: string
 }
 
-export function ChatMessage({ isUser, children }: ChatMessageProps) {
+export function ChatMessage({ isUser, children, content }: ChatMessageProps) {
   return (
     <article
       className={cn(
@@ -24,17 +26,26 @@ export function ChatMessage({ isUser, children }: ChatMessageProps) {
       )}
     >
       <div className="flex-1">
-        <Card
-          className={cn(
-            "px-4 py-3",
-            isUser ? "bg-primary/10 border-primary/20" : "bg-card"
-          )}
-        >
-          <div className="flex flex-col gap-2.5">
-            <p className="sr-only">{isUser ? "You" : "AI Assistant"} said:</p>
-            {children}
-          </div>
-        </Card>
+        {isUser ? (
+          <Card className={cn("px-4 py-3", "bg-primary/10 border-primary/20")}>
+            <div className="flex flex-col gap-2.5">
+              <p className="sr-only">You said:</p>
+              {children}
+            </div>
+          </Card>
+        ) : content ? (
+          <>
+            <p className="sr-only">AI Assistant said:</p>
+            <MarkdownMessage content={content} />
+          </>
+        ) : (
+          <Card className="px-4 py-3 bg-card">
+            <div className="flex flex-col gap-2.5">
+              <p className="sr-only">AI Assistant said:</p>
+              {children}
+            </div>
+          </Card>
+        )}
         {!isUser && <MessageActions />}
       </div>
     </article>

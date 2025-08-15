@@ -9,8 +9,8 @@ import { DashboardHeader } from "@/components/header"
 import { DashboardShell } from "@/components/shell"
 
 export const metadata: Metadata = {
-  title: "LangChain Document Chat - AI Content Moderation Agent",
-  description: "Chat with your uploaded documents using LangChain powered RAG.",
+  title: "Document Chat",
+  description: "Chat with your uploaded documents using RAG.",
 }
 
 export default async function LangChainToolsPage() {
@@ -23,8 +23,8 @@ export default async function LangChainToolsPage() {
   return (
     <DashboardShell>
       <DashboardHeader
-        heading="LangChain Document Chat"
-        text="Interact with your documents using LangChain's powerful RAG pipeline and Pinecone vector storage."
+        heading="Document Chat"
+        text="Interact with your documents using RAG."
       />
       <Card className="h-[calc(100vh-12rem)] overflow-hidden bg-background p-0">
         <ChatWithDocuments />
