@@ -37,7 +37,7 @@ export async function getPineconeStore(): Promise<PineconeStore> {
     pineconeStore = await PineconeStore.fromExistingIndex(getEmbeddingModel(), {
       pineconeIndex,
       namespace: RAG_CONFIG.vectorDb.namespace,
-      textKey: "content",
+      textKey: RAG_CONFIG.vectorDb.textKey,
     })
   }
   return pineconeStore

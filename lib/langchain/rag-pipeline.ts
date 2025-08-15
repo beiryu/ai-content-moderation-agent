@@ -28,9 +28,9 @@ export function createLLM(options?: {
   streaming?: boolean
 }) {
   const {
-    modelName = "gpt-4o",
-    temperature = 0.2,
-    streaming = false,
+    modelName = RAG_CONFIG.models.chat.default,
+    temperature = RAG_CONFIG.models.chat.temperature,
+    streaming = RAG_CONFIG.models.chat.streaming,
   } = options || {}
 
   return new ChatOpenAI({
@@ -45,13 +45,7 @@ export function createLLM(options?: {
  */
 export function createRAGPromptTemplate() {
   return ChatPromptTemplate.fromMessages([
-    SystemMessagePromptTemplate.fromTemplate(
-      `You are a helpful AI assistant. Use the following context to answer the user's question. 
-      If you don't know the answer, say that you don't know. DO NOT make up an answer.
-      
-      Context:
-      {context}`
-    ),
+    SystemMessagePromptTemplate.fromTemplate(RAG_CONFIG.prompts.ragSystem),
     new MessagesPlaceholder("chat_history"),
     HumanMessagePromptTemplate.fromTemplate("{input}"),
   ])

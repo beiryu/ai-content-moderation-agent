@@ -7,11 +7,23 @@
  */
 
 export const RAG_CONFIG = {
-  // Embedding Configuration
-  embedding: {
-    model: "text-embedding-3-large",
-    dimensions: 1536,
-    batchSize: 100,
+  // Model Configuration
+  models: {
+    chat: {
+      default: "gpt-4o-mini",
+      interview: "gpt-3.5-turbo-1106",
+      analysis: "gpt-3.5-turbo-1106",
+      temperature: 0.2,
+      streaming: false,
+      maxTokens: 2000,
+      presencePenalty: 0.1,
+      frequencyPenalty: 0.2,
+    },
+    embedding: {
+      model: "text-embedding-3-large",
+      dimensions: 1536,
+      batchSize: 100,
+    },
   },
 
   // Vector Database Configuration
@@ -20,44 +32,38 @@ export const RAG_CONFIG = {
     namespace: process.env.PINECONE_NAMESPACE || "default",
     topK: 5,
     includeMetadata: true,
+    textKey: "content",
   },
 
   // Chunking Configuration
   chunking: {
     chunkSize: 256,
     chunkOverlap: 20,
-    // separators: ["\n\n", "\n", ".", "!", "?", ",", " ", ""] as string[],
+    separators: ["\n\n", "\n", ".", "!", "?", ",", " ", ""] as string[],
   },
 
-  // Memory Configuration
-  memory: {
-    shortTermRetentionDays: 7,
-    longTermRetentionMonths: 12,
-    maxShortTermEntries: 100,
-    maxLongTermEntries: 1000,
-  },
-
-  // Search Configuration
-  search: {
-    similarityThreshold: 0.35, // Lowered from 0.7 to match typical scores
-    maxResults: 10,
-    hybridSearchWeight: 0.6, // Reduced vector search weight from 0.7 to 0.6 (keyword is now 0.4)
-  },
-
-  // Tools Configuration
-  tools: {
-    webSearchEnabled: true,
-    codeAnalysisEnabled: true,
-    cvScannerEnabled: true,
-    jobDescriptionParserEnabled: true,
-  },
-
-  // Performance Configuration
-  performance: {
-    cacheEnabled: true,
-    cacheTTL: 3600, // 1 hour in seconds
-    requestTimeout: 30000, // 30 seconds
-    maxConcurrentRequests: 5,
+  // System Prompts
+  prompts: {
+    ragSystem: `You are a helpful AI assistant. Use the following context to answer the user's question. 
+      If you don't know the answer, say that you don't know. DO NOT make up an answer.
+      
+      Context:
+      {context}`,
+    interviewAnalysis: `You are an interview analysis assistant. Analyze the given text and:
+      1. Determine if it's a question and its type (technical/behavioral/general)
+      2. Extract the core question
+      3. Provide 2-3 suggested responses
+      4. Identify key topics/keywords
+      
+      Format response as JSON with fields:
+      {
+        "question": "extracted question",
+        "questionType": "technical" | "behavioral" | "general" | "other",
+        "suggestedAnswerPoints": ["suggestion1", "suggestion2"],
+        "keywords": ["keyword1", "keyword2"],
+      }
+      
+      Keep responses professional and concise.`,
   },
 } as const
 

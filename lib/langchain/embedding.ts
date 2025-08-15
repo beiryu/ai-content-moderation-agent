@@ -17,9 +17,9 @@ let embeddingModel: OpenAIEmbeddings | null = null
 export function getEmbeddingModel(): OpenAIEmbeddings {
   if (!embeddingModel) {
     embeddingModel = new OpenAIEmbeddings({
-      modelName: RAG_CONFIG.embedding.model,
-      dimensions: RAG_CONFIG.embedding.dimensions,
-      batchSize: RAG_CONFIG.embedding.batchSize,
+      modelName: RAG_CONFIG.models.embedding.model,
+      dimensions: RAG_CONFIG.models.embedding.dimensions,
+      batchSize: RAG_CONFIG.models.embedding.batchSize,
     })
   }
   return embeddingModel

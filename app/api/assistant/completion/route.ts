@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+import { RAG_CONFIG } from "@/config/rag"
 import openai from "@/lib/openai"
 import { buildPrompt, buildSummarizerPrompt } from "@/lib/utils"
 
@@ -17,11 +18,11 @@ export async function POST(req: Request) {
 
   try {
     const stream = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-1106",
-      max_tokens: 2000,
-      temperature: 0.5,
-      presence_penalty: 0.1,
-      frequency_penalty: 0.2,
+      model: RAG_CONFIG.models.chat.interview,
+      max_tokens: RAG_CONFIG.models.chat.maxTokens,
+      temperature: 0.5, // Using a specific value for interview responses
+      presence_penalty: RAG_CONFIG.models.chat.presencePenalty,
+      frequency_penalty: RAG_CONFIG.models.chat.frequencyPenalty,
       messages: [
         {
           role: "user",
