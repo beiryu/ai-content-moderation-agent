@@ -1,11 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 
-
-
-import { db } from "@/lib/db";
-import { saveChatInteraction } from "@/lib/langchain/memory";
-import { executeRAGPipeline } from "@/lib/langchain/rag-pipeline";
+import { db } from "@/lib/db"
+import { saveChatInteraction } from "@/lib/langchain/memory"
+import { executeRAGPipeline } from "@/lib/langchain/rag-pipeline"
 import { getCurrentUser } from "@/lib/session"
 import { RagChatRequestSchema } from "@/lib/validations/chat-message"
 
@@ -44,8 +42,6 @@ export async function POST(req: NextRequest) {
     // Execute the RAG pipeline
     const result = await executeRAGPipeline(message, user.id, conversationId, {
       documentIds: selectedDocuments,
-      modelName: options?.modelName,
-      temperature: options?.temperature,
     })
 
     // Save the interaction in the database

@@ -81,8 +81,6 @@ export default function Chat() {
         options: {
           includeCitations: true,
           tonePreference: "professional",
-          modelName: "gpt-4o", // Use GPT-4o for better results
-          temperature: 0.2, // Lower temperature for more focused responses
         },
       },
       {
@@ -139,7 +137,9 @@ export default function Chat() {
               <p className="text-muted-foreground mb-4 max-w-md">
                 {selectedDocuments.length === 0
                   ? "Please select documents to begin analyzing your content with advanced retrieval augmented generation."
-                  : `Ready to analyze ${selectedDocuments.length} document${selectedDocuments.length > 1 ? "s" : ""}.`}
+                  : `Ready to analyze ${selectedDocuments.length} document${
+                      selectedDocuments.length > 1 ? "s" : ""
+                    }.`}
               </p>
               {selectedDocuments.length > 0 && (
                 <p className="text-sm text-muted-foreground">

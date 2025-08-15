@@ -22,34 +22,20 @@ import { getPineconeStore, searchSimilarDocuments } from "./vector-store"
 /**
  * Create the LLM instance
  */
-export function createLLM(options?: {
-  modelName?: string
-  temperature?: number
-  streaming?: boolean
-}) {
-  const {
-    modelName = RAG_CONFIG.models.chat.default,
-    temperature = RAG_CONFIG.models.chat.temperature,
-    streaming = RAG_CONFIG.models.chat.streaming,
-  } = options || {}
-
-  return new ChatOpenAI({
-    modelName,
-    temperature,
-    streaming,
-  })
-}
+export const llm = new ChatOpenAI({
+  modelName: RAG_CONFIG.models.chat.default,
+  temperature: RAG_CONFIG.models.chat.temperature,
+  streaming: RAG_CONFIG.models.chat.streaming,
+})
 
 /**
  * Create the RAG prompt template
  */
-export function createRAGPromptTemplate() {
-  return ChatPromptTemplate.fromMessages([
-    SystemMessagePromptTemplate.fromTemplate(RAG_CONFIG.prompts.ragSystem),
-    new MessagesPlaceholder("chat_history"),
-    HumanMessagePromptTemplate.fromTemplate("{input}"),
-  ])
-}
+export const ragPromptTemplate = ChatPromptTemplate.fromMessages([
+  SystemMessagePromptTemplate.fromTemplate(RAG_CONFIG.prompts.ragSystem),
+  new MessagesPlaceholder("chat_history"),
+  HumanMessagePromptTemplate.fromTemplate("{input}"),
+])
 
 /**
  * Create a RAG chain with memory
@@ -58,20 +44,14 @@ export async function createRAGChain(
   userId: string,
   conversationId: string,
   options?: {
-    modelName?: string
-    temperature?: number
-    streaming?: boolean
     documentIds?: string[]
   }
 ) {
-  // Create the LLM
-  const llm = createLLM(options)
-
   // Create memory with history
   const memory = await createMemoryWithHistory(userId, conversationId)
 
   // Create the prompt template
-  const promptTemplate = createRAGPromptTemplate()
+  const promptTemplate = ragPromptTemplate
 
   // Create the RAG chain
   const chain = RunnableSequence.from([
@@ -134,16 +114,14 @@ export async function executeRAGPipeline(
   conversationId: string,
   options?: {
     documentIds?: string[]
-    modelName?: string
-    temperature?: number
-    streaming?: boolean
   }
 ) {
   try {
-    const { chain, memory } = await createRAGChain(userId, conversationId, {
-      ...options,
-      documentIds: options?.documentIds,
-    })
+    const { chain, memory } = await createRAGChain(
+      userId,
+      conversationId,
+      options
+    )
 
     // Execute the chain
     const response = await chain.invoke(query)

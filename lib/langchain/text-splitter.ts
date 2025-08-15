@@ -14,22 +14,18 @@ import { RAG_CONFIG } from "../../config/rag"
 /**
  * Create a default text splitter based on configuration
  */
-export function createDefaultTextSplitter() {
-  return new RecursiveCharacterTextSplitter({
-    chunkSize: RAG_CONFIG.chunking.chunkSize,
-    chunkOverlap: RAG_CONFIG.chunking.chunkOverlap,
-  })
-}
+export const defaultTextSplitter = new RecursiveCharacterTextSplitter({
+  chunkSize: RAG_CONFIG.chunking.chunkSize,
+  chunkOverlap: RAG_CONFIG.chunking.chunkOverlap,
+})
 
 /**
  * Create a markdown-specific text splitter
  */
-export function createMarkdownTextSplitter() {
-  return new MarkdownTextSplitter({
-    chunkSize: RAG_CONFIG.chunking.chunkSize,
-    chunkOverlap: RAG_CONFIG.chunking.chunkOverlap,
-  })
-}
+export const markdownTextSplitter = new MarkdownTextSplitter({
+  chunkSize: RAG_CONFIG.chunking.chunkSize,
+  chunkOverlap: RAG_CONFIG.chunking.chunkOverlap,
+})
 
 /**
  * Split documents based on their content type
@@ -50,8 +46,8 @@ export async function splitDocuments(
     } = options || {}
 
     let splitter = useMarkdownSplitter
-      ? createMarkdownTextSplitter()
-      : createDefaultTextSplitter()
+      ? markdownTextSplitter
+      : defaultTextSplitter
 
     // Override defaults if custom values are provided
     if (
