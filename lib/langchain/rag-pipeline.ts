@@ -47,7 +47,7 @@ export async function createRAGChain(
     documentIds?: string[]
   }
 ) {
-  // Create memory with history
+  // Create memory with Redis persistence
   const memory = await createMemoryWithHistory(userId, conversationId)
 
   // Create the prompt template

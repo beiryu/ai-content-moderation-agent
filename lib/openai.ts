@@ -1,16 +1,10 @@
-// import { createOpenAI } from "@ai-sdk/openai"
-
 import OpenAI from "openai"
 
-// const openai = createOpenAI({
-//   apiKey: process.env.OPENAI_API_KEY || "",
-//   baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
-//   compatibility: "strict",
-// })
+import { env } from "@/env.mjs"
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "",
-  baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+  apiKey: env.OPENAI_API_KEY || "",
+  baseURL: env.OPENAI_BASE_URL || "https://api.openai.com/v1",
 })
 
 export default openai

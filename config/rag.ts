@@ -6,6 +6,8 @@
  * and the new LangChain-based implementation.
  */
 
+import { env } from "@/env.mjs"
+
 export const RAG_CONFIG = {
   // Model Configuration
   models: {
@@ -28,8 +30,8 @@ export const RAG_CONFIG = {
 
   // Vector Database Configuration
   vectorDb: {
-    indexName: process.env.PINECONE_INDEX_NAME || "interview-assistant",
-    namespace: process.env.PINECONE_NAMESPACE || "default",
+    indexName: env.PINECONE_INDEX_NAME || "interview-assistant",
+    namespace: env.PINECONE_NAMESPACE || "default",
     topK: 5,
     includeMetadata: true,
     textKey: "content",

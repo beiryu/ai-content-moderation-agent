@@ -1,3 +1,4 @@
+import { env } from "@/env.mjs"
 import { db } from "@/lib/db"
 import { createMomoSignature, momoConfig } from "@/lib/momo"
 
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
           id: body.extraData, // userId stored in extraData
         },
         data: {
-          stripePriceId: process.env.MOMO_MONTHLY_PLAN_ID,
+          stripePriceId: env.MOMO_MONTHLY_PLAN_ID,
           stripeCurrentPeriodEnd: new Date(
             Date.now() + 30 * 24 * 60 * 60 * 1000 // 30 days
           ),

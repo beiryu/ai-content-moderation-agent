@@ -7,6 +7,8 @@ import { Document } from "@langchain/core/documents"
 import { PineconeStore } from "@langchain/pinecone"
 import { Pinecone } from "@pinecone-database/pinecone"
 
+import { env } from "@/env.mjs"
+
 import { RAG_CONFIG } from "../../config/rag"
 import { getEmbeddingModel } from "./embedding"
 
@@ -20,7 +22,7 @@ let pineconeStore: PineconeStore | null = null
 async function initPinecone(): Promise<Pinecone> {
   if (!pineconeClient) {
     pineconeClient = new Pinecone({
-      apiKey: process.env.PINECONE_API_KEY || "",
+      apiKey: env.PINECONE_API_KEY || "",
     })
   }
   return pineconeClient
