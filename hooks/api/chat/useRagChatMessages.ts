@@ -8,6 +8,14 @@ export interface OptimisticMessage extends ChatMessage {
   error?: boolean
 }
 
+export interface Source {
+  documentId: string
+  documentTitle: string
+  content: string
+  score?: number
+  chunkId?: string
+}
+
 // Fetch messages for a conversation
 const getSessionMessages = async (
   sessionId?: string

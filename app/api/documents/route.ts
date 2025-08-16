@@ -35,31 +35,16 @@ export async function POST(req: NextRequest) {
       const formData = await req.formData()
       const title = formData.get("title") as string
       const type = formData.get("type") as DocumentType
-      const metadataStr = formData.get("metadata") as string
       const file = formData.get("file") as File
 
       if (!file) {
         return NextResponse.json({ error: "No file provided" }, { status: 400 })
       }
 
-      // Parse and validate metadata
-      let metadata = {}
-      if (metadataStr) {
-        try {
-          metadata = JSON.parse(metadataStr)
-        } catch (e) {
-          return NextResponse.json(
-            { error: "Invalid metadata format" },
-            { status: 400 }
-          )
-        }
-      }
-
       // Validate request data
       DocumentUploadSchema.parse({
         title,
         type,
-        metadata,
       })
 
       // Read file as buffer
@@ -71,19 +56,19 @@ export async function POST(req: NextRequest) {
           userId: user.id,
           title,
           type,
-          content: "", // Will be filled after processing
-          metadata: metadata || {},
+          content: "",
+          metadata: {},
         },
       })
 
-      // Load document with LangChain loaders
-      const langchainDocs = await loadDocumentFromBuffer(buffer, type, {
+      const metadata = {
         documentId: document.id,
         documentTitle: title,
         documentType: type,
         userId: user.id,
-        ...metadata,
-      })
+      }
+      // Load document with LangChain loaders
+      const langchainDocs = await loadDocumentFromBuffer(buffer, type, metadata)
 
       // Split documents into chunks
       const splitDocs = await splitDocuments(langchainDocs)
@@ -93,6 +78,7 @@ export async function POST(req: NextRequest) {
         where: { id: document.id },
         data: {
           content: langchainDocs.map((doc) => doc.pageContent).join("\n\n"),
+          metadata: metadata,
         },
       })
 
@@ -111,8 +97,7 @@ export async function POST(req: NextRequest) {
     } else {
       // Handle JSON request (direct content)
       const body = await req.json()
-      const { title, content, type, metadata } =
-        CreateDocumentRequestSchema.parse(body)
+      const { title, content, type } = CreateDocumentRequestSchema.parse(body)
 
       // Create document in database first
       const document = await db.document.create({
@@ -121,21 +106,30 @@ export async function POST(req: NextRequest) {
           title,
           type,
           content,
-          metadata: metadata || {},
+          metadata: {},
         },
       })
 
-      // Load document with LangChain
-      const langchainDocs = loadDocumentFromString(content, {
+      const metadata = {
         documentId: document.id,
         documentTitle: title,
         documentType: type,
         userId: user.id,
-        ...metadata,
-      })
+      }
+      // Load document with LangChain
+      const langchainDocs = loadDocumentFromString(content, metadata)
 
       // Split documents into chunks
       const splitDocs = await splitDocuments(langchainDocs)
+
+      // Save content to database document
+      await db.document.update({
+        where: { id: document.id },
+        data: {
+          content: langchainDocs.map((doc) => doc.pageContent).join("\n\n"),
+          metadata: metadata,
+        },
+      })
 
       // Process each chunk through the RAG pipeline
       for (const doc of splitDocs) {

@@ -38,11 +38,13 @@ export const ragPromptTemplate = ChatPromptTemplate.fromMessages([
 ])
 
 /**
- * Create a RAG chain with memory
+ * Create a RAG chain with memory and retrieve relevant documents
+ * @returns Chain, memory, and the retrieved documents for tracking sources
  */
 export async function createRAGChain(
   userId: string,
   conversationId: string,
+  query: string,
   options?: {
     documentIds?: string[]
   }
@@ -50,51 +52,40 @@ export async function createRAGChain(
   // Create memory with Redis persistence
   const memory = await createMemoryWithHistory(userId, conversationId)
 
-  // Create the prompt template
-  const promptTemplate = ragPromptTemplate
+  // Create filter based on user ID and optional document IDs
+  const filter: Record<string, any> = {
+    userId: { $eq: userId },
+  }
+
+  // If document IDs are provided, filter by those specific documents
+  if (options?.documentIds && options.documentIds.length > 0) {
+    filter["documentId"] = { $in: options.documentIds }
+    console.log("RAG Pipeline - Using document filter:", options.documentIds)
+  }
+
+  console.log("RAG Pipeline - Full filter:", filter)
+
+  // Retrieve relevant documents with combined filter
+  const retrievedDocs = await searchSimilarDocuments(query, {
+    // Increase k if we have multiple documents to ensure we get enough context from each
+    k:
+      options?.documentIds && options.documentIds.length > 1
+        ? Math.min(RAG_CONFIG.vectorDb.topK * options.documentIds.length, 20)
+        : RAG_CONFIG.vectorDb.topK,
+    filter: filter,
+  })
 
   // Create the RAG chain
   const chain = RunnableSequence.from([
     {
-      input: (query) => query,
+      input: (q) => q,
       chat_history: async () => {
         const memoryVariables = await memory.loadMemoryVariables({})
         return memoryVariables.chat_history || []
       },
-      context: async (query) => {
-        // Create filter based on user ID and optional document IDs
-        const filter: Record<string, any> = {
-          userId: { $eq: userId },
-        }
-
-        // If document IDs are provided, filter by those specific documents
-        if (options?.documentIds && options.documentIds.length > 0) {
-          filter["documentId"] = { $in: options.documentIds }
-          console.log(
-            "RAG Pipeline - Using document filter:",
-            options.documentIds
-          )
-        }
-
-        console.log("RAG Pipeline - Full filter:", filter)
-
-        // Retrieve relevant documents with combined filter
-        const docs = await searchSimilarDocuments(query, {
-          // Increase k if we have multiple documents to ensure we get enough context from each
-          k:
-            options?.documentIds && options.documentIds.length > 1
-              ? Math.min(
-                  RAG_CONFIG.vectorDb.topK * options.documentIds.length,
-                  20
-                )
-              : RAG_CONFIG.vectorDb.topK,
-          filter: filter,
-        })
-
-        return formatDocumentsAsString(docs)
-      },
+      context: () => formatDocumentsAsString(retrievedDocs),
     },
-    promptTemplate,
+    ragPromptTemplate,
     llm,
     new StringOutputParser(),
   ])
@@ -102,6 +93,7 @@ export async function createRAGChain(
   return {
     chain,
     memory,
+    retrievedDocs,
   }
 }
 
@@ -117,21 +109,31 @@ export async function executeRAGPipeline(
   }
 ) {
   try {
-    const { chain, memory } = await createRAGChain(
+    // Create chain with integrated document retrieval
+    const { chain, memory, retrievedDocs } = await createRAGChain(
       userId,
       conversationId,
+      query,
       options
     )
 
     // Execute the chain
     const response = await chain.invoke(query)
 
-    // Save to memory
+    // Format sources from the retrieved documents for client response
+    const sources = retrievedDocs.map((doc) => ({
+      documentId: doc.metadata.documentId,
+      documentTitle: doc.metadata.documentTitle || "Unnamed Document",
+      content: doc.pageContent.substring(0, 100) + "...",
+      score: doc.metadata.score,
+      chunkId: doc.metadata.chunkId,
+    }))
+
     await memory.saveContext({ input: query }, { output: response })
 
     return {
       response,
-      sources: [], // Would need to modify to track sources
+      sources,
     }
   } catch (error) {
     console.error("Error executing RAG pipeline:", error)
@@ -151,19 +153,11 @@ export async function processDocumentRAG(
   }
 ) {
   try {
-    // Add userId and ensure all required metadata is present
-    const documentWithUserId = {
+    const enrichedDocument = {
       ...document,
       metadata: {
         ...document.metadata,
-        userId,
-        documentId: options?.documentId || document.metadata.documentId,
-        // Ensure we have document title/name for better identification in search results
-        documentTitle:
-          document.metadata.documentTitle ||
-          document.metadata.title ||
-          "Unnamed Document",
-        // Add chunk identifier for better tracking
+        userId: userId,
         chunkId:
           document.metadata.chunkId ||
           `chunk-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -174,7 +168,7 @@ export async function processDocumentRAG(
     const store = await getPineconeStore()
 
     // Add document to vector store
-    await store.addDocuments([documentWithUserId], {
+    await store.addDocuments([enrichedDocument], {
       namespace: options?.namespace || RAG_CONFIG.vectorDb.namespace,
     })
 

@@ -7,6 +7,7 @@ import { FileText, Paperclip, Send, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
+  Source,
   useRagChatMessages,
   useSendRagChatMessage,
 } from "@/hooks/api/chat/useRagChatMessages"
@@ -129,7 +130,7 @@ export default function Chat() {
 
       {/* Conversation Area with ScrollArea */}
       <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-        <div className="space-y-6 max-w-4xl mx-auto">
+        <div className="space-y-1 max-w-4xl mx-auto">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-64 text-center p-8">
               <FileText className="size-10 text-primary/60 mb-4" />
@@ -156,40 +157,12 @@ export default function Chat() {
                 <p>{msg.content}</p>
               </ChatMessage>
             ) : (
-              <ChatMessage key={msg.id} isUser={false} content={msg.content}>
-                <div className="space-y-2">
-                  <p>{msg.content}</p>
-                  {/* Error handling for optimistic updates happens in the hook */}
-
-                  {/* Show sources for assistant messages */}
-                  {msg.sources && msg.sources.length > 0 && (
-                    <div className="mt-4 border-t pt-3">
-                      <p className="text-xs font-medium text-muted-foreground mb-2">
-                        Sources ({msg.sources.length}):
-                      </p>
-                      <div className="space-y-2">
-                        {msg.sources.slice(0, 3).map((source: any, index) => (
-                          <div
-                            key={index}
-                            className="text-xs bg-muted p-2 rounded border-l-2 border-primary/30"
-                          >
-                            <div className="font-medium">
-                              {source.documentTitle}
-                            </div>
-                            <div className="text-muted-foreground whitespace-pre-wrap mt-1">
-                              {source.chunkContent.substring(0, 100)}...
-                            </div>
-                            <div className="text-muted-foreground mt-1">
-                              Relevance:{" "}
-                              {(source.relevanceScore * 100).toFixed(0)}%
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </ChatMessage>
+              <ChatMessage
+                key={msg.id}
+                isUser={false}
+                content={msg.content}
+                sources={msg.sources as unknown as Source[]}
+              />
             )
           )}
 
