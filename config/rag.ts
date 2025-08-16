@@ -26,6 +26,10 @@ export const RAG_CONFIG = {
       dimensions: 1536,
       batchSize: 100,
     },
+    memory: {
+      model: "gpt-3.5-turbo",
+      temperature: 0,
+    },
   },
 
   // Vector Database Configuration

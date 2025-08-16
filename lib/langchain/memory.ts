@@ -3,15 +3,23 @@
  * Handles conversation history and context management
  */
 
-import { UpstashRedisChatMessageHistory } from "@langchain/community/stores/message/upstash_redis";
-import { BufferMemory } from "langchain/memory";
+import { UpstashRedisChatMessageHistory } from "@langchain/community/stores/message/upstash_redis"
+import { ChatOpenAI } from "@langchain/openai"
+import {
+  BufferMemory,
+  ConversationSummaryBufferMemory,
+  ConversationTokenBufferMemory,
+} from "langchain/memory"
 
+import { RAG_CONFIG } from "@/config/rag"
 
+import { db } from "../db"
+import redis from "../redis"
 
-import { db } from "../db";
-import redis from "../redis";
-
-
+export const memoryLlm = new ChatOpenAI({
+  modelName: RAG_CONFIG.models.memory.model,
+  temperature: RAG_CONFIG.models.memory.temperature,
+})
 
 /**
  * Create a buffer memory instance with Redis persistence
@@ -20,7 +28,7 @@ export function createBufferMemory(
   sessionId: string,
   sessionTTL: number = 86400
 ) {
-  return new BufferMemory({
+  return new ConversationSummaryBufferMemory({
     chatHistory: new UpstashRedisChatMessageHistory({
       sessionId,
       sessionTTL,
@@ -28,6 +36,8 @@ export function createBufferMemory(
     }),
     memoryKey: "chat_history",
     returnMessages: true,
+    llm: memoryLlm,
+    maxTokenLimit: 1000,
   })
 }
 
