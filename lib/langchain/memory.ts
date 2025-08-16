@@ -3,40 +3,35 @@
  * Handles conversation history and context management
  */
 
-import { OpenAI } from "@langchain/openai"
-import { BufferMemory, ConversationSummaryMemory } from "langchain/memory"
+import { UpstashRedisChatMessageHistory } from "@langchain/community/stores/message/upstash_redis";
+import { BufferMemory } from "langchain/memory";
 
-import { db } from "../db"
+
+
+import { db } from "../db";
+import redis from "../redis";
+
+
 
 /**
- * Create a buffer memory instance for short conversations
+ * Create a buffer memory instance with Redis persistence
  */
-export function createBufferMemory(sessionId: string) {
+export function createBufferMemory(
+  sessionId: string,
+  sessionTTL: number = 86400
+) {
   return new BufferMemory({
+    chatHistory: new UpstashRedisChatMessageHistory({
+      sessionId,
+      sessionTTL,
+      client: redis,
+    }),
     memoryKey: "chat_history",
-    inputKey: "input",
-    outputKey: "output",
     returnMessages: true,
   })
 }
 
-/**
- * Create a summary memory instance for longer conversations
- */
-export function createSummaryMemory(sessionId: string) {
-  const llm = new OpenAI({
-    modelName: "gpt-3.5-turbo-instruct",
-    temperature: 0,
-  })
-
-  return new ConversationSummaryMemory({
-    memoryKey: "chat_history",
-    llm,
-    inputKey: "input",
-    outputKey: "output",
-    returnMessages: true,
-  })
-}
+// We're no longer using summary memory as requested
 
 /**
  * Retrieve conversation history from database
@@ -84,20 +79,27 @@ export async function loadConversationHistory(
  */
 export async function createMemoryWithHistory(
   userId: string,
-  conversationId: string,
-  useBufferMemory = true
+  conversationId: string
 ) {
-  // Create memory instance
-  const memory = useBufferMemory
-    ? createBufferMemory(conversationId)
-    : createSummaryMemory(conversationId)
+  // Create memory instance with Redis persistence
+  const memory = createBufferMemory(conversationId)
 
-  // Load conversation history
-  const history = await loadConversationHistory(userId, conversationId)
+  // First check if we have existing messages in Redis
+  const memoryVariables = await memory.loadMemoryVariables({})
+  const existingMessages = memoryVariables.chat_history || []
 
-  // Populate memory with history
-  for (const { input, output } of history) {
-    await memory.saveContext({ input }, { output })
+  // If Redis memory is empty, load from database and populate Redis
+  if (existingMessages.length === 0) {
+    try {
+      const history = await loadConversationHistory(userId, conversationId)
+
+      // Populate Redis with database history
+      for (const { input, output } of history) {
+        await memory.saveContext({ input }, { output })
+      }
+    } catch (error) {
+      console.error("Error populating memory:", error)
+    }
   }
 
   return memory
