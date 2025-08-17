@@ -36,7 +36,6 @@ export function ChatMessage({
   children,
   content,
   sources = [],
-  isStreaming = false,
 }: ChatMessageProps) {
   return (
     <article
@@ -56,7 +55,7 @@ export function ChatMessage({
         ) : content ? (
           <div className="space-y-2">
             <p className="sr-only">AI Assistant said:</p>
-            <MarkdownMessage content={content} isStreaming={isStreaming} />
+            <MarkdownMessage content={content} />
           </div>
         ) : (
           <Card className="px-4 py-3 bg-card">
