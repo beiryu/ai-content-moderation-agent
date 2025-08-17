@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card"
 interface MarkdownMessageProps {
   content: string
   className?: string
+  isStreaming?: boolean
 }
 
 /**
@@ -18,8 +19,13 @@ interface MarkdownMessageProps {
  * - Syntax highlighting for code blocks
  * - Proper formatting for lists, headings, tables, etc.
  * - Styled to match the application's design system
+ * - Streaming support with typing cursor
  */
-export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
+export function MarkdownMessage({
+  content,
+  className,
+  isStreaming = false,
+}: MarkdownMessageProps) {
   return (
     <Card className={cn("px-4 py-3", className)}>
       <div className="markdown-message prose prose-sm dark:prose-invert max-w-none">
@@ -107,6 +113,11 @@ export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
         >
           {content}
         </ReactMarkdown>
+
+        {/* Streaming cursor */}
+        {isStreaming && (
+          <span className="inline-block w-2 h-4 bg-primary ml-1 animate-pulse" />
+        )}
       </div>
     </Card>
   )

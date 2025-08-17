@@ -5,9 +5,9 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
-import Chat from "@/components/chat/chat"
 import ChatSessions from "@/components/chat/chat-sessions"
 import DocumentSelector from "@/components/chat/document-selector"
+import StreamingChat from "@/components/chat/streaming-chat"
 
 export function ChatWithDocuments() {
   return (
@@ -24,7 +24,7 @@ export function ChatWithDocuments() {
         {/* Chat Panel */}
         <ResizablePanel defaultSize={45} minSize={30}>
           <div className="h-full bg-background flex flex-col">
-            <Chat />
+            <StreamingChat />
           </div>
         </ResizablePanel>
 

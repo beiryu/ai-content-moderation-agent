@@ -28,6 +28,7 @@ interface ChatMessageProps {
   children?: React.ReactNode
   content?: string
   sources?: Source[]
+  isStreaming?: boolean
 }
 
 export function ChatMessage({
@@ -35,6 +36,7 @@ export function ChatMessage({
   children,
   content,
   sources = [],
+  isStreaming = false,
 }: ChatMessageProps) {
   return (
     <article
@@ -54,7 +56,7 @@ export function ChatMessage({
         ) : content ? (
           <div className="space-y-2">
             <p className="sr-only">AI Assistant said:</p>
-            <MarkdownMessage content={content} />
+            <MarkdownMessage content={content} isStreaming={isStreaming} />
           </div>
         ) : (
           <Card className="px-4 py-3 bg-card">

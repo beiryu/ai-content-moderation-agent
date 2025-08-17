@@ -16,7 +16,7 @@ export const RAG_CONFIG = {
       interview: "gpt-3.5-turbo-1106",
       analysis: "gpt-3.5-turbo-1106",
       temperature: 0.2,
-      streaming: false,
+      streaming: true,
       maxTokens: 2000,
       presencePenalty: 0.1,
       frequencyPenalty: 0.2,
