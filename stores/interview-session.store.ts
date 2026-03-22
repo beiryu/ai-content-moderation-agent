@@ -138,53 +138,74 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
 
         if (!message) return
 
-        try {
-          const currentIndex = state.messages.findIndex((m) => m.id === messageId)
-          const context = state.messages
-            .slice(Math.max(0, currentIndex - 6), currentIndex)
-            .map((m) => ({ role: m.role, content: m.content }))
+        // Show card immediately with empty answer
+        const initialAnalysis = {
+          id: messageId,
+          question: message.content,
+          suggestedAnswer: "",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          messageId,
+        }
+        set((state) => ({
+          messages: state.messages.map((m) =>
+            m.id === messageId ? { ...m, questionAnalysis: initialAnalysis } : m
+          ),
+          currentAnalysis: initialAnalysis,
+        }))
 
+        const currentIndex = state.messages.findIndex((m) => m.id === messageId)
+        const context = state.messages
+          .slice(Math.max(0, currentIndex - 6), currentIndex)
+          .map((m) => ({ role: m.role, content: m.content }))
+
+        try {
           const response = await fetch("/api/assistant/question", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               text: message.content,
-              agentHistory: state.agentHistory,
+              agentHistory: get().agentHistory,
               context,
             }),
           })
 
-          const { question, suggestedAnswer, updatedHistory } =
-            await response.json()
+          const reader = response.body!.getReader()
+          const decoder = new TextDecoder()
+          let buffer = ""
 
-          set((state) => ({
-            agentHistory: updatedHistory,
-            messages: state.messages.map((m) =>
-              m.id === messageId
-                ? {
-                    ...m,
-                    questionAnalysis: {
-                      id: messageId,
-                      question,
-                      suggestedAnswer,
-                      createdAt: new Date(),
-                      updatedAt: new Date(),
-                      messageId,
-                    },
-                  }
-                : m
-            ),
-            currentAnalysis: {
-              id: messageId,
-              question,
-              suggestedAnswer,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              messageId,
-            },
-          }))
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split("\n")
+            buffer = lines.pop() ?? ""
+
+            for (const line of lines) {
+              if (!line.trim()) continue
+              const event = JSON.parse(line)
+              if (event.type === "delta") {
+                set((state) => ({
+                  messages: state.messages.map((m) =>
+                    m.id === messageId && m.questionAnalysis
+                      ? {
+                          ...m,
+                          questionAnalysis: {
+                            ...m.questionAnalysis,
+                            suggestedAnswer:
+                              m.questionAnalysis.suggestedAnswer + event.text,
+                          },
+                        }
+                      : m
+                  ),
+                }))
+              } else if (event.type === "done") {
+                set({ agentHistory: event.updatedHistory })
+              }
+            }
+          }
         } catch (error) {
-          console.error("Error analyzing message:", error)
+          console.error("Error streaming answer:", error)
         }
       },
     }),

@@ -17,9 +17,5 @@ If CONVERSATION SO FAR is provided, use it to:
 - Build naturally on what was already said
 - Fill genuine gaps in the candidate's previous answers
 
-Always respond with valid JSON in this exact format:
-{
-  "question": "the extracted question",
-  "suggestedAnswer": "full answer text here"
-}`,
+Return ONLY the answer text. No JSON, no labels, no prefixes.`,
 })

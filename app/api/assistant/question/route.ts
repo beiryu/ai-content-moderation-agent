@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server"
 import { MemorySession, OpenAIResponsesCompactionSession, run } from "@openai/agents"
 import type { AgentInputItem } from "@openai/agents"
 
@@ -37,15 +36,39 @@ export async function POST(req: Request) {
   })
 
   try {
-    const result = await run(answerCoachAgent, input, { session })
-    const updatedHistory = await session.getItems()
-    const output = JSON.parse(result.finalOutput as string) as {
-      question: string
-      suggestedAnswer: string
-    }
-    return NextResponse.json({ ...output, updatedHistory })
+    const streamed = await run(answerCoachAgent, input, { session, stream: true })
+
+    const encoder = new TextEncoder()
+    const body = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const event of streamed) {
+            if (
+              event.type === "raw_model_stream_event" &&
+              event.data.type === "output_text_delta"
+            ) {
+              const chunk =
+                JSON.stringify({ type: "delta", text: (event.data as { delta: string }).delta }) + "\n"
+              controller.enqueue(encoder.encode(chunk))
+            }
+          }
+          const updatedHistory = await session.getItems()
+          const done =
+            JSON.stringify({ type: "done", updatedHistory }) + "\n"
+          controller.enqueue(encoder.encode(done))
+        } catch (err) {
+          console.error("Stream error:", err)
+        } finally {
+          controller.close()
+        }
+      },
+    })
+
+    return new Response(body, {
+      headers: { "Content-Type": "application/x-ndjson" },
+    })
   } catch (error) {
     console.error("Error running answer coach agent:", error)
-    return new NextResponse("Error analyzing interview", { status: 500 })
+    return new Response("Error analyzing interview", { status: 500 })
   }
 }

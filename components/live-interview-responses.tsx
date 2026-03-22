@@ -31,6 +31,9 @@ export function LiveInterviewResponses() {
                 <div className="font-medium text-sm mb-2">{response.question}</div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {response.suggestedAnswer}
+                  {response.suggestedAnswer.length === 0 && (
+                    <span className="inline-block w-2 h-3 bg-muted-foreground/50 animate-pulse rounded-sm" />
+                  )}
                 </p>
               </div>
             </div>
