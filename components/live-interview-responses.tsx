@@ -1,6 +1,17 @@
+import { ContextType } from "@/types/interview-message"
 import { useInterviewSessionStore } from "@/stores/interview-session.store"
 
+import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+
+const contextBadgeVariant: Record<
+  NonNullable<ContextType>,
+  "default" | "secondary" | "outline"
+> = {
+  cold: "default",
+  "follow-up": "secondary",
+  pivot: "outline",
+}
 
 export function LiveInterviewResponses() {
   const { messages } = useInterviewSessionStore()
@@ -26,7 +37,14 @@ export function LiveInterviewResponses() {
                 })}
               </div>
               <div className="flex-1">
-                <div className="font-medium text-sm">{response.question}</div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="font-medium text-sm">{response.question}</div>
+                  {response.contextType && (
+                    <Badge variant={contextBadgeVariant[response.contextType]} className="text-xs capitalize shrink-0">
+                      {response.contextType}
+                    </Badge>
+                  )}
+                </div>
                 <div className="text-sm text-muted-foreground mt-1">
                   {response.suggestedAnswerPoints.map((suggestion, index) => (
                     <div key={index} className="mb-2">

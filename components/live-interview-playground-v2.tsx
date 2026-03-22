@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useInterviewSessionStore } from "@/stores/interview-session.store"
-import { Clock, Mic, Send, Settings } from "lucide-react"
+import { Clock, Settings } from "lucide-react"
 
 import useCreateInterviewSession from "@/hooks/api/interview-session/useCreateInterviewSession"
 import useUpdateInterviewSession from "@/hooks/api/interview-session/useUpdateInterviewSession"
@@ -14,9 +14,10 @@ import {
 } from "@/components/ui/resizable"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import StreamingChat from "@/components/chat/streaming-chat"
 import { LiveInterviewResponses } from "@/components/live-interview-responses"
+import MicOnlyRecorder from "@/components/mic-only-recorder"
 import { MicrophoneConnectionStatus } from "@/components/microphone-connection-status"
 import { TranscriptionDisplay } from "@/components/transcription-display"
 
@@ -37,8 +38,6 @@ export function LiveInterviewPlaygroundV2({
   const [timer, setTimer] = useState("00:00")
   const timerRef = useRef<NodeJS.Timeout>()
   const cleanupRef = useRef<(() => void) | null>(null)
-
-  const [message, setMessage] = useState("")
 
   // Reset and start timer
   const resetTimer = useCallback(() => {
@@ -149,9 +148,7 @@ export function LiveInterviewPlaygroundV2({
               <Button variant="ghost" size="icon">
                 <Settings className="size-4" />
               </Button>
-              <Button variant="ghost" size="icon">
-                <Mic className="size-4" />
-              </Button>
+              <MicOnlyRecorder />
               <Switch />
               <Button variant="destructive" size="sm">
                 Leave
@@ -170,49 +167,8 @@ export function LiveInterviewPlaygroundV2({
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={defaultLayout[2]} minSize={25}>
-          <div className="flex h-[52px] items-center px-4">
-            <h2 className="text-lg font-semibold">Chat with AI Assistant</h2>
-          </div>
-          <Separator />
-          <div className="flex h-full flex-col justify-between">
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="space-y-4">
-                <div className="flex flex-col space-y-2">
-                  <div className="bg-muted w-max max-w-[75%] rounded-lg px-4 py-2 text-sm">
-                    Hello! I&apos;m your AI interview assistant. How can I help
-                    you today?
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="sticky bottom-0 bg-background">
-              <Separator />
-              <div className="shrink-0 border-t p-4">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault()
-                    setMessage("")
-                  }}
-                  className="relative flex items-center"
-                >
-                  <Textarea
-                    placeholder="Type your message..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    className="flex-1 resize-none overflow-hidden pr-12"
-                    style={{ maxHeight: "120px" }}
-                  />
-                  <Button
-                    type="submit"
-                    size="icon"
-                    className="absolute right-2"
-                  >
-                    <Send className="size-4" />
-                    <span className="sr-only">Send message</span>
-                  </Button>
-                </form>
-              </div>
-            </div>
+          <div className="flex h-full flex-col overflow-hidden">
+            <StreamingChat />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

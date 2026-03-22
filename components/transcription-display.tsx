@@ -14,7 +14,7 @@ const useScrollToBottom = (ref: React.RefObject<HTMLElement>, deps: any[]) => {
 }
 
 export function TranscriptionDisplay() {
-  const { messages, transcriptionBuffer, interimText } =
+  const { messages, interviewerBuffer, candidateBuffer, interimText } =
     useInterviewSessionStore()
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -39,18 +39,33 @@ export function TranscriptionDisplay() {
               })}
               text={message.content}
               type="final"
+              role={message.role as "interviewer" | "candidate"}
             />
           ))}
 
-          {/* Current buffer */}
-          {transcriptionBuffer && (
+          {/* Interviewer buffer */}
+          {interviewerBuffer && (
             <TranscriptionMessage
               timestamp={new Date().toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
               })}
-              text={transcriptionBuffer}
+              text={interviewerBuffer}
               type="buffer"
+              role="interviewer"
+            />
+          )}
+
+          {/* Candidate buffer */}
+          {candidateBuffer && (
+            <TranscriptionMessage
+              timestamp={new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              text={candidateBuffer}
+              type="buffer"
+              role="candidate"
             />
           )}
 
@@ -63,6 +78,7 @@ export function TranscriptionDisplay() {
               })}
               text={interimText}
               type="interim"
+              role="interviewer"
             />
           )}
         </div>

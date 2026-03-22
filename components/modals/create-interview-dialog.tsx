@@ -3,11 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
 import { useForm } from "react-hook-form"
-
-import { cn } from "@/lib/utils"
 import {
   CreateInterviewRequest,
   CreateInterviewRequestSchema,
@@ -32,20 +28,9 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
 import { Icons } from "@/components/icons"
 
-import { priority_options, type_options } from "../filters"
-import { Calendar } from "../ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 
 export function CreateInterviewDialog() {
   const [open, setOpen] = React.useState(false)
@@ -62,8 +47,8 @@ export function CreateInterviewDialog() {
       status: "in-progress",
       priority: "high",
       dueDate: new Date().toISOString(),
-      jobTitle: "Software Engineer",
-      companyName: "Upwork",
+      jobTitle: "",
+      companyName: "",
     },
   })
 
@@ -97,14 +82,14 @@ export function CreateInterviewDialog() {
       <DialogTrigger asChild>
         <Button variant="default" effect="gooeyRight">
           <Icons.add className="mr-2 size-4" />
-          Create Interview
+          New Session
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Interview</DialogTitle>
+          <DialogTitle>New Session</DialogTitle>
           <DialogDescription>
-            Fill in the details for your new interview session.
+            Give your session a name to get started.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -114,143 +99,10 @@ export function CreateInterviewDialog() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Session name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Interview name" {...field} />
+                    <Input placeholder="e.g. Google SWE round 1" {...field} />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="jobTitle"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Job Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Job title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="companyName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Company name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select interview type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectGroup>
-                        {type_options.map((type, index) => (
-                          <SelectItem key={index} value={type.value}>
-                            <span className="flex items-center">
-                              <type.icon className="mr-2 size-5 text-muted-foreground" />
-                              {type.label}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Priority</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectGroup>
-                        {priority_options.map((priority, index) => (
-                          <SelectItem key={index} value={priority.value}>
-                            <span className="flex items-center">
-                              <priority.icon className="mr-2 size-5 text-muted-foreground" />
-                              {priority.label}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="dueDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Due Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(new Date(field.value), "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto size-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar
-                        mode="single"
-                        selected={
-                          field.value ? new Date(field.value) : undefined
-                        }
-                        onSelect={(date) =>
-                          field.onChange(date ? date.toISOString() : "")
-                        }
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -260,7 +112,7 @@ export function CreateInterviewDialog() {
                 {isPending && (
                   <Icons.spinner className="mr-2 size-4 animate-spin" />
                 )}
-                Create
+                Start
               </Button>
             </DialogFooter>
           </form>

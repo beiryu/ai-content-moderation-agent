@@ -6,7 +6,8 @@ import { InterviewSession, MicrophoneStatus } from "@/types/interview-session"
 interface InterviewSessionStore {
   // Transcription states
   microphoneStatus: MicrophoneStatus
-  transcriptionBuffer: string
+  interviewerBuffer: string
+  candidateBuffer: string
   interimText: string
   lastSpeakTime: number
 
@@ -18,7 +19,8 @@ interface InterviewSessionStore {
 
   setMicrophoneStatus: (status: MicrophoneStatus) => void
   setCurrentSessionId: (sessionId: string | null) => void
-  processTranscript: (transcript: string, isFinal: boolean) => void
+  processTranscript: (transcript: string, isFinal: boolean, role?: "interviewer" | "candidate") => void
+  flushTranscript: (role: "interviewer" | "candidate") => void
   analyzeMessage: (messageId: string) => Promise<void>
 }
 
@@ -26,7 +28,8 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
   (set, get) => ({
     // Transcription states
     microphoneStatus: "disconnected",
-    transcriptionBuffer: "",
+    interviewerBuffer: "",
+    candidateBuffer: "",
     interimText: "",
     lastSpeakTime: Date.now(),
 
@@ -63,54 +66,44 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
       }
     },
 
-    processTranscript: (transcript: string, isFinal: boolean) => {
-      const now = Date.now()
-      const SILENCE_THRESHOLD = 3000
+    flushTranscript: (role: "interviewer" | "candidate") => {
       const state = get()
-      const timeSinceLastSpeak = now - state.lastSpeakTime
+      const bufferKey = role === "interviewer" ? "interviewerBuffer" : "candidateBuffer"
+      const buffer = state[bufferKey].trim()
+      if (!buffer) return
 
-      // Check silence threshold first
-      if (
-        timeSinceLastSpeak > SILENCE_THRESHOLD &&
-        state.transcriptionBuffer.trim()
-      ) {
-        const messageId = Date.now().toString()
-        const messageText = state.transcriptionBuffer.trim()
+      const messageId = Date.now().toString()
+      set({
+        messages: [
+          ...state.messages,
+          {
+            id: messageId,
+            role,
+            content: buffer,
+            messageType: "other",
+            questionAnalysis: null,
+            answerAnalysis: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            sessionId: state.currentSession?.id ?? "",
+          },
+        ],
+        [bufferKey]: "",
+        interimText: "",
+      })
 
-        set({
-          messages: [
-            ...state.messages,
-            {
-              id: messageId,
-
-              role: "interviewer",
-              content: messageText,
-              messageType: "other",
-              questionAnalysis: null,
-              answerAnalysis: null,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-
-              sessionId: state.currentSession?.id ?? "",
-            },
-          ],
-          transcriptionBuffer: isFinal ? transcript : "",
-          interimText: isFinal ? "" : transcript,
-          lastSpeakTime: now,
-        })
-
+      if (role === "interviewer") {
         get().analyzeMessage(messageId)
-        return
       }
+    },
 
-      // If not enough silence, update buffer or interim
+    processTranscript: (transcript: string, isFinal: boolean, role: "interviewer" | "candidate" = "interviewer") => {
+      const now = Date.now()
+      const bufferKey = role === "interviewer" ? "interviewerBuffer" : "candidateBuffer"
+
       if (isFinal) {
         set((state) => ({
-          transcriptionBuffer: (
-            state.transcriptionBuffer +
-            " " +
-            transcript
-          ).trim(),
+          [bufferKey]: (state[bufferKey] + " " + transcript).trim(),
           lastSpeakTime: now,
         }))
       } else {
@@ -127,11 +120,17 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
 
       if (!message) return
 
+      // Build context window: last 6 messages before this one
+      const msgIndex = state.messages.findIndex((m) => m.id === messageId)
+      const contextMessages = state.messages
+        .slice(Math.max(0, msgIndex - 6), msgIndex)
+        .map((m) => ({ role: m.role, content: m.content }))
+
       try {
         const response = await fetch("/api/assistant/analyze-message", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: message.content }),
+          body: JSON.stringify({ text: message.content, context: contextMessages }),
         })
 
         const analysis: QuestionAnalysis = await response.json()

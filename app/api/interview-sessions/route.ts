@@ -36,23 +36,3 @@ export async function POST(req: Request) {
     return new NextResponse("Internal Error", { status: 500 })
   }
 }
-
-export async function PUT(req: Request) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return new NextResponse("Unauthorized", { status: 403 })
-    }
-
-    const { sessionId, data } = await req.json()
-
-    const updatedSession = await db.interviewSession.update({
-      where: { id: sessionId },
-      data,
-    })
-
-    return NextResponse.json(updatedSession)
-  } catch (error) {
-    return new NextResponse("Internal Error", { status: 500 })
-  }
-}

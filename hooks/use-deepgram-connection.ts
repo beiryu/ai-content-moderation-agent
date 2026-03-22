@@ -15,8 +15,8 @@ interface UseDeepgramConnectionReturn {
   error: Error | null
 }
 
-export function useDeepgramConnection(): UseDeepgramConnectionReturn {
-  const { processTranscript } = useInterviewSessionStore()
+export function useDeepgramConnection(role: "interviewer" | "candidate" = "interviewer"): UseDeepgramConnectionReturn {
+  const { processTranscript, flushTranscript } = useInterviewSessionStore()
 
   const [status, setStatus] = useState<DeepgramConnectionStatus>("idle")
   const [error, setError] = useState<Error | null>(null)
@@ -24,6 +24,7 @@ export function useDeepgramConnection(): UseDeepgramConnectionReturn {
   const [connection, setConnection] = useState<LiveClient | null>(null)
 
   const keepAliveInterval = useRef<NodeJS.Timeout>()
+  const silenceInterval = useRef<NodeJS.Timeout>()
 
   const initializeConnection = useCallback(async () => {
     try {
@@ -40,6 +41,8 @@ export function useDeepgramConnection(): UseDeepgramConnectionReturn {
         model: "nova-2",
         interim_results: true,
         smart_format: true,
+        utterance_end_ms: 1000,
+        endpointing: 300,
       })
 
       // Setup keepAlive interval
@@ -51,6 +54,18 @@ export function useDeepgramConnection(): UseDeepgramConnectionReturn {
         }
       }, 10000) // Send keepAlive every 10 seconds
 
+      // Silence fallback: flush buffer if no audio for 5s (handles case where UtteranceEnd doesn't fire)
+      silenceInterval.current = setInterval(() => {
+        const state = useInterviewSessionStore.getState()
+        const silentFor = Date.now() - state.lastSpeakTime
+        if (silentFor > 5000) {
+          const bufferKey = role === "interviewer" ? "interviewerBuffer" : "candidateBuffer"
+          if (state[bufferKey].trim()) {
+            state.flushTranscript(role)
+          }
+        }
+      }, 1000)
+
       conn.on(LiveTranscriptionEvents.Open, () => {
         setIsListening(true)
         setStatus("ready")
@@ -61,6 +76,10 @@ export function useDeepgramConnection(): UseDeepgramConnectionReturn {
         setConnection(null)
       })
 
+      conn.on(LiveTranscriptionEvents.UtteranceEnd, () => {
+        flushTranscript(role)
+      })
+
       conn.on(LiveTranscriptionEvents.Transcript, (data) => {
         const words = data.channel.alternatives[0].words
         if (words.length === 0) return
@@ -69,7 +88,7 @@ export function useDeepgramConnection(): UseDeepgramConnectionReturn {
           .map((word: any) => word.punctuated_word ?? word.word)
           .join(" ")
 
-        processTranscript(currentTranscript, data.is_final)
+        processTranscript(currentTranscript, data.is_final, role)
       })
 
       setConnection(conn)
@@ -89,6 +108,9 @@ export function useDeepgramConnection(): UseDeepgramConnectionReturn {
     return () => {
       if (keepAliveInterval.current) {
         clearInterval(keepAliveInterval.current)
+      }
+      if (silenceInterval.current) {
+        clearInterval(silenceInterval.current)
       }
     }
   }, [])
