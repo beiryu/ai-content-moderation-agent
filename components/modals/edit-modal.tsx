@@ -31,7 +31,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Popover,
   PopoverContent,
@@ -45,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
 import { priority_options, status_options, type_options } from "../filters"
 import { toast } from "../ui/use-toast"
