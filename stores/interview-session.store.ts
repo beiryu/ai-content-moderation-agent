@@ -21,9 +21,11 @@ interface InterviewSessionStore {
 
   // Session states
   currentSession: InterviewSession | null
+  sessionContext: string
 
   setMicrophoneStatus: (status: MicrophoneStatus) => void
   setCurrentSessionId: (sessionId: string | null) => void
+  setSessionContext: (ctx: string) => void
   processTranscript: (
     transcript: string,
     isFinal: boolean,
@@ -51,9 +53,11 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
 
       // Session states
       currentSession: null,
+      sessionContext: "",
 
       // Actions
       setMicrophoneStatus: (status) => set({ microphoneStatus: status }),
+      setSessionContext: (ctx) => set({ sessionContext: ctx }),
 
       setCurrentSessionId: (sessionId) => {
         if (sessionId) {
@@ -75,7 +79,7 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
             },
           }))
         } else {
-          set({ currentSession: null, agentHistory: [] })
+          set({ currentSession: null, agentHistory: [], sessionContext: "" })
         }
       },
 
@@ -167,6 +171,7 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
               text: message.content,
               agentHistory: get().agentHistory,
               context,
+              sessionContext: get().sessionContext,
             }),
           })
 

@@ -26,6 +26,7 @@ export async function POST(req: Request) {
         dueDate: body.dueDate,
         jobTitle: body.jobTitle,
         companyName: body.companyName,
+        notes: body.notes,
         user: {
           connect: {
             id: session.user.id,

@@ -120,8 +120,9 @@ model InterviewSession {
   user        User      @relation("UserInterviewSessions", fields: [userId], references: [id], onDelete: Cascade)
   title       String?
   status      String    @default("in_progress")
-  transcripts String?   @db.Text
-  feedback    Json?
+  transcripts    String?   @db.Text
+  sessionContext String?   @db.Text
+  feedback       Json?
   duration    Int?
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")

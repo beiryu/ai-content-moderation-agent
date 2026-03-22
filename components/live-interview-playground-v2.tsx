@@ -33,7 +33,7 @@ export function LiveInterviewPlaygroundV2({
   defaultLayout = [30, 40, 30],
 }: LiveInterviewPlaygroundV2Props) {
   const router = useRouter()
-  const { setCurrentSessionId } = useInterviewSessionStore()
+  const { setCurrentSessionId, setSessionContext } = useInterviewSessionStore()
   const { clearDocumentSelection, clearActiveSession } = useChatDocumentStore()
 
   const { mutateAsync: createSession } = useCreateInterviewSession()
@@ -84,6 +84,7 @@ export function LiveInterviewPlaygroundV2({
               if (mounted) {
                 interviewSessionIdRef.current = result.id
                 setCurrentSessionId(result.id)
+                setSessionContext(result.sessionContext ?? "")
               }
             },
           }
@@ -114,6 +115,7 @@ export function LiveInterviewPlaygroundV2({
     cleanupRef.current = async () => {
       const sessionId = interviewSessionIdRef.current
       interviewSessionIdRef.current = null
+      setSessionContext("")
       if (!sessionId) {
         setCurrentSessionId(null)
         return
@@ -134,7 +136,7 @@ export function LiveInterviewPlaygroundV2({
         console.error("Failed to cleanup session:", error)
       }
     }
-  }, [updateSession, setCurrentSessionId])
+  }, [updateSession, setCurrentSessionId, setSessionContext])
 
   const handleLeave = useCallback(() => {
     void cleanupRef.current?.()
@@ -191,32 +193,46 @@ export function LiveInterviewPlaygroundV2({
             minSize={30}
             className="flex min-h-0 flex-col"
           >
-            {/* Meeting room: connect flow + screen preview */}
-            <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Meeting room
-              </span>
-              <MicrophoneConnectionStatus />
-            </div>
-            <div className="shrink-0 border-b bg-muted/30 px-3 py-4">
-              <RecorderTranscriber />
-            </div>
+            <ResizablePanelGroup direction="vertical">
+              {/* Meeting room: connect flow + screen preview */}
+              <ResizablePanel
+                defaultSize={28}
+                minSize={15}
+                className="flex min-h-0 flex-col"
+              >
+                <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Meeting room
+                  </span>
+                  <MicrophoneConnectionStatus />
+                </div>
+                <div className="min-h-0 flex-1 overflow-auto border-b bg-muted/30 px-3 py-4">
+                  <RecorderTranscriber />
+                </div>
+              </ResizablePanel>
 
-            {/* AI Responses section header */}
-            <div className="flex h-10 shrink-0 items-center justify-between border-b px-4">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                AI Suggestions
-              </span>
-              <div className="flex items-center gap-1.5">
-                <div className="size-1.5 rounded-full bg-green-500" />
-                <span className="text-xs text-muted-foreground">Ready</span>
-              </div>
-            </div>
+              <ResizableHandle withHandle />
 
-            {/* AI Responses list */}
-            <div className="min-h-0 flex-1 overflow-hidden">
-              <LiveInterviewResponses />
-            </div>
+              {/* AI Suggestions */}
+              <ResizablePanel
+                defaultSize={72}
+                minSize={20}
+                className="flex min-h-0 flex-col"
+              >
+                <div className="flex h-10 shrink-0 items-center justify-between border-b px-4">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    AI Suggestions
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="size-1.5 rounded-full bg-green-500" />
+                    <span className="text-xs text-muted-foreground">Ready</span>
+                  </div>
+                </div>
+                <div className="min-h-0 flex-1 overflow-hidden">
+                  <LiveInterviewResponses />
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
           </ResizablePanel>
 
           <ResizableHandle withHandle />

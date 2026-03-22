@@ -10,6 +10,7 @@ export const InterviewSchema = z.object({
   type: z.string(),
   jobTitle: z.string(),
   companyName: z.string(),
+  notes: z.string().optional().nullable(),
 
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -23,6 +24,7 @@ export const CreateInterviewRequestSchema = z.object({
   dueDate: z.string(),
   jobTitle: z.string(),
   companyName: z.string(),
+  notes: z.string().optional(),
 })
 
 export const UpdateInterviewRequestSchema = z.object({
@@ -33,6 +35,7 @@ export const UpdateInterviewRequestSchema = z.object({
   priority: z.string().optional(),
   dueDate: z.string().optional(),
   type: z.string().optional(),
+  notes: z.string().optional(),
 })
 
 export type Interview = z.infer<typeof InterviewSchema>

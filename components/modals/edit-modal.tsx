@@ -31,6 +31,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Popover,
   PopoverContent,
@@ -66,6 +67,7 @@ export default function EditDialog({ interview }: EditProps) {
       type: interview.type,
       priority: interview.priority,
       dueDate: interview.dueDate,
+      notes: interview.notes ?? "",
     },
   })
 
@@ -244,6 +246,28 @@ export default function EditDialog({ interview }: EditProps) {
                       />
                     </PopoverContent>
                   </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Notes{" "}
+                    <span className="font-normal text-muted-foreground">
+                      (optional)
+                    </span>
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="e.g. Round 2, focus on system design..."
+                      rows={3}
+                      {...field}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

@@ -13,11 +13,24 @@ export async function POST(req: Request) {
 
     const { interviewId } = await req.json()
 
+    // Build sessionContext from interview metadata
+    const interview = await db.interview.findUnique({
+      where: { id: interviewId },
+    })
+
+    const parts: string[] = []
+    if (interview?.jobTitle) parts.push(`Role: ${interview.jobTitle}`)
+    if (interview?.companyName) parts.push(`Company: ${interview.companyName}`)
+    if (interview?.type) parts.push(`Interview type: ${interview.type}`)
+    if (interview?.notes) parts.push(`Notes: ${interview.notes}`)
+    const sessionContext = parts.length > 0 ? parts.join("\n") : undefined
+
     // Create new session
     const interviewSession = await db.interviewSession.create({
       data: {
         feedback: "",
         duration: 0,
+        sessionContext,
         interview: {
           connect: {
             id: interviewId,

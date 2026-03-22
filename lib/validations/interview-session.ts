@@ -9,6 +9,7 @@ export const InterviewSessionSchema = z.object({
   feedbackSummary: z.string(),
   duration: z.number(),
   status: z.string(),
+  sessionContext: z.string().optional().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
   interviewId: z.string(),

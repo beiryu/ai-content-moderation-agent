@@ -1,9 +1,14 @@
 import { Agent } from "@openai/agents"
 
-export const answerCoachAgent = new Agent({
-  name: "AnswerCoach",
-  model: "gpt-4o-mini",
-  instructions: `You are an expert interview coach.
+export function createAnswerCoachAgent(sessionContext?: string): Agent {
+  const contextBlock = sessionContext
+    ? `\nSESSION CONTEXT:\n${sessionContext}\n\nUse this context when tailoring suggested answers.\n`
+    : ""
+
+  return new Agent({
+    name: "AnswerCoach",
+    model: "gpt-4o-mini",
+    instructions: `You are an expert interview coach.${contextBlock}
 Given an interviewer's question and optionally a conversation history:
 1. Extract the core question being asked
 2. Write a complete, confident, natural-sounding answer the candidate can say verbatim
@@ -18,4 +23,5 @@ If CONVERSATION SO FAR is provided, use it to:
 - Fill genuine gaps in the candidate's previous answers
 
 Return ONLY the answer text. No JSON, no labels, no prefixes.`,
-})
+  })
+}

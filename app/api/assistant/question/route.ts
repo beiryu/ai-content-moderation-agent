@@ -5,17 +5,19 @@ import {
   type AgentInputItem,
 } from "@openai/agents"
 
-import { answerCoachAgent } from "@/lib/agents/interview-agents"
+import { createAnswerCoachAgent } from "@/lib/agents/interview-agents"
 
 export async function POST(req: Request) {
   const {
     text,
     agentHistory = [],
     context = [],
+    sessionContext,
   }: {
     text: string
     agentHistory: AgentInputItem[]
     context: { role: string; content: string }[]
+    sessionContext?: string
   } = await req.json()
 
   const contextBlock =
@@ -41,8 +43,10 @@ export async function POST(req: Request) {
       compactionCandidateItems.length >= 12,
   })
 
+  const agent = createAnswerCoachAgent(sessionContext)
+
   try {
-    const streamed = await run(answerCoachAgent, input, {
+    const streamed = await run(agent, input, {
       session,
       stream: true,
     })
