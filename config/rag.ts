@@ -13,8 +13,8 @@ export const RAG_CONFIG = {
   models: {
     chat: {
       default: "gpt-4o-mini",
-      interview: "gpt-3.5-turbo-1106",
-      analysis: "gpt-3.5-turbo-1106",
+      interview: "gpt-4o-mini",
+      analysis: "gpt-4o-mini",
       temperature: 0.2,
       streaming: true,
       maxTokens: 2000,

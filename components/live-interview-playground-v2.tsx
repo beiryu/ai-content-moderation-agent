@@ -1,8 +1,9 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { useInterviewSessionStore } from "@/stores/interview-session.store"
-import { Clock, Settings } from "lucide-react"
+import { Clock } from "lucide-react"
 
 import useCreateInterviewSession from "@/hooks/api/interview-session/useCreateInterviewSession"
 import useUpdateInterviewSession from "@/hooks/api/interview-session/useUpdateInterviewSession"
@@ -13,7 +14,6 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import StreamingChat from "@/components/chat/streaming-chat"
 import { LiveInterviewResponses } from "@/components/live-interview-responses"
@@ -30,6 +30,7 @@ export function LiveInterviewPlaygroundV2({
   interviewId,
   defaultLayout = [30, 40, 30],
 }: LiveInterviewPlaygroundV2Props) {
+  const router = useRouter()
   const { setCurrentSessionId } = useInterviewSessionStore()
 
   const { mutateAsync: createSession } = useCreateInterviewSession()
@@ -126,6 +127,11 @@ export function LiveInterviewPlaygroundV2({
     }
   }, [updateSession, setCurrentSessionId])
 
+  const handleLeave = useCallback(() => {
+    void cleanupRef.current?.()
+    router.push("/dashboard/interviews")
+  }, [router])
+
   return (
     <TooltipProvider delayDuration={0}>
       <ResizablePanelGroup
@@ -153,12 +159,8 @@ export function LiveInterviewPlaygroundV2({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon">
-                <Settings className="size-4" />
-              </Button>
               <MicOnlyRecorder />
-              <Switch />
-              <Button variant="destructive" size="sm">
+              <Button variant="destructive" size="sm" onClick={handleLeave}>
                 Leave
               </Button>
             </div>

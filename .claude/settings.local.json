@@ -7,7 +7,14 @@
       "Bash(ls /Users/beiryu/Development/Beiryu/ai-interview-old/app/\\\\\\(dashboard\\\\\\))",
       "Bash(ls:*)",
       "Bash(find /Users/beiryu/Development/Beiryu/ai-interview-old -type f \\\\\\(-name manifest.json -o -name *extension* \\\\\\))",
-      "Bash(pnpm tsc:*)"
+      "Bash(pnpm tsc:*)",
+      "Bash(pnpm add:*)",
+      "Bash(grep -r AgentInputItem /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/@openai/ --include=*.d.ts -l)",
+      "Bash(grep -r AgentInputItem /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/.pnpm/@openai+agents@0.7.2/ --include=*.d.ts -l)",
+      "Bash(grep -r OpenAIResponsesCompactionSession /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/.pnpm/@openai+agents@0.7.2_@cfworker+json-schema@4.1.1_ws@8.18.3_zod@3.25.76/ --include=*.d.ts)",
+      "Bash(grep -r \"CompactionSession\\\\|compaction\" /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/.pnpm/@openai+agents-core@0.7.2_@cfworker+json-schema@4.1.1_ws@8.18.3_zod@3.25.76/ --include=*.d.ts -l)",
+      "Bash(grep -r \"class.*Session\\\\|export.*Session\" /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/.pnpm/@openai+agents-core@0.7.2_@cfworker+json-schema@4.1.1_ws@8.18.3_zod@3.25.76/node_modules/@openai/agents-core/dist/ --include=*.d.ts)",
+      "Bash(grep -r \"class.*Session\\\\|export.*Session\" /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/.pnpm/@openai+agents-openai@0.7.2_@cfworker+json-schema@4.1.1_ws@8.18.3_zod@3.25.76/node_modules/@openai/agents-openai/dist/ --include=*.d.ts)"
     ]
   }
 }

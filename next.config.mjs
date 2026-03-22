@@ -9,7 +9,12 @@ const nextConfig = {
     domains: ["avatars.githubusercontent.com"],
   },
   experimental: {
-    serverComponentsExternalPackages: ["@prisma/client"],
+    serverComponentsExternalPackages: [
+      "@prisma/client",
+      "@openai/agents",
+      "@openai/agents-core",
+      "@openai/agents-openai",
+    ],
   },
   webpack(config) {
     // Grab the existing rule that handles SVG imports

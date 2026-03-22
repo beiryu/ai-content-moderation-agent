@@ -13,7 +13,6 @@ export interface InterviewMessage {
   content: string
   messageType: MessageType
   questionAnalysis: QuestionAnalysis | null
-  answerAnalysis: AnswerAnalysis | null
 
   createdAt: Date
   updatedAt: Date
@@ -31,24 +30,4 @@ export interface QuestionAnalysis {
   updatedAt: Date
 
   messageId: string
-}
-
-export interface AnswerAnalysis {
-  id: string
-
-  relevanceScore: number
-  completenessScore: number
-  clarityScore: number
-  technicalAccuracy?: number
-
-  coveredPoints: string[]
-  missedPoints: string[]
-  improvements: string[]
-
-  metadata?: Record<string, any>
-
-  messageId: string
-
-  createdAt: Date
-  updatedAt: Date
 }

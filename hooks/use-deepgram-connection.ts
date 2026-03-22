@@ -15,7 +15,9 @@ interface UseDeepgramConnectionReturn {
   error: Error | null
 }
 
-export function useDeepgramConnection(role: "interviewer" | "candidate" = "interviewer"): UseDeepgramConnectionReturn {
+export function useDeepgramConnection(
+  role: "interviewer" | "candidate" = "interviewer"
+): UseDeepgramConnectionReturn {
   const { processTranscript, flushTranscript } = useInterviewSessionStore()
 
   const [status, setStatus] = useState<DeepgramConnectionStatus>("idle")
@@ -59,7 +61,8 @@ export function useDeepgramConnection(role: "interviewer" | "candidate" = "inter
         const state = useInterviewSessionStore.getState()
         const silentFor = Date.now() - state.lastSpeakTime
         if (silentFor > 5000) {
-          const bufferKey = role === "interviewer" ? "interviewerBuffer" : "candidateBuffer"
+          const bufferKey =
+            role === "interviewer" ? "interviewerBuffer" : "candidateBuffer"
           if (state[bufferKey].trim()) {
             state.flushTranscript(role)
           }

@@ -1,4 +1,6 @@
+import type { AgentInputItem } from "@openai/agents"
 import { create } from "zustand"
+import { createJSONStorage, persist } from "zustand/middleware"
 
 import { InterviewMessage, QuestionAnalysis } from "@/types/interview-message"
 import { InterviewSession, MicrophoneStatus } from "@/types/interview-session"
@@ -14,149 +16,182 @@ interface InterviewSessionStore {
   messages: InterviewMessage[]
   currentAnalysis: QuestionAnalysis | null
 
+  // Agent memory
+  agentHistory: AgentInputItem[]
+
   // Session states
   currentSession: InterviewSession | null
 
   setMicrophoneStatus: (status: MicrophoneStatus) => void
   setCurrentSessionId: (sessionId: string | null) => void
-  processTranscript: (transcript: string, isFinal: boolean, role?: "interviewer" | "candidate") => void
+  processTranscript: (
+    transcript: string,
+    isFinal: boolean,
+    role?: "interviewer" | "candidate"
+  ) => void
   flushTranscript: (role: "interviewer" | "candidate") => void
   analyzeMessage: (messageId: string) => Promise<void>
 }
 
 export const useInterviewSessionStore = create<InterviewSessionStore>()(
-  (set, get) => ({
-    // Transcription states
-    microphoneStatus: "disconnected",
-    interviewerBuffer: "",
-    candidateBuffer: "",
-    interimText: "",
-    lastSpeakTime: Date.now(),
+  persist(
+    (set, get) => ({
+      // Transcription states
+      microphoneStatus: "disconnected",
+      interviewerBuffer: "",
+      candidateBuffer: "",
+      interimText: "",
+      lastSpeakTime: Date.now(),
 
-    messages: [],
-    currentAnalysis: null,
+      messages: [],
+      currentAnalysis: null,
 
-    // Session states
-    currentSession: null,
+      // Agent memory
+      agentHistory: [],
 
-    // Actions
-    setMicrophoneStatus: (status) => set({ microphoneStatus: status }),
+      // Session states
+      currentSession: null,
 
-    setCurrentSessionId: (sessionId) => {
-      if (sessionId) {
-        set((state) => ({
-          currentSession: {
-            id: sessionId,
+      // Actions
+      setMicrophoneStatus: (status) => set({ microphoneStatus: status }),
 
-            completionRate: 0,
-            performanceScore: 0,
-            feedbackSummary: "",
-            duration: 0,
-            status: "active",
+      setCurrentSessionId: (sessionId) => {
+        if (sessionId) {
+          set((state) => ({
+            currentSession: {
+              id: sessionId,
 
-            createdAt: new Date(),
-            updatedAt: new Date(),
+              completionRate: 0,
+              performanceScore: 0,
+              feedbackSummary: "",
+              duration: 0,
+              status: "active",
 
-            interviewId: "",
-            messages: state.messages,
-          },
-        }))
-      } else {
-        set({ currentSession: null })
-      }
-    },
+              createdAt: new Date(),
+              updatedAt: new Date(),
 
-    flushTranscript: (role: "interviewer" | "candidate") => {
-      const state = get()
-      const bufferKey = role === "interviewer" ? "interviewerBuffer" : "candidateBuffer"
-      const buffer = state[bufferKey].trim()
-      if (!buffer) return
+              interviewId: "",
+              messages: state.messages,
+            },
+          }))
+        } else {
+          set({ currentSession: null, agentHistory: [] })
+        }
+      },
 
-      const messageId = Date.now().toString()
-      set({
-        messages: [
-          ...state.messages,
-          {
-            id: messageId,
-            role,
-            content: buffer,
-            messageType: "other",
-            questionAnalysis: null,
-            answerAnalysis: null,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            sessionId: state.currentSession?.id ?? "",
-          },
-        ],
-        [bufferKey]: "",
-        interimText: "",
-      })
+      flushTranscript: (role: "interviewer" | "candidate") => {
+        const state = get()
+        const bufferKey =
+          role === "interviewer" ? "interviewerBuffer" : "candidateBuffer"
+        const buffer = state[bufferKey].trim()
+        if (!buffer) return
 
-      if (role === "interviewer") {
-        get().analyzeMessage(messageId)
-      }
-    },
-
-    processTranscript: (transcript: string, isFinal: boolean, role: "interviewer" | "candidate" = "interviewer") => {
-      const now = Date.now()
-      const bufferKey = role === "interviewer" ? "interviewerBuffer" : "candidateBuffer"
-
-      if (isFinal) {
-        set((state) => ({
-          [bufferKey]: (state[bufferKey] + " " + transcript).trim(),
-          lastSpeakTime: now,
-        }))
-      } else {
+        const messageId = Date.now().toString()
         set({
-          interimText: transcript,
-          lastSpeakTime: now,
-        })
-      }
-    },
-
-    analyzeMessage: async (messageId: string) => {
-      const state = get()
-      const message = state.messages.find((m) => m.id === messageId)
-
-      if (!message) return
-
-      // Build context window: last 6 messages before this one
-      const msgIndex = state.messages.findIndex((m) => m.id === messageId)
-      const contextMessages = state.messages
-        .slice(Math.max(0, msgIndex - 6), msgIndex)
-        .map((m) => ({ role: m.role, content: m.content }))
-
-      try {
-        const response = await fetch("/api/assistant/analyze-message", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: message.content, context: contextMessages }),
+          messages: [
+            ...state.messages,
+            {
+              id: messageId,
+              role,
+              content: buffer,
+              messageType: "other",
+              questionAnalysis: null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              sessionId: state.currentSession?.id ?? "",
+            },
+          ],
+          [bufferKey]: "",
+          interimText: "",
         })
 
-        const analysis: QuestionAnalysis = await response.json()
+        if (role === "interviewer") {
+          get().analyzeMessage(messageId)
+        }
+      },
 
-        set((state) => ({
-          messages: state.messages.map((m) =>
-            m.id === messageId
-              ? {
-                  ...m,
-                  questionAnalysis: {
-                    ...analysis,
+      processTranscript: (
+        transcript: string,
+        isFinal: boolean,
+        role: "interviewer" | "candidate" = "interviewer"
+      ) => {
+        const now = Date.now()
+        const bufferKey =
+          role === "interviewer" ? "interviewerBuffer" : "candidateBuffer"
 
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
+        if (isFinal) {
+          set((state) => ({
+            [bufferKey]: (state[bufferKey] + " " + transcript).trim(),
+            lastSpeakTime: now,
+          }))
+        } else {
+          set({
+            interimText: transcript,
+            lastSpeakTime: now,
+          })
+        }
+      },
 
-                    messageId: messageId,
-                  },
-                }
-              : m
-          ),
+      analyzeMessage: async (messageId: string) => {
+        const state = get()
+        const message = state.messages.find((m) => m.id === messageId)
 
-          currentAnalysis: analysis,
-        }))
-      } catch (error) {
-        console.error("Error analyzing message:", error)
-      }
-    },
-  })
+        if (!message) return
+
+        try {
+          const currentIndex = state.messages.findIndex((m) => m.id === messageId)
+          const context = state.messages
+            .slice(Math.max(0, currentIndex - 6), currentIndex)
+            .map((m) => ({ role: m.role, content: m.content }))
+
+          const response = await fetch("/api/assistant/question", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text: message.content,
+              agentHistory: state.agentHistory,
+              context,
+            }),
+          })
+
+          const { question, suggestedAnswer, updatedHistory } =
+            await response.json()
+
+          set((state) => ({
+            agentHistory: updatedHistory,
+            messages: state.messages.map((m) =>
+              m.id === messageId
+                ? {
+                    ...m,
+                    questionAnalysis: {
+                      id: messageId,
+                      question,
+                      suggestedAnswer,
+                      createdAt: new Date(),
+                      updatedAt: new Date(),
+                      messageId,
+                    },
+                  }
+                : m
+            ),
+            currentAnalysis: {
+              id: messageId,
+              question,
+              suggestedAnswer,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              messageId,
+            },
+          }))
+        } catch (error) {
+          console.error("Error analyzing message:", error)
+        }
+      },
+    }),
+    {
+      name: "interview-agent-history",
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) => ({ agentHistory: state.agentHistory }),
+    }
+  )
 )
