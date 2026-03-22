@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
   try {
     const stream = await openai.chat.completions.create({
-      model: RAG_CONFIG.models.chat.interview,
+      model: RAG_CONFIG.models.chat.model,
       max_tokens: RAG_CONFIG.models.chat.maxTokens,
       temperature: 0.5, // Using a specific value for interview responses
       presence_penalty: RAG_CONFIG.models.chat.presencePenalty,

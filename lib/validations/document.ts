@@ -22,7 +22,7 @@ export const CreateDocumentRequestSchema = z.object({
     .min(1, "Title is required")
     .max(200, "Title must be less than 200 characters"),
   type: z.nativeEnum(DocumentType),
-  content: z.string().min(10, "Content must be at least 10 characters long"),
+  content: z.string(),
   metadata: z.record(z.string(), z.any()).optional(),
 })
 
@@ -30,7 +30,7 @@ export type CreateDocumentRequest = z.infer<typeof CreateDocumentRequestSchema>
 
 export const UpdateDocumentRequestSchema = z.object({
   title: z.string().max(200).optional(),
-  content: z.string().min(10).optional(),
+  content: z.string().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
 })
 

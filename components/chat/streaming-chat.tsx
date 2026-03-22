@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useChatDocumentStore } from "@/stores/chat-document-store"
-import { FileText, Paperclip, Send, Square, X } from "lucide-react"
+import { Paperclip, Send, Square, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Source, useRagChatMessages } from "@/hooks/api/chat/useRagChatMessages"
@@ -12,8 +12,10 @@ import { useGetDocuments } from "@/hooks/api/document/useGetDocuments"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import { ChatMessage } from "@/components/chat/chat-message"
+import DocumentSelector from "@/components/chat/document-selector"
 
 import { Icons } from "../icons"
 import { toast } from "../ui/use-toast"
@@ -138,38 +140,37 @@ export default function StreamingChat() {
   }
 
   return (
-    <>
-      {/* Header */}
-      <div className="p-4 border-b border-border flex items-center justify-between shrink-0">
-        <div className="inline-flex items-center gap-2">
-          <FileText className="size-4 text-primary" />
-          <h3 className="font-medium">RAG Chat</h3>
-        </div>
-        <div className="flex items-center">
-          <div className="inline-flex items-center bg-muted rounded-full border text-xs py-1 px-3 text-muted-foreground">
-            <span className="mr-1">{selectedDocuments.length}</span>
-            document{selectedDocuments.length !== 1 ? "s" : ""} selected
-          </div>
-        </div>
+    <div className="flex h-full min-h-0 flex-col">
+      {/* Header — aligned with Transcription / Meeting room / AI Suggestions */}
+      <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Document chat
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {selectedDocuments.length === 0
+            ? "No documents selected"
+            : `${selectedDocuments.length} document${
+                selectedDocuments.length !== 1 ? "s" : ""
+              } selected`}
+        </span>
       </div>
 
       {/* Conversation Area with ScrollArea */}
-      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-        <div className="space-y-1 max-w-4xl mx-auto">
+      <ScrollArea ref={scrollAreaRef} className="min-h-0 flex-1 p-4">
+        <div className="mx-auto max-w-4xl space-y-1">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-64 text-center p-8">
-              <FileText className="size-10 text-primary/60 mb-4" />
-              <h3 className="text-lg font-medium mb-2">
+            <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed border-border/80 bg-muted/20 p-8 text-center">
+              <p className="text-sm font-medium text-foreground">
                 {selectedDocuments.length === 0
-                  ? "AI Chat"
-                  : "Document Assistant"}
-              </h3>
-              <p className="text-muted-foreground mb-4 max-w-md">
+                  ? "Ask anything about your interview"
+                  : "Ready when you are"}
+              </p>
+              <p className="mt-2 max-w-md text-xs text-muted-foreground">
                 {selectedDocuments.length === 0
-                  ? "Ask anything. Select documents from the right panel to chat with your content."
-                  : `Ready to analyze ${selectedDocuments.length} document${
-                      selectedDocuments.length > 1 ? "s" : ""
-                    }. Ask questions about your documents to get AI-powered insights.`}
+                  ? "Use the paperclip to attach documents for answers grounded in your files."
+                  : `${selectedDocuments.length} document${
+                      selectedDocuments.length > 1 ? "s are" : " is"
+                    } attached. Ask questions to get AI-powered insights.`}
               </p>
             </div>
           )}
@@ -205,7 +206,7 @@ export default function StreamingChat() {
       </ScrollArea>
 
       {/* Chat Input */}
-      <div className="p-4 border-t border-border">
+      <div className="shrink-0 border-t border-border p-4">
         <div className="mx-auto">
           {/* Selected Documents Context */}
           {selectedDocuments.length > 0 && (
@@ -214,10 +215,9 @@ export default function StreamingChat() {
                 <Badge
                   key={doc.id}
                   variant="outline"
-                  className="bg-muted/50 text-xs flex items-center gap-1 pl-1.5 pr-1 py-0.5 h-6"
+                  className="flex h-6 items-center gap-1 bg-muted/50 py-0.5 pl-2 pr-1 text-xs"
                 >
-                  <FileText className="size-3 mr-1 text-muted-foreground" />
-                  <span className="truncate max-w-[120px]">{doc.title}</span>
+                  <span className="max-w-[120px] truncate">{doc.title}</span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -252,15 +252,22 @@ export default function StreamingChat() {
             {/* Input Actions */}
             <div className="flex items-center justify-between gap-2 p-2 pt-0">
               <div className="flex items-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="size-8 p-0 rounded-full text-muted-foreground"
-                  title="Attach document"
-                >
-                  <Paperclip className="size-4" />
-                  <span className="sr-only">Attach</span>
-                </Button>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="size-8 p-0 rounded-full text-muted-foreground"
+                      title="Select documents"
+                    >
+                      <Paperclip className="size-4" />
+                      <span className="sr-only">Select documents</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-80 p-0">
+                    <DocumentSelector />
+                  </SheetContent>
+                </Sheet>
               </div>
               <Button
                 variant={isStreaming ? "destructive" : "default"}
@@ -284,6 +291,6 @@ export default function StreamingChat() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }

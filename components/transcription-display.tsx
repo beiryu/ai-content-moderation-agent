@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react"
 import { useInterviewSessionStore } from "@/stores/interview-session.store"
 
-import RecorderTranscriber from "./recorder-transcriber"
 import { TranscriptionMessage } from "./transcription-message"
 
 const useScrollToTop = (ref: React.RefObject<HTMLElement>, deps: unknown[]) => {
@@ -27,12 +26,8 @@ export function TranscriptionDisplay() {
   ])
 
   return (
-    <div className="flex h-[calc(100vh-theme(spacing.40))] flex-col">
-      <div className="sticky bottom-0">
-        <RecorderTranscriber />
-      </div>
-
-      <div className="flex-1 min-h-0 overflow-y-auto" ref={scrollRef}>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 overflow-y-auto" ref={scrollRef}>
         <div className="flex flex-col gap-2 p-4">
           {/* Most recent live text at top, then finalized messages newest → oldest */}
           {interimText && (

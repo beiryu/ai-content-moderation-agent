@@ -50,7 +50,7 @@ export async function* streamWithFileSearch(
   ]
 
   const stream = await openai.responses.create({
-    model: RAG_CONFIG.models.chat.default,
+    model: RAG_CONFIG.models.chat.model,
     input,
     tools: [fileSearchTool],
     stream: true,

@@ -11,7 +11,7 @@ export function LiveInterviewResponses() {
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 
   return (
-    <ScrollArea className="h-[calc(100vh-theme(spacing.52))]">
+    <ScrollArea className="h-full">
       <div className="flex flex-col gap-2 p-4 pt-0">
         {analyzedResponses.map((response) => (
           <div

@@ -39,16 +39,16 @@ export default function RecorderTranscriber() {
   }
 
   return (
-    <div className="w-full relative">
+    <div className="relative w-full">
       {micOpen ? (
-        <div className="flex items-center gap-4 p-2">
+        <div className="flex max-h-[min(42vh,320px)] items-center justify-center overflow-hidden p-2">
           <VideoPreview stream={userMedia} />
         </div>
       ) : (
-        <div className="m-4 flex flex-col items-center">
-          <div className="text-sm font-medium text-muted-foreground">
+        <div className="flex flex-col items-center px-4 py-6">
+          <p className="text-center text-sm font-medium text-muted-foreground">
             Connect to your interview meeting room
-          </div>
+          </p>
           <RecordButton
             micOpen={micOpen}
             onClick={toggleMicrophone}

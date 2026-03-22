@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useInterviewSessionStore } from "@/stores/interview-session.store"
+import { useChatDocumentStore } from "@/stores/chat-document-store"
 import { Clock } from "lucide-react"
 
 import useCreateInterviewSession from "@/hooks/api/interview-session/useCreateInterviewSession"
@@ -19,6 +20,7 @@ import StreamingChat from "@/components/chat/streaming-chat"
 import { LiveInterviewResponses } from "@/components/live-interview-responses"
 import MicOnlyRecorder from "@/components/mic-only-recorder"
 import { MicrophoneConnectionStatus } from "@/components/microphone-connection-status"
+import RecorderTranscriber from "@/components/recorder-transcriber"
 import { TranscriptionDisplay } from "@/components/transcription-display"
 
 interface LiveInterviewPlaygroundV2Props {
@@ -32,6 +34,7 @@ export function LiveInterviewPlaygroundV2({
 }: LiveInterviewPlaygroundV2Props) {
   const router = useRouter()
   const { setCurrentSessionId } = useInterviewSessionStore()
+  const { clearDocumentSelection, clearActiveSession } = useChatDocumentStore()
 
   const { mutateAsync: createSession } = useCreateInterviewSession()
   const { mutateAsync: updateSession } = useUpdateInterviewSession()
@@ -61,6 +64,12 @@ export function LiveInterviewPlaygroundV2({
       )
     }, 1000)
   }, [])
+
+  // Reset RAG chat state when interview changes
+  useEffect(() => {
+    clearDocumentSelection()
+    clearActiveSession()
+  }, [interviewId, clearDocumentSelection, clearActiveSession])
 
   // Start new session when component mounts
   useEffect(() => {
@@ -134,54 +143,96 @@ export function LiveInterviewPlaygroundV2({
 
   return (
     <TooltipProvider delayDuration={0}>
-      <ResizablePanelGroup
-        direction="horizontal"
-        className="max-h-[calc(100vh-100px)] items-stretch rounded-lg border"
-      >
-        <ResizablePanel defaultSize={defaultLayout[0]} minSize={25}>
-          <div className="flex h-[52px] items-center justify-between px-4">
-            <div className="flex items-center gap-2">
-              <div className="text-sm font-medium">Interviewer says:</div>
+      <div className="flex flex-col">
+        {/* Unified top header */}
+        <div className="flex h-14 shrink-0 items-center justify-between rounded-t-lg border border-b-0 bg-background px-5">
+          <div className="flex items-center gap-3">
+            <h1 className="text-sm font-semibold tracking-tight">
+              Live Interview
+            </h1>
+            <Separator orientation="vertical" className="h-4" />
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Clock className="size-3.5" />
+              <span className="font-mono tabular-nums">{timer}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <MicOnlyRecorder />
+            <Button variant="destructive" size="sm" onClick={handleLeave}>
+              End Session
+            </Button>
+          </div>
+        </div>
+
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="max-h-[calc(100vh-156px)] items-stretch rounded-b-lg border"
+        >
+          {/* Left panel: Transcription */}
+          <ResizablePanel
+            defaultSize={defaultLayout[0]}
+            minSize={25}
+            className="flex min-h-0 flex-col"
+          >
+            <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Transcription
+              </span>
               <MicrophoneConnectionStatus />
             </div>
-          </div>
-          <Separator />
-          <TranscriptionDisplay />
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={defaultLayout[1]} minSize={30}>
-          <div className="flex h-[52px] items-center justify-between px-4 py-2">
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold">Live Interview</h1>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="size-4" />
-                {timer}
+            <TranscriptionDisplay />
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Center panel: Connection status + AI Responses */}
+          <ResizablePanel
+            defaultSize={defaultLayout[1]}
+            minSize={30}
+            className="flex min-h-0 flex-col"
+          >
+            {/* Meeting room: connect flow + screen preview */}
+            <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Meeting room
+              </span>
+              <MicrophoneConnectionStatus />
+            </div>
+            <div className="shrink-0 border-b bg-muted/30 px-3 py-4">
+              <RecorderTranscriber />
+            </div>
+
+            {/* AI Responses section header */}
+            <div className="flex h-10 shrink-0 items-center justify-between border-b px-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                AI Suggestions
+              </span>
+              <div className="flex items-center gap-1.5">
+                <div className="size-1.5 rounded-full bg-green-500" />
+                <span className="text-xs text-muted-foreground">Ready</span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <MicOnlyRecorder />
-              <Button variant="destructive" size="sm" onClick={handleLeave}>
-                Leave
-              </Button>
+
+            {/* AI Responses list */}
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <LiveInterviewResponses />
             </div>
-          </div>
-          <Separator />
-          <div className="bg-background/95 p-4">
-            <div className="flex items-center gap-2">
-              <div className="text-sm font-medium">AI Responses:</div>
-              <div className="flex size-2 rounded-full bg-green-500" />
-              <span className="text-sm text-muted-foreground">Ready</span>
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Right panel: Chat */}
+          <ResizablePanel
+            defaultSize={defaultLayout[2]}
+            minSize={25}
+            className="flex min-h-0 flex-col"
+          >
+            <div className="flex h-full min-h-0 flex-col overflow-hidden">
+              <StreamingChat />
             </div>
-          </div>
-          <LiveInterviewResponses />
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={defaultLayout[2]} minSize={25}>
-          <div className="flex h-full flex-col overflow-hidden">
-            <StreamingChat />
-          </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
     </TooltipProvider>
   )
 }
