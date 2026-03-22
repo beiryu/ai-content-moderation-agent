@@ -20,7 +20,9 @@ export function TranscriptionMessage({
   if (isInterim || isBuffer) {
     return (
       <div className="flex items-start gap-3 py-1 animate-fade-in">
-        <div className="min-w-12 text-xs text-muted-foreground">{timestamp}</div>
+        <div className="min-w-12 text-xs text-muted-foreground">
+          {timestamp}
+        </div>
         <div className="rounded-lg px-4 py-2 text-sm bg-muted/50 text-muted-foreground italic opacity-60">
           {text}
         </div>

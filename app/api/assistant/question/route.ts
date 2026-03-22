@@ -1,5 +1,9 @@
-import { MemorySession, OpenAIResponsesCompactionSession, run } from "@openai/agents"
-import type { AgentInputItem } from "@openai/agents"
+import {
+  MemorySession,
+  OpenAIResponsesCompactionSession,
+  run,
+  type AgentInputItem,
+} from "@openai/agents"
 
 import { answerCoachAgent } from "@/lib/agents/interview-agents"
 
@@ -20,7 +24,9 @@ export async function POST(req: Request) {
         context
           .map(
             (m) =>
-              `${m.role === "interviewer" ? "INTERVIEWER" : "YOU SAID"}: ${m.content}`
+              `${m.role === "interviewer" ? "INTERVIEWER" : "YOU SAID"}: ${
+                m.content
+              }`
           )
           .join("\n") +
         "\n\n"
@@ -36,7 +42,10 @@ export async function POST(req: Request) {
   })
 
   try {
-    const streamed = await run(answerCoachAgent, input, { session, stream: true })
+    const streamed = await run(answerCoachAgent, input, {
+      session,
+      stream: true,
+    })
 
     const encoder = new TextEncoder()
     const body = new ReadableStream({
@@ -48,13 +57,15 @@ export async function POST(req: Request) {
               event.data.type === "output_text_delta"
             ) {
               const chunk =
-                JSON.stringify({ type: "delta", text: (event.data as { delta: string }).delta }) + "\n"
+                JSON.stringify({
+                  type: "delta",
+                  text: (event.data as { delta: string }).delta,
+                }) + "\n"
               controller.enqueue(encoder.encode(chunk))
             }
           }
           const updatedHistory = await session.getItems()
-          const done =
-            JSON.stringify({ type: "done", updatedHistory }) + "\n"
+          const done = JSON.stringify({ type: "done", updatedHistory }) + "\n"
           controller.enqueue(encoder.encode(done))
         } catch (err) {
           console.error("Stream error:", err)

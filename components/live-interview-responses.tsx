@@ -8,9 +8,7 @@ export function LiveInterviewResponses() {
   const analyzedResponses = messages
     .map((m) => m.questionAnalysis)
     .filter((analysis) => analysis !== null)
-    .sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-    )
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 
   return (
     <ScrollArea className="h-[calc(100vh-theme(spacing.52))]">
@@ -28,7 +26,9 @@ export function LiveInterviewResponses() {
                 })}
               </div>
               <div className="flex-1">
-                <div className="font-medium text-sm mb-2">{response.question}</div>
+                <div className="font-medium text-sm mb-2">
+                  {response.question}
+                </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {response.suggestedAnswer}
                   {response.suggestedAnswer.length === 0 && (

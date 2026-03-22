@@ -183,28 +183,28 @@ function SourceBadge({ title, sources }: { title: string; sources: Source[] }) {
         <div className="flex items-center px-4 py-3 border-b border-border/50">
           <FileText className="size-3 mr-1.5 text-muted-foreground" />
           <p className="text-xs text-muted-foreground">
-            {sources.length} chunk{sources.length > 1 ? "s" : ""} found
+            {sources.length} citation{sources.length > 1 ? "s" : ""} found
           </p>
         </div>
         <div className="p-2 space-y-2">
           {sources.map((source, index) => (
             <Card
-              key={source.chunkId || index}
+              key={source.fileId ?? source.chunkId ?? index}
               className="p-3 bg-muted/30 border-border/30 hover:bg-muted/50 transition-colors"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-muted-foreground">
-                    Chunk {index + 1}
+                    Citation {index + 1}
                   </span>
-                  {source.score && (
+                  {source.score !== undefined && (
                     <Badge variant="outline" className="text-xs h-5 px-1.5">
                       {(source.score * 100).toFixed(0)}% match
                     </Badge>
                   )}
                 </div>
                 <p className="text-xs text-foreground/90 leading-relaxed line-clamp-4">
-                  {source.content}
+                  {source.quote ?? source.content}
                 </p>
               </div>
             </Card>

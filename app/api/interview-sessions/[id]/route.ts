@@ -19,7 +19,10 @@ export async function PUT(req: Request, { params }: Params) {
     const json = await req.json()
     const parsed = UpdateInterviewSessionRequestSchema.safeParse(json)
     if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+      return NextResponse.json(
+        { error: parsed.error.flatten() },
+        { status: 400 }
+      )
     }
 
     if (parsed.data.id !== params.id) {

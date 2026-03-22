@@ -284,12 +284,6 @@ export function DocumentsListV2() {
                         {format(new Date(document.createdAt), "MMM d, yyyy")}
                       </span>
                     </div>
-                    {document?.chunks?.length && (
-                      <div className="flex items-center justify-between">
-                        <span>Chunks</span>
-                        <span>{document.chunks.length}</span>
-                      </div>
-                    )}
                     {document.updatedAt !== document.createdAt && (
                       <div className="flex items-center justify-between">
                         <span>Updated</span>

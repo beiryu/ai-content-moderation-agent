@@ -13,6 +13,7 @@ pnpm start            # Start production server
 ```
 
 Database setup (requires Docker):
+
 ```bash
 docker-compose up -d  # Start PostgreSQL on port 5432
 pnpm prisma migrate dev   # Run migrations

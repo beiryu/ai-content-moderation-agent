@@ -2,30 +2,30 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
 import { db } from "@/lib/db"
-import { saveChatInteraction } from "@/lib/langchain/memory"
-import { executeRAGPipeline } from "@/lib/langchain/rag-pipeline"
+import {
+  appendToRedisHistory,
+  loadMessagesForResponsesAPI,
+  saveChatInteraction,
+} from "@/lib/langchain/memory"
+import { streamWithFileSearch } from "@/lib/openai/file-search-stream"
+import { getOrCreateVectorStore } from "@/lib/openai/vector-store-service"
 import { getCurrentUser } from "@/lib/session"
 import { RagChatRequestSchema } from "@/lib/validations/chat-message"
 
 export async function POST(req: NextRequest) {
   try {
-    // Get current user
     const user = await getCurrentUser()
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Parse request body
     const body = await req.json()
-    const { message, selectedDocuments, sessionId, options } =
+    const { message, selectedDocuments, sessionId } =
       RagChatRequestSchema.parse(body)
 
-    // Create or retrieve the chat conversation
     let conversationId = sessionId
 
-    // If no conversation ID was provided, create a new one
     if (!conversationId) {
-      // Create a title from the first message, truncating if too long
       const conversationTitle =
         message.length > 100 ? `${message.substring(0, 100)}...` : message
 
@@ -39,31 +39,59 @@ export async function POST(req: NextRequest) {
       conversationId = conversation.id
     }
 
-    // Execute the RAG pipeline
-    const result = await executeRAGPipeline(message, user.id, conversationId, {
-      documentIds: selectedDocuments,
+    const vectorStoreId = await getOrCreateVectorStore(user.id)
+
+    const docsWhere = selectedDocuments?.length
+      ? { id: { in: selectedDocuments }, userId: user.id }
+      : { userId: user.id }
+
+    const userDocs = await db.document.findMany({
+      where: { ...docsWhere, openaiFileId: { not: null } },
+      select: { id: true, title: true, openaiFileId: true },
     })
 
-    // Save the interaction in the database
-    const assistantMessage = await saveChatInteraction(
-      user.id,
-      conversationId,
-      message,
-      result.response,
-      result.sources
+    const fileIdToTitle = new Map(
+      userDocs
+        .filter((d) => d.openaiFileId)
+        .map((d) => [d.openaiFileId!, { documentId: d.id, title: d.title }])
     )
 
-    // Return response
+    const conversationMessages = await loadMessagesForResponsesAPI(
+      user.id,
+      conversationId!
+    )
+
+    // Collect full response from the streaming generator
+    let fullResponse = ""
+    let sources: any[] = []
+
+    for await (const chunk of streamWithFileSearch(
+      message,
+      vectorStoreId,
+      conversationMessages,
+      selectedDocuments || [],
+      fileIdToTitle
+    )) {
+      if (chunk.sources) sources = chunk.sources
+      if (chunk.content) fullResponse += chunk.content
+    }
+
+    await appendToRedisHistory(conversationId!, message, fullResponse)
+    const assistantMessage = await saveChatInteraction(
+      user.id,
+      conversationId!,
+      message,
+      fullResponse,
+      sources
+    )
+
     return NextResponse.json(assistantMessage)
   } catch (error) {
     console.error("Error in RAG endpoint:", error)
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        {
-          error: "Invalid request data",
-          details: error.errors,
-        },
+        { error: "Invalid request data", details: error.issues },
         { status: 400 }
       )
     }

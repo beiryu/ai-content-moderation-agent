@@ -2,15 +2,21 @@ import { NextRequest } from "next/server"
 import { z } from "zod"
 
 import { db } from "@/lib/db"
-import { saveChatInteraction } from "@/lib/langchain/memory"
-import { executeRAGPipelineStream } from "@/lib/langchain/rag-pipeline-stream"
+import {
+  appendToRedisHistory,
+  loadMessagesForResponsesAPI,
+  saveChatInteraction,
+} from "@/lib/langchain/memory"
+import {
+  FileSearchSource,
+  streamWithFileSearch,
+} from "@/lib/openai/file-search-stream"
+import { getOrCreateVectorStore } from "@/lib/openai/vector-store-service"
 import { getCurrentUser } from "@/lib/session"
 import { RagChatRequestSchema } from "@/lib/validations/chat-message"
-import { Source } from "@/hooks/api/chat/useRagChatMessages"
 
 export async function POST(req: NextRequest) {
   try {
-    // Get current user
     const user = await getCurrentUser()
     if (!user?.id) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -19,7 +25,6 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Parse request body
     const body = await req.json()
     const { message, selectedDocuments, sessionId, options } =
       RagChatRequestSchema.parse(body)
@@ -27,9 +32,7 @@ export async function POST(req: NextRequest) {
     // Create or retrieve the chat conversation
     let conversationId = sessionId
 
-    // If no conversation ID was provided, create a new one
     if (!conversationId) {
-      // Create a title from the first message, truncating if too long
       const conversationTitle =
         message.length > 100 ? `${message.substring(0, 100)}...` : message
 
@@ -45,55 +48,80 @@ export async function POST(req: NextRequest) {
 
     console.log("Starting streaming response for message:", message)
 
-    // Create a TransformStream for streaming
     const encoder = new TextEncoder()
     let fullResponse = ""
-    let sources: Source[] = []
+    let sources: FileSearchSource[] = []
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Execute the streaming RAG pipeline
-          const streamIterator = await executeRAGPipelineStream(
-            message,
-            user.id,
-            conversationId,
-            {
-              documentIds: selectedDocuments,
-            }
+          // 1. Get user's vector store
+          const vectorStoreId = await getOrCreateVectorStore(user.id)
+
+          // 2. Build fileId → { documentId, title } map for source annotation
+          const docsWhere = selectedDocuments?.length
+            ? { id: { in: selectedDocuments }, userId: user.id }
+            : { userId: user.id }
+
+          const userDocs = await db.document.findMany({
+            where: { ...docsWhere, openaiFileId: { not: null } },
+            select: { id: true, title: true, openaiFileId: true },
+          })
+
+          const fileIdToTitle = new Map(
+            userDocs
+              .filter((d) => d.openaiFileId)
+              .map((d) => [
+                d.openaiFileId!,
+                { documentId: d.id, title: d.title },
+              ])
           )
 
-          // Process the stream
+          // 3. Load conversation history as plain messages array
+          const conversationMessages = await loadMessagesForResponsesAPI(
+            user.id,
+            conversationId!
+          )
+
+          // 4. Stream from Responses API with file_search tool
+          const streamIterator = streamWithFileSearch(
+            message,
+            vectorStoreId,
+            conversationMessages,
+            selectedDocuments || [],
+            fileIdToTitle
+          )
+
           for await (const chunk of streamIterator) {
+            if (chunk.sources) {
+              sources = chunk.sources
+            }
+
             if (chunk.content) {
               fullResponse += chunk.content
 
-              // Send chunk to client
               const data = JSON.stringify({
                 type: "content",
                 content: chunk.content,
-                conversationId: conversationId,
+                conversationId,
               })
 
               console.log("Streaming chunk:", chunk.content)
               controller.enqueue(encoder.encode(`data: ${data}\n\n`))
             }
-
-            if (chunk.sources) {
-              sources = chunk.sources
-            }
           }
 
-          // Save the complete interaction to database
+          // 5. Persist conversation
+          await appendToRedisHistory(conversationId!, message, fullResponse)
           const assistantMessage = await saveChatInteraction(
             user.id,
-            conversationId,
+            conversationId!,
             message,
             fullResponse,
             sources
           )
 
-          // Send final message with complete response and metadata
+          // 6. Send complete event (same shape as before — no frontend changes needed)
           const finalData = JSON.stringify({
             type: "complete",
             message: {
@@ -101,8 +129,8 @@ export async function POST(req: NextRequest) {
               content: fullResponse,
               role: "assistant",
               createdAt: assistantMessage?.createdAt,
-              conversationId: conversationId,
-              sources: sources,
+              conversationId,
+              sources,
             },
           })
 
@@ -125,7 +153,6 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Return streaming response
     return new Response(stream, {
       headers: {
         "Content-Type": "text/event-stream",
@@ -143,7 +170,7 @@ export async function POST(req: NextRequest) {
       return new Response(
         JSON.stringify({
           error: "Invalid request data",
-          details: error.errors,
+          details: error.issues,
         }),
         {
           status: 400,

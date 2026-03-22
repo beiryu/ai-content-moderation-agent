@@ -50,11 +50,13 @@ export const RAG_CONFIG = {
 
   // System Prompts
   prompts: {
-    ragSystem: `You are a helpful AI assistant. Use the following context to answer the user's question. 
+    ragSystem: `You are a helpful AI assistant. Use the following context to answer the user's question.
       If you don't know the answer, say that you don't know. DO NOT make up an answer.
-      
+
       Context:
       {context}`,
+    plainChatSystem: `You are a helpful AI assistant. Answer the user's questions thoughtfully and accurately.
+      If you don't know something, say so honestly.`,
     interviewAnalysis: `You are an interview analysis assistant. Analyze the given text and:
       1. Determine if it's a question and its type (technical/behavioral/general)
       2. Extract the core question

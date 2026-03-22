@@ -104,7 +104,7 @@ export default function StreamingChat() {
   }, [activeSessionId, refetchMessages])
 
   const handleSendMessage = () => {
-    if (!message.trim() || selectedDocuments.length === 0 || isLoading) return
+    if (!message.trim() || isLoading) return
 
     const trimmedMessage = message.trim()
     setMessage("")
@@ -159,10 +159,14 @@ export default function StreamingChat() {
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-64 text-center p-8">
               <FileText className="size-10 text-primary/60 mb-4" />
-              <h3 className="text-lg font-medium mb-2">Document Assistant</h3>
+              <h3 className="text-lg font-medium mb-2">
+                {selectedDocuments.length === 0
+                  ? "AI Chat"
+                  : "Document Assistant"}
+              </h3>
               <p className="text-muted-foreground mb-4 max-w-md">
                 {selectedDocuments.length === 0
-                  ? "Please select documents to begin analyzing your content with advanced retrieval augmented generation."
+                  ? "Ask anything. Select documents from the right panel to chat with your content."
                   : `Ready to analyze ${selectedDocuments.length} document${
                       selectedDocuments.length > 1 ? "s" : ""
                     }. Ask questions about your documents to get AI-powered insights.`}
@@ -236,13 +240,13 @@ export default function StreamingChat() {
               )}
               placeholder={
                 selectedDocuments.length === 0
-                  ? "Select documents, then ask questions..."
+                  ? "Ask anything..."
                   : "Ask questions about your documents..."
               }
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              disabled={selectedDocuments.length === 0 || isLoading}
+              disabled={isLoading}
             />
 
             {/* Input Actions */}
@@ -253,7 +257,6 @@ export default function StreamingChat() {
                   size="sm"
                   className="size-8 p-0 rounded-full text-muted-foreground"
                   title="Attach document"
-                  disabled={selectedDocuments.length === 0}
                 >
                   <Paperclip className="size-4" />
                   <span className="sr-only">Attach</span>

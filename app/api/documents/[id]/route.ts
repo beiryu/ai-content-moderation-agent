@@ -2,12 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/lib/db"
 import {
-  loadDocumentFromBuffer,
-  loadDocumentFromString,
-} from "@/lib/langchain/document-loaders"
-import { processDocumentRAG } from "@/lib/langchain/rag-pipeline"
-import { splitDocuments } from "@/lib/langchain/text-splitter"
-import { deleteDocumentsFromPinecone } from "@/lib/langchain/vector-store"
+  addFileToVectorStore,
+  getOrCreateVectorStore,
+  removeFileFromVectorStore,
+} from "@/lib/openai/vector-store-service"
 import { getCurrentUser } from "@/lib/session"
 
 interface Params {
@@ -22,27 +20,15 @@ interface Params {
  */
 export async function GET(req: NextRequest, { params }: Params) {
   try {
-    // Get current user
     const user = await getCurrentUser()
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get document by ID and ensure it belongs to user
     const document = await db.document.findFirst({
       where: {
         id: params.id,
         userId: user.id,
-      },
-      include: {
-        chunks: {
-          select: {
-            id: true,
-            content: true,
-            metadata: true,
-            chunkIndex: true,
-          },
-        },
       },
     })
 
@@ -59,51 +45,44 @@ export async function GET(req: NextRequest, { params }: Params) {
 
 /**
  * DELETE /api/documents/[id]
- * Delete a document and all its chunks
+ * Delete a document and remove its file from OpenAI
  */
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
-    // Get current user
     const user = await getCurrentUser()
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Verify document belongs to user
     const document = await db.document.findFirst({
       where: {
         id: params.id,
         userId: user.id,
       },
+      select: { openaiFileId: true },
     })
 
     if (!document) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 })
     }
 
-    // Delete document chunks from database
-    await db.documentChunk.deleteMany({
-      where: {
-        documentId: params.id,
-      },
-    })
-
-    // Delete document chunks from Pinecone
-    try {
-      await deleteDocumentsFromPinecone(
-        [params.id], // Using document ID as the namespace filter
-        `doc-${params.id}` // Use document-specific namespace
-      )
-    } catch (deleteError) {
-      console.error("Error deleting from vector store:", deleteError)
-      // Continue with database deletion even if vector store deletion fails
+    // Remove from OpenAI before deleting from DB
+    if (document.openaiFileId) {
+      const userRecord = await db.user.findUnique({
+        where: { id: user.id },
+        select: { openaiVectorStoreId: true },
+      })
+      if (userRecord?.openaiVectorStoreId) {
+        await removeFileFromVectorStore(
+          document.openaiFileId,
+          userRecord.openaiVectorStoreId
+        )
+      }
     }
 
-    // Delete the document from database
+    // Delete document (chunks cascade via FK)
     await db.document.delete({
-      where: {
-        id: params.id,
-      },
+      where: { id: params.id },
     })
 
     return NextResponse.json({
@@ -121,17 +100,15 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
 /**
  * PUT /api/documents/[id]
- * Update a document
+ * Update a document — removes old OpenAI file, uploads new one
  */
 export async function PUT(req: NextRequest, { params }: Params) {
   try {
-    // Get current user
     const user = await getCurrentUser()
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Verify document belongs to user
     const existingDocument = await db.document.findFirst({
       where: {
         id: params.id,
@@ -143,13 +120,14 @@ export async function PUT(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 })
     }
 
-    // Check content-type to determine how to process the request
     const contentType = req.headers.get("content-type") || ""
+    let newTitle: string = existingDocument.title
+    let newContent: string = existingDocument.content
+    let newMetadata: Record<string, any> = {}
 
     if (contentType.includes("multipart/form-data")) {
-      // Handle file update
       const formData = await req.formData()
-      const title = formData.get("title") as string
+      newTitle = (formData.get("title") as string) || existingDocument.title
       const metadataStr = formData.get("metadata") as string
       const file = formData.get("file") as File
 
@@ -157,12 +135,10 @@ export async function PUT(req: NextRequest, { params }: Params) {
         return NextResponse.json({ error: "No file provided" }, { status: 400 })
       }
 
-      // Parse and validate metadata
-      let metadata = {}
       if (metadataStr) {
         try {
-          metadata = JSON.parse(metadataStr)
-        } catch (e) {
+          newMetadata = JSON.parse(metadataStr)
+        } catch {
           return NextResponse.json(
             { error: "Invalid metadata format" },
             { status: 400 }
@@ -170,112 +146,62 @@ export async function PUT(req: NextRequest, { params }: Params) {
         }
       }
 
-      // Read file as buffer
       const buffer = Buffer.from(await file.arrayBuffer())
+      newContent = buffer.toString("utf-8")
+    } else {
+      const body = await req.json()
+      newTitle = body.title || existingDocument.title
+      newContent = body.content || existingDocument.content
+      newMetadata = body.metadata || {}
+    }
 
-      // Update basic document info
-      await db.document.update({
-        where: {
-          id: params.id,
-        },
-        data: {
-          title: title || existingDocument.title,
-          metadata: metadata || existingDocument.metadata || {},
-        },
+    const contentChanged = newContent !== existingDocument.content
+
+    if (contentChanged) {
+      // Get user's vector store
+      const userRecord = await db.user.findUnique({
+        where: { id: user.id },
+        select: { openaiVectorStoreId: true },
       })
 
-      // Delete existing chunks
-      await db.documentChunk.deleteMany({
-        where: {
-          documentId: params.id,
-        },
-      })
+      // Remove old OpenAI file if it exists
+      if (existingDocument.openaiFileId && userRecord?.openaiVectorStoreId) {
+        await removeFileFromVectorStore(
+          existingDocument.openaiFileId,
+          userRecord.openaiVectorStoreId
+        )
+      }
 
-      // Load document with LangChain loaders
-      const langchainDocs = await loadDocumentFromBuffer(
-        buffer,
-        existingDocument.type,
-        {
-          documentId: params.id,
-          documentTitle: title || existingDocument.title,
-          documentType: existingDocument.type,
-          userId: user.id,
-          ...(metadata || existingDocument.metadata || {}),
-        }
+      // Upload new file
+      const vectorStoreId =
+        userRecord?.openaiVectorStoreId ??
+        (await getOrCreateVectorStore(user.id))
+
+      const newOpenaiFileId = await addFileToVectorStore(
+        newContent,
+        newTitle,
+        params.id,
+        vectorStoreId
       )
 
-      // Save content to document
       await db.document.update({
         where: { id: params.id },
         data: {
-          content: langchainDocs.map((doc) => doc.pageContent).join("\n\n"),
+          title: newTitle,
+          content: newContent,
+          openaiFileId: newOpenaiFileId,
+          metadata: newMetadata || existingDocument.metadata || {},
         },
       })
-
-      // Split documents into chunks
-      const splitDocs = await splitDocuments(langchainDocs)
-
-      // Process each chunk through the RAG pipeline
-      for (const doc of splitDocs) {
-        await processDocumentRAG(doc, user.id, {
-          documentId: params.id,
-        })
-      }
     } else {
-      // Handle JSON request (direct content)
-      const { title, content, metadata } = await req.json()
-
-      // If content has changed, reprocess document
-      if (content && content !== existingDocument.content) {
-        // Update document first
-        await db.document.update({
-          where: {
-            id: params.id,
-          },
-          data: {
-            title: title || existingDocument.title,
-            content: content,
-            metadata: metadata || existingDocument.metadata || {},
-          },
-        })
-
-        // Delete existing chunks
-        await db.documentChunk.deleteMany({
-          where: {
-            documentId: params.id,
-          },
-        })
-
-        // Load document with LangChain
-        const langchainDocs = loadDocumentFromString(content, {
-          documentId: params.id,
-          documentTitle: title || existingDocument.title,
-          documentType: existingDocument.type,
-          userId: user.id,
-          ...(metadata || existingDocument.metadata || {}),
-        })
-
-        // Split documents into chunks
-        const splitDocs = await splitDocuments(langchainDocs)
-
-        // Process each chunk through the RAG pipeline
-        for (const doc of splitDocs) {
-          await processDocumentRAG(doc, user.id, {
-            documentId: params.id,
-          })
-        }
-      } else {
-        // Just update metadata and title
-        await db.document.update({
-          where: {
-            id: params.id,
-          },
-          data: {
-            title: title || existingDocument.title,
-            metadata: metadata || existingDocument.metadata || {},
-          },
-        })
-      }
+      // No content change — just update title/metadata
+      await db.document.update({
+        where: { id: params.id },
+        data: {
+          title: newTitle,
+          metadata: newMetadata || existingDocument.metadata || {},
+        },
+      })
     }
 
     return NextResponse.json({

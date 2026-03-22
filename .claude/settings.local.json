@@ -14,7 +14,23 @@
       "Bash(grep -r OpenAIResponsesCompactionSession /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/.pnpm/@openai+agents@0.7.2_@cfworker+json-schema@4.1.1_ws@8.18.3_zod@3.25.76/ --include=*.d.ts)",
       "Bash(grep -r \"CompactionSession\\\\|compaction\" /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/.pnpm/@openai+agents-core@0.7.2_@cfworker+json-schema@4.1.1_ws@8.18.3_zod@3.25.76/ --include=*.d.ts -l)",
       "Bash(grep -r \"class.*Session\\\\|export.*Session\" /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/.pnpm/@openai+agents-core@0.7.2_@cfworker+json-schema@4.1.1_ws@8.18.3_zod@3.25.76/node_modules/@openai/agents-core/dist/ --include=*.d.ts)",
-      "Bash(grep -r \"class.*Session\\\\|export.*Session\" /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/.pnpm/@openai+agents-openai@0.7.2_@cfworker+json-schema@4.1.1_ws@8.18.3_zod@3.25.76/node_modules/@openai/agents-openai/dist/ --include=*.d.ts)"
+      "Bash(grep -r \"class.*Session\\\\|export.*Session\" /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/.pnpm/@openai+agents-openai@0.7.2_@cfworker+json-schema@4.1.1_ws@8.18.3_zod@3.25.76/node_modules/@openai/agents-openai/dist/ --include=*.d.ts)",
+      "Bash(cat /Users/beiryu/Development/Beiryu/ai-interview-old/app/api/chat/conversations/[conversationId]/messages/route.ts)",
+      "Bash(node:*)",
+      "Bash(pnpm prisma:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep -r \"ResponseStreamEvent\\\\|output_text\\\\|annotation\" /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/openai/resources/responses/ --include=*.d.ts -l)",
+      "Bash(pnpm remove:*)",
+      "Bash(docker compose:*)",
+      "Bash(grep -r \"User\\\\|Account\\\\|Session\\\\|VerificationToken\" /Users/beiryu/Development/Beiryu/ai-interview-old/types --include=*.ts --include=*.d.ts)",
+      "Bash(grep -r db. /Users/beiryu/Development/Beiryu/ai-interview-old/app --include=*.ts --include=*.tsx)",
+      "Bash(grep -r db. /Users/beiryu/Development/Beiryu/ai-interview-old/lib --include=*.ts --include=*.tsx)",
+      "Bash(docker exec:*)",
+      "Bash(pnpm run:*)",
+      "Bash(grep -r contentlayer /Users/beiryu/Development/Beiryu/ai-interview-old/app --include=*.tsx --include=*.ts)",
+      "Bash(grep -r contentlayer /Users/beiryu/Development/Beiryu/ai-interview-old/lib --include=*.tsx --include=*.ts)",
+      "Bash(grep -r \"contentlayer\\\\|next-contentlayer\" /Users/beiryu/Development/Beiryu/ai-interview-old --include=*.ts --include=*.tsx --include=*.js --include=*.mjs --include=*.json)",
+      "Bash(grep -r \"contentlayer\\\\|next-contentlayer\" /Users/beiryu/Development/Beiryu/ai-interview-old --include=*.ts --include=*.tsx --include=*.js --include=*.mjs)"
     ]
   }
 }

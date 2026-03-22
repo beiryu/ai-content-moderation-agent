@@ -3,13 +3,9 @@
  * Handles conversation history and context management
  */
 
-import { UpstashRedisChatMessageHistory } from "@langchain/community/stores/message/upstash_redis"
+import { RedisChatMessageHistory } from "@langchain/community/stores/message/ioredis"
 import { ChatOpenAI } from "@langchain/openai"
-import {
-  BufferMemory,
-  ConversationSummaryBufferMemory,
-  ConversationTokenBufferMemory,
-} from "langchain/memory"
+import { ConversationSummaryBufferMemory } from "langchain/memory"
 
 import { RAG_CONFIG } from "@/config/rag"
 
@@ -29,7 +25,7 @@ export function createBufferMemory(
   sessionTTL: number = 86400
 ) {
   return new ConversationSummaryBufferMemory({
-    chatHistory: new UpstashRedisChatMessageHistory({
+    chatHistory: new RedisChatMessageHistory({
       sessionId,
       sessionTTL,
       client: redis,
@@ -41,8 +37,6 @@ export function createBufferMemory(
   })
 }
 
-// We're no longer using summary memory as requested
-
 /**
  * Retrieve conversation history from database
  */
@@ -51,24 +45,15 @@ export async function loadConversationHistory(
   conversationId: string
 ) {
   try {
-    // Fetch messages from the database
     const messages = await db.chatMessage.findMany({
-      where: {
-        conversationId,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
+      where: { conversationId },
+      orderBy: { createdAt: "asc" },
     })
 
-    // Format messages for memory
     const formattedHistory: { input: string; output: string }[] = []
-
-    // Process messages in pairs (user -> assistant)
     for (let i = 0; i < messages.length; i += 2) {
       const userMessage = messages[i]
       const assistantMessage = messages[i + 1]
-
       if (userMessage && assistantMessage) {
         formattedHistory.push({
           input: userMessage.content,
@@ -76,7 +61,6 @@ export async function loadConversationHistory(
         })
       }
     }
-
     return formattedHistory
   } catch (error) {
     console.error("Error loading conversation history:", error)
@@ -91,19 +75,13 @@ export async function createMemoryWithHistory(
   userId: string,
   conversationId: string
 ) {
-  // Create memory instance with Redis persistence
   const memory = createBufferMemory(conversationId)
-
-  // First check if we have existing messages in Redis
   const memoryVariables = await memory.loadMemoryVariables({})
   const existingMessages = memoryVariables.chat_history || []
 
-  // If Redis memory is empty, load from database and populate Redis
   if (existingMessages.length === 0) {
     try {
       const history = await loadConversationHistory(userId, conversationId)
-
-      // Populate Redis with database history
       for (const { input, output } of history) {
         await memory.saveContext({ input }, { output })
       }
@@ -113,6 +91,69 @@ export async function createMemoryWithHistory(
   }
 
   return memory
+}
+
+/**
+ * Load conversation history as a plain messages array for the Responses API.
+ * Checks Redis first (hot path), falls back to Postgres.
+ */
+export async function loadMessagesForResponsesAPI(
+  userId: string,
+  conversationId: string
+): Promise<Array<{ role: "user" | "assistant"; content: string }>> {
+  try {
+    const history = new RedisChatMessageHistory({
+      sessionId: conversationId,
+      sessionTTL: 86400,
+      client: redis,
+    })
+    const redisMessages = await history.getMessages()
+    if (redisMessages.length > 0) {
+      return redisMessages.map((msg) => ({
+        role: msg._getType() === "human" ? "user" : "assistant",
+        content:
+          typeof msg.content === "string"
+            ? msg.content
+            : JSON.stringify(msg.content),
+      })) as Array<{ role: "user" | "assistant"; content: string }>
+    }
+  } catch (error) {
+    console.error("Error loading from Redis, falling back to DB:", error)
+  }
+
+  const dbMessages = await db.chatMessage.findMany({
+    where: { conversationId },
+    orderBy: { createdAt: "asc" },
+    select: { role: true, content: true },
+  })
+
+  return dbMessages
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }))
+}
+
+/**
+ * Append a new user/assistant exchange to Redis history.
+ */
+export async function appendToRedisHistory(
+  conversationId: string,
+  userMessage: string,
+  assistantMessage: string
+): Promise<void> {
+  try {
+    const history = new RedisChatMessageHistory({
+      sessionId: conversationId,
+      sessionTTL: 86400,
+      client: redis,
+    })
+    await history.addUserMessage(userMessage)
+    await history.addAIChatMessage(assistantMessage)
+  } catch (error) {
+    console.error("Error appending to Redis history:", error)
+  }
 }
 
 /**
@@ -126,7 +167,6 @@ export async function saveChatInteraction(
   sources?: any[]
 ) {
   try {
-    // Save user message
     await db.chatMessage.create({
       data: {
         conversationId,
@@ -135,7 +175,6 @@ export async function saveChatInteraction(
       },
     })
 
-    // Save assistant message with sources if available
     const assistantMessage = await db.chatMessage.create({
       data: {
         conversationId,
@@ -145,7 +184,6 @@ export async function saveChatInteraction(
       },
     })
 
-    // Update conversation timestamp
     await db.chatConversation.update({
       where: { id: conversationId },
       data: { updatedAt: new Date() },

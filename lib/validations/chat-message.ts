@@ -2,9 +2,7 @@ import * as z from "zod"
 
 export const RagChatRequestSchema = z.object({
   message: z.string().min(1, "Message is required"),
-  selectedDocuments: z
-    .array(z.string().min(1))
-    .min(1, "At least one document must be selected"),
+  selectedDocuments: z.array(z.string().min(1)).default([]),
   sessionId: z.string().optional(),
   options: z
     .object({

@@ -11,9 +11,13 @@ export interface OptimisticMessage extends ChatMessage {
 export interface Source {
   documentId: string
   documentTitle: string
-  content: string
+  // Legacy Pinecone fields (kept optional for backward compat)
+  content?: string
   score?: number
   chunkId?: string
+  // OpenAI file_search fields
+  quote?: string
+  fileId?: string
 }
 
 // Fetch messages for a conversation
