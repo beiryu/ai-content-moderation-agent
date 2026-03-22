@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs cat:*)",
+      "Bash(grep -r \"interview\\\\|interview\\\\|recording\\\\|audio\\\\|speech\\\\|transcri\\\\|claude\\\\|openai\\\\|anthropic\" /Users/beiryu/Development/Beiryu/ai-interview-old --include=*.ts --include=*.tsx --include=*.js --include=*.jsx)",
+      "Bash(grep -r \"interview\\\\|recording\\\\|audio\\\\|speech\\\\|transcri\\\\|claude\\\\|openai\\\\|anthropic\" /Users/beiryu/Development/Beiryu/ai-interview-old --include=*.ts --include=*.tsx --include=*.js --include=*.jsx --include=*.mdx --include=*.md)",
+      "Bash(ls /Users/beiryu/Development/Beiryu/ai-interview-old/app/\\\\\\(dashboard\\\\\\))",
+      "Bash(ls:*)",
+      "Bash(find /Users/beiryu/Development/Beiryu/ai-interview-old -type f \\\\\\(-name manifest.json -o -name *extension* \\\\\\))"
+    ]
+  }
+}

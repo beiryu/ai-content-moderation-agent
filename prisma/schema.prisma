@@ -60,12 +60,6 @@ model User {
   stripePriceId          String?   @map(name: "stripe_price_id")
   stripeCurrentPeriodEnd DateTime? @map(name: "stripe_current_period_end")
 
-  // Momo fields
-  momoCustomerId       String?   @unique @map(name: "momo_customer_id")
-  momoSubscriptionId   String?   @unique @map(name: "momo_subscription_id")
-  momoPriceId         String?   @map(name: "momo_price_id") 
-  momoCurrentPeriodEnd DateTime? @map(name: "momo_current_period_end")
-
   // Relations
   interviews         Interview[]          @relation("UserInterviews")
   interviewSessions  InterviewSession[]   @relation("UserInterviewSessions")
