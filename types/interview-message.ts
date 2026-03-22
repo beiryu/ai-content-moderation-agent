@@ -1,5 +1,3 @@
-export type QuestionType = "technical" | "behavioral" | "general" | "other"
-export type ContextType = "cold" | "follow-up" | "pivot"
 export type RoleType = "interviewer" | "candidate" | "ai" | "system"
 export type MessageType =
   | "question"
@@ -27,10 +25,7 @@ export interface QuestionAnalysis {
   id: string
 
   question: string
-  questionType: QuestionType
-  contextType?: ContextType
-  suggestedAnswerPoints: string[]
-  keywords: string[]
+  suggestedAnswer: string
 
   createdAt: Date
   updatedAt: Date

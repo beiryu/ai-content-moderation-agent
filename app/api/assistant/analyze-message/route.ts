@@ -11,28 +11,25 @@ export async function POST(req: Request) {
     context.length > 0
       ? `\nCONVERSATION HISTORY (last ${context.length} messages):\n` +
         context
-          .map((m: { role: string; content: string }) => `${m.role.toUpperCase()}: ${m.content}`)
+          .map(
+            (m: { role: string; content: string }) =>
+              `${m.role.toUpperCase()}: ${m.content}`
+          )
           .join("\n") +
         "\n"
       : ""
 
-  const systemPrompt = `You are an interview analysis assistant. Analyze the given interviewer statement and:
-1. Determine if it's a question and its type (technical/behavioral/general)
-2. Extract the core question
-3. Classify the context type: "cold" (first question, no prior history), "follow-up" (builds on a prior exchange), or "pivot" (new unrelated topic)
-4. Provide 2-3 suggested response points — if follow-up, avoid repeating what the candidate already said
-5. Identify key topics/keywords
+  const systemPrompt = `You are an expert interview coach. Given an interviewer's statement and conversation history:
+1. Extract the core question being asked
+2. Write a complete, confident, natural-sounding answer the candidate can say verbatim
 ${contextSection}
-Format response as JSON with fields:
-{
-  "question": "extracted question",
-  "questionType": "technical" | "behavioral" | "general" | "other",
-  "contextType": "cold" | "follow-up" | "pivot",
-  "suggestedAnswerPoints": ["suggestion1", "suggestion2"],
-  "keywords": ["keyword1", "keyword2"]
-}
+The answer should be 1-3 sentences: directly address the question, include a concrete example or detail where relevant, and end cleanly.
 
-Keep responses professional and concise.`
+Format response as JSON:
+{
+  "question": "the extracted question",
+  "suggestedAnswer": "full answer text here"
+}`
 
   try {
     const response = await openai.chat.completions.create({

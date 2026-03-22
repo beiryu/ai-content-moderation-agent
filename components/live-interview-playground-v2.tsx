@@ -38,6 +38,8 @@ export function LiveInterviewPlaygroundV2({
   const [timer, setTimer] = useState("00:00")
   const timerRef = useRef<NodeJS.Timeout>()
   const cleanupRef = useRef<(() => void) | null>(null)
+  /** DB id of the active InterviewSession (not the parent interview's id). */
+  const interviewSessionIdRef = useRef<string | null>(null)
 
   // Reset and start timer
   const resetTimer = useCallback(() => {
@@ -70,6 +72,7 @@ export function LiveInterviewPlaygroundV2({
           {
             onSuccess: (result) => {
               if (mounted) {
+                interviewSessionIdRef.current = result.id
                 setCurrentSessionId(result.id)
               }
             },
@@ -89,7 +92,6 @@ export function LiveInterviewPlaygroundV2({
         clearInterval(timerRef.current)
       }
 
-      // Store cleanup function to avoid running during unmount
       if (cleanupRef.current) {
         cleanupRef.current()
       }
@@ -100,10 +102,16 @@ export function LiveInterviewPlaygroundV2({
   // Setup cleanup effect separately
   useEffect(() => {
     cleanupRef.current = async () => {
+      const sessionId = interviewSessionIdRef.current
+      interviewSessionIdRef.current = null
+      if (!sessionId) {
+        setCurrentSessionId(null)
+        return
+      }
       try {
-        updateSession(
+        await updateSession(
           {
-            id: interviewId,
+            id: sessionId,
             status: "completed",
           },
           {
@@ -116,7 +124,7 @@ export function LiveInterviewPlaygroundV2({
         console.error("Failed to cleanup session:", error)
       }
     }
-  }, [interviewId, updateSession, setCurrentSessionId])
+  }, [updateSession, setCurrentSessionId])
 
   return (
     <TooltipProvider delayDuration={0}>
