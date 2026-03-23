@@ -7,12 +7,15 @@ import {
   FileSearchSource,
   streamWithFileSearch,
 } from "@/lib/openai/file-search-stream"
+import redis from "@/lib/redis"
 import {
   getCachedUserDocs,
   getOrCreateVectorStore,
 } from "@/lib/openai/vector-store-service"
 import { getCurrentUser } from "@/lib/session"
 import { RagChatRequestSchema } from "@/lib/validations/chat-message"
+
+const PREV_RESP_TTL = 86400 // 24h
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,39 +54,57 @@ export async function POST(req: NextRequest) {
     let fullResponse = ""
     let sources: FileSearchSource[] = []
 
+    // Run all setup queries in parallel — previousResponseId served from Redis
+    // to avoid a DB round-trip on every conversational turn.
+    const prevRespCacheKey = conversationId
+      ? `prev_resp:${conversationId}`
+      : null
+
+    const [vectorStoreId, userDocs, cachedPrevRespId] = await Promise.all([
+      getOrCreateVectorStore(user.id),
+      getCachedUserDocs(
+        user.id,
+        selectedDocuments?.length ? selectedDocuments : undefined
+      ),
+      prevRespCacheKey ? redis.get(prevRespCacheKey) : Promise.resolve(null),
+    ])
+
+    // Fall back to DB only on Redis miss (first turn or cache eviction)
+    let previousResponseId: string | null | undefined = cachedPrevRespId
+    if (!previousResponseId && conversationId) {
+      const conv = await db.chatConversation.findUnique({
+        where: { id: conversationId },
+        select: { previousResponseId: true },
+      })
+      previousResponseId = conv?.previousResponseId ?? null
+    }
+
+    const fileIdToTitle = new Map(
+      userDocs
+        .filter((d) => d.openaiFileId)
+        .map((d) => [
+          d.openaiFileId!,
+          { documentId: d.id, title: d.title },
+        ])
+    )
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // 1. Get user's vector store
-          const vectorStoreId = await getOrCreateVectorStore(user.id)
-
-          // 2. Build fileId → { documentId, title } map for source annotation
-          const userDocs = await getCachedUserDocs(
-            user.id,
-            selectedDocuments?.length ? selectedDocuments : undefined
+          // Send an immediate "thinking" signal so the UI can show a typing indicator
+          // before the OpenAI file_search round-trip completes (~400-1500ms)
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ type: "thinking", conversationId })}\n\n`
+            )
           )
 
-          const fileIdToTitle = new Map(
-            userDocs
-              .filter((d) => d.openaiFileId)
-              .map((d) => [
-                d.openaiFileId!,
-                { documentId: d.id, title: d.title },
-              ])
-          )
-
-          // 3. Get previous response ID for conversation continuity
-          const conversation = await db.chatConversation.findUnique({
-            where: { id: conversationId! },
-            select: { previousResponseId: true },
-          })
-
-          // 4. Stream from Responses API with file_search tool
+          // Stream from Responses API with file_search tool
           let newResponseId: string | undefined
           const streamIterator = streamWithFileSearch(
             message,
             vectorStoreId,
-            conversation?.previousResponseId ?? undefined,
+            previousResponseId ?? undefined,
             selectedDocuments || [],
             fileIdToTitle
           )
@@ -111,41 +132,44 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // 5. Persist conversation and save new response ID
-          const assistantMessage = await saveChatInteraction(
-            user.id,
-            conversationId!,
-            message,
-            fullResponse,
-            sources
-          )
-
-          if (newResponseId) {
-            await db.chatConversation.update({
-              where: { id: conversationId! },
-              data: { previousResponseId: newResponseId },
-            })
-          }
-
-          // 6. Send complete event (same shape as before — no frontend changes needed)
+          // Send complete event immediately — don't block on DB writes
           const finalData = JSON.stringify({
             type: "complete",
             message: {
-              id: assistantMessage?.id,
               content: fullResponse,
               role: "assistant",
-              createdAt: assistantMessage?.createdAt,
               conversationId,
               sources,
             },
           })
 
-          console.log(
-            "Streaming complete. Full response length:",
-            fullResponse.length
-          )
           controller.enqueue(encoder.encode(`data: ${finalData}\n\n`))
           controller.close()
+
+          // Fire-and-forget: persist to DB and update Redis cache after the
+          // stream is already closed — client is unblocked immediately.
+          Promise.all([
+            saveChatInteraction(
+              user.id,
+              conversationId!,
+              message,
+              fullResponse,
+              sources
+            ).then((saved) => {
+              if (newResponseId && conversationId) {
+                const key = `prev_resp:${conversationId}`
+                return Promise.all([
+                  redis.set(key, newResponseId, "EX", PREV_RESP_TTL),
+                  db.chatConversation.update({
+                    where: { id: conversationId },
+                    data: { previousResponseId: newResponseId },
+                  }),
+                ])
+              }
+            }),
+          ]).catch((err) =>
+            console.error("Post-stream persistence error:", err)
+          )
         } catch (error) {
           console.error("Error in streaming:", error)
           const errorData = JSON.stringify({
@@ -162,8 +186,10 @@ export async function POST(req: NextRequest) {
     return new Response(stream, {
       headers: {
         "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
+        "Cache-Control": "no-cache, no-transform",
         Connection: "keep-alive",
+        // Prevents nginx/CDN from buffering SSE chunks — critical for low TTFT
+        "X-Accel-Buffering": "no",
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
