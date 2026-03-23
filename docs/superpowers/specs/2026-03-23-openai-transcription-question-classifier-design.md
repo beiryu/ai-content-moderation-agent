@@ -29,26 +29,31 @@ The current system uses Deepgram Nova-2 for real-time speech-to-text during inte
 ### Current Flow (broken)
 
 ```
-Mic → WebSocket → Deepgram Nova-2 → processTranscript() → buffer
-                                  → UtteranceEnd (300ms silence)
-                                         → flushTranscript()
-                                               → analyzeMessage()  ← no filter, always fires
+Mic → MediaRecorder (WebM/Opus blobs) → queue → connection.send(blob) → Deepgram Nova-2
+                                                                              → processTranscript() → buffer
+                                                                              → UtteranceEnd (300ms silence)
+                                                                                    → flushTranscript()
+                                                                                          → analyzeMessage()  ← no filter
 ```
 
 ### New Flow
 
 ```
-Mic → WebSocket → OpenAI Realtime API (gpt-4o-transcribe)
-                        → transcript delta  → processTranscript(text, false)  [interim]
-                        → transcript done   → processTranscript(text, true)   [final]
-                        → speech_stopped (1200ms silence)
-                                → flushTranscript()
-                                      → Question Classifier (GPT-4o-mini)
-                                              ↓ isQuestion: true
-                                        analyzeMessage()
-                                              ↓ isQuestion: false
-                                        skip analysis (message still saved in history)
+Mic → AudioContext → AudioWorkletProcessor → PCM16 24kHz → base64
+                                                              → WebSocket.send(input_audio_buffer.append)
+                                                                    → OpenAI Realtime API (gpt-4o-transcribe)
+                                                                          → transcript delta  → processTranscript(text, false)
+                                                                          → transcript done   → processTranscript(text, true)
+                                                                          → speech_stopped (1200ms silence)
+                                                                                → flushTranscript() [async]
+                                                                                      → Question Classifier (GPT-4o-mini)
+                                                                                              ↓ isQuestion: true
+                                                                                        analyzeMessage()
+                                                                                              ↓ isQuestion: false
+                                                                                        skip (message saved in history)
 ```
+
+**Key architecture change:** The new hook internalises the entire audio pipeline (AudioContext → PCM16 → WebSocket). Consumer components no longer manage the audio queue or call `connection.send()` directly. They call `startListening()` / `stopListening()` on the hook instead.
 
 ---
 
@@ -56,7 +61,9 @@ Mic → WebSocket → OpenAI Realtime API (gpt-4o-transcribe)
 
 ### 1. `app/api/transcription-session/route.ts` (new)
 
-Backend endpoint that creates an ephemeral OpenAI token for the client to use when connecting to the Realtime WebSocket directly. This avoids exposing the API key in the browser.
+Backend endpoint that creates an ephemeral OpenAI token for the client to use when connecting to the Realtime WebSocket directly. Avoids exposing the API key in the browser.
+
+Authentication: Use `getCurrentUser()` from `lib/session.ts`. Return 401 if result is null.
 
 ```
 GET /api/transcription-session
@@ -72,7 +79,9 @@ Token lifetime: 60 seconds (OpenAI default). Client must connect within this win
 
 Connects to `wss://api.openai.com/v1/realtime?model=gpt-4o-transcribe` via native WebSocket.
 
-**Session config sent on connect:**
+**This hook owns the entire audio pipeline.** It creates `AudioContext`, attaches an `AudioWorkletProcessor` to convert mic input to PCM16 24kHz, base64-encodes it, and sends it as `input_audio_buffer.append` JSON messages. Consumer components do not interact with audio or the WebSocket directly.
+
+**Session config sent after `session.created`:**
 
 ```json
 {
@@ -80,8 +89,7 @@ Connects to `wss://api.openai.com/v1/realtime?model=gpt-4o-transcribe` via nativ
   "session": {
     "input_audio_format": "pcm16",
     "input_audio_transcription": {
-      "model": "gpt-4o-transcribe",
-      "language": null
+      "model": "gpt-4o-transcribe"
     },
     "turn_detection": {
       "type": "server_vad",
@@ -92,38 +100,38 @@ Connects to `wss://api.openai.com/v1/realtime?model=gpt-4o-transcribe` via nativ
 }
 ```
 
-Key differences from Deepgram config:
-- `language: null` → auto-detect Vietnamese/English per segment
-- `silence_duration_ms: 1200ms` vs current 300ms → allows natural pauses for non-native speakers without premature flush
-- `server_vad` → OpenAI handles VAD server-side, same as Deepgram's endpointing
+Notes:
+- `language` field is **omitted** entirely (not set to `null`) — omitting it enables automatic language detection.
+- `silence_duration_ms: 1200ms` vs current 300ms — allows natural pauses for non-native speakers.
+- `server_vad` — OpenAI handles VAD server-side, replacing Deepgram's `endpointing`.
 
-**Audio pipeline:**
-Browser `AudioContext` → `AudioWorkletProcessor` → raw PCM16 24kHz → base64 → WebSocket.
-(Browser `MediaRecorder` outputs WebM/Opus which OpenAI Realtime does not accept.)
+**Silence fallback interval:**
+The existing hook has a 1-second polling interval that calls `flushTranscript` if no audio for 5 seconds (fallback for when `UtteranceEnd` never fires). The new hook **retains this fallback** for the same reason: if `speech_stopped` fails to fire due to a network issue or VAD miss, the buffer would never flush. The interval checks `lastSpeakTime` from the store, identical to current behavior.
 
 **Events handled:**
 
 | Event | Action |
 |-------|--------|
-| `session.created` | set status `"ready"`, `isListening: true` |
+| `session.created` | Send `session.update` config; set status `"ready"`, `isListening: true` |
 | `conversation.item.input_audio_transcription.delta` | `processTranscript(delta, false)` |
 | `conversation.item.input_audio_transcription.completed` | `processTranscript(text, true)` |
 | `input_audio_buffer.speech_stopped` | `flushTranscript(role)` |
 | WebSocket `close` | set `isListening: false`, attempt reconnect |
 | WebSocket `error` | set status `"error"` |
 
-**Return interface** (identical to current `use-deepgram-connection.ts`):
+**Return interface** (updated — `connection` removed, `startListening`/`stopListening` added):
 
 ```ts
 interface UseOpenAITranscriptionReturn {
   isListening: boolean
-  connection: WebSocket | null
+  startListening: () => Promise<void>
+  stopListening: () => void
   status: "idle" | "loading" | "ready" | "error"
   error: Error | null
 }
 ```
 
-Keeping the same interface means all components that consume the hook require no changes — only the import path changes.
+`connection` is no longer exposed. Consumers call `startListening()` to request mic access and begin streaming, and `stopListening()` to end the session.
 
 **Reconnect logic:**
 On unexpected close: retry with exponential backoff (1s, 2s, 4s, max 3 attempts). After 3 failures, set status `"error"` and show user-facing toast.
@@ -134,8 +142,10 @@ On unexpected close: retry with exponential backoff (1s, 2s, 4s, max 3 attempts)
 
 Fast two-tier classification before triggering the expensive AI analysis pipeline.
 
+Authentication: Use `getCurrentUser()` from `lib/session.ts`. Return 401 if null.
+
 **Tier 1 — Free, <1ms (word count check):**
-If transcript has fewer than 4 words → `{ isQuestion: false }`. No LLM call.
+If transcript has fewer than 4 words → return `{ isQuestion: false }`. No LLM call.
 
 **Tier 2 — GPT-4o-mini, ~100ms:**
 
@@ -144,6 +154,8 @@ POST /api/assistant/classify-question
 Body: { text: string, context: { role: string, content: string }[] }
 → 200 { isQuestion: boolean }
 ```
+
+`context` contains the last 3 messages before the current one (not including the current message). The store passes `messages.slice(Math.max(0, currentIndex - 3), currentIndex)` where `currentIndex = messages.length - 1` at the time of calling (the current message has already been appended). The 3-message window is intentional — the classifier only needs enough context to disambiguate the current fragment, whereas `analyzeMessage` uses 6 messages to generate a full answer. These windows can differ and should not be kept in sync.
 
 System prompt (kept minimal for speed and cost):
 
@@ -155,7 +167,7 @@ Determine if the transcript is a complete interview question worth answering.
 Return only valid JSON: { "isQuestion": true } or { "isQuestion": false }
 
 Return false for:
-- Single words or short filler sounds (yes, no, ok, ừ, uh, hmm, right)
+- Single words or short filler sounds (yes, no, ok, ừ, uh, hmm, right, okay)
 - Incomplete fragments (trailing off mid-sentence)
 - Affirmations or acknowledgements
 
@@ -173,25 +185,41 @@ Return true for:
 **New state:**
 
 ```ts
-isClassifying: boolean  // show loading indicator during classifier call
+isClassifying: boolean  // used by the interviewer panel to show a brief loading indicator
 ```
 
-**Modified `flushTranscript(role)`:**
+**`flushTranscript` signature change:**
+
+The function becomes `async` since it needs to await the classifier HTTP call.
+
+```ts
+// Before
+flushTranscript: (role: "interviewer" | "candidate") => void
+
+// After
+flushTranscript: (role: "interviewer" | "candidate") => Promise<void>
+```
+
+The store interface definition in `InterviewSessionStore` must be updated accordingly.
+
+**Modified `flushTranscript(role)` logic:**
 
 ```
 1. Get buffer, trim
 2. If empty → return
 3. Create message object, append to messages[]
-4. Clear buffer
+4. Clear buffer + interimText
 5. If role !== "interviewer" → return (candidates don't need analysis)
 6. set isClassifying: true
-7. Call POST /api/assistant/classify-question
+7. POST /api/assistant/classify-question with { text: buffer, context: last 3 messages }
 8. set isClassifying: false
 9. If isQuestion: true → call analyzeMessage(messageId)
 10. On classifier error/timeout → call analyzeMessage(messageId) [fallback]
 ```
 
-Note: The message is always saved to history regardless of classification result. Only `analyzeMessage()` is gated.
+All callers of `flushTranscript` (the hook's `speech_stopped` handler and the silence fallback interval) fire-and-forget with `.catch(console.error)` since they are event handlers.
+
+Note: Messages are always saved to history regardless of classification result. Only `analyzeMessage()` is gated.
 
 ---
 
@@ -204,6 +232,7 @@ Note: The message is always saved to history regardless of classification result
 | WebSocket disconnect | Auto-reconnect, max 3 attempts with backoff |
 | Reconnect fails | status `"error"`, toast notification |
 | Language detection failure | OpenAI auto-detect handles gracefully |
+| `speech_stopped` never fires | Silence fallback interval (5s) flushes buffer |
 
 ---
 
@@ -211,10 +240,9 @@ Note: The message is always saved to history regardless of classification result
 
 - `analyzeMessage()` logic and streaming response pipeline
 - OpenAI Agents, vector store, session context
-- All UI components consuming the transcription hook (only import path changes)
-- `/api/deepgram` route — kept, not deleted immediately
 - `processTranscript()` signature and behavior
 - Interview message history structure
+- `/api/deepgram` route — kept, not deleted immediately
 
 ---
 
@@ -222,7 +250,7 @@ Note: The message is always saved to history regardless of classification result
 
 | | Current | New |
 |--|---------|-----|
-| STT | Deepgram Nova-2: $0.0043/min | OpenAI gpt-4o-transcribe: $0.006/min |
+| STT | Deepgram Nova-2: $0.0043/min | OpenAI gpt-4o-transcribe: $0.006/min (verify current pricing) |
 | Classifier | — | GPT-4o-mini: ~$0.00001/call |
 | Delta | +$0.0017/min STT | negligible classifier cost |
 
@@ -234,8 +262,11 @@ For a 60-minute interview session: ~$0.10 additional cost. Justified by Vietname
 
 | File | Change |
 |------|--------|
-| `hooks/use-openai-transcription.ts` | New (replaces Deepgram hook) |
-| `app/api/transcription-session/route.ts` | New |
-| `app/api/assistant/classify-question/route.ts` | New |
-| `stores/interview-session.store.ts` | Add `isClassifying`, modify `flushTranscript` |
-| Components using hook | Import path update only |
+| `hooks/use-openai-transcription.ts` | New — full audio pipeline + WebSocket to OpenAI |
+| `app/api/transcription-session/route.ts` | New — ephemeral token endpoint |
+| `app/api/assistant/classify-question/route.ts` | New — question classifier endpoint |
+| `stores/interview-session.store.ts` | Add `isClassifying`, make `flushTranscript` async |
+| `components/recorder-transcriber.tsx` | Replace `useDeepgramConnection` import + `connection.send` with `startListening`/`stopListening` |
+| `components/mic-only-recorder.tsx` | Same as above |
+| `hooks/use-microphone.ts` | May be internalised into new hook; no longer used by consumers directly |
+| `hooks/use-microphone-only.ts` | Same as above |
