@@ -22,15 +22,19 @@ export async function POST(req: Request) {
     context = [],
     sessionContext,
     selectedDocuments,
+    fastMode = false,
   }: {
     text: string
     agentHistory: AgentInputItem[]
     context: { role: string; content: string }[]
     sessionContext?: string
     selectedDocuments?: string[]
+    fastMode?: boolean
   } = await req.json()
 
-  const vectorStoreId = await getOrCreateVectorStore(authSession.user.id)
+  const vectorStoreId = fastMode
+    ? undefined
+    : await getOrCreateVectorStore(authSession.user.id)
 
   const contextBlock =
     context.length > 0

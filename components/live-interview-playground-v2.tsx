@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useChatDocumentStore } from "@/stores/chat-document-store"
 import { useInterviewSessionStore } from "@/stores/interview-session.store"
-import { Clock, Settings } from "lucide-react"
+import { Clock, Settings, Zap } from "lucide-react"
 
 import useCreateInterviewSession from "@/hooks/api/interview-session/useCreateInterviewSession"
 import useUpdateInterviewSession from "@/hooks/api/interview-session/useUpdateInterviewSession"
@@ -48,6 +48,8 @@ export function LiveInterviewPlaygroundV2({
     coachDocuments,
     toggleCoachDocument,
     clearCoachDocuments,
+    fastMode,
+    setFastMode,
   } = useChatDocumentStore()
 
   const { mutateAsync: createSession } = useCreateInterviewSession()
@@ -244,6 +246,20 @@ export function LiveInterviewPlaygroundV2({
                     AI Suggestions
                   </span>
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant={fastMode ? "default" : "outline"}
+                      size="sm"
+                      className="h-6 gap-1 px-2 text-xs"
+                      onClick={() => setFastMode(!fastMode)}
+                      title={
+                        fastMode
+                          ? "Fast mode: file search disabled. Click to enable Normal mode."
+                          : "Normal mode: file search enabled. Click to enable Fast mode."
+                      }
+                    >
+                      <Zap className="size-3" />
+                      {fastMode ? "Fast" : "Normal"}
+                    </Button>
                     <Sheet>
                       <SheetTrigger asChild>
                         <Button
@@ -251,6 +267,7 @@ export function LiveInterviewPlaygroundV2({
                           size="icon"
                           className="size-7"
                           title="Select documents for Answer Coach"
+                          disabled={fastMode}
                         >
                           <Settings className="size-3.5" />
                         </Button>
@@ -271,12 +288,6 @@ export function LiveInterviewPlaygroundV2({
                         />
                       </SheetContent>
                     </Sheet>
-                    <div className="flex items-center gap-1.5">
-                      <div className="size-1.5 rounded-full bg-green-500" />
-                      <span className="text-xs text-muted-foreground">
-                        Ready
-                      </span>
-                    </div>
                   </div>
                 </div>
                 <div className="min-h-0 flex-1 overflow-hidden">

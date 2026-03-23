@@ -1,24 +1,29 @@
 import { db } from "@/lib/db"
 import openai from "@/lib/openai"
+import redis from "@/lib/redis"
+
+const VS_CACHE_TTL = 86400 // 24 hours
+const DOCS_CACHE_TTL = 300 // 5 minutes
 
 /**
  * Returns the existing vector store ID for a user, or creates a new one
  * and persists it to the User row. Safe to call multiple times (idempotent).
+ * Result is cached in Redis for 24h to avoid DB + OpenAI round-trips.
  */
 export async function getOrCreateVectorStore(userId: string): Promise<string> {
+  const cacheKey = `vs:${userId}`
+
+  const cached = await redis.get(cacheKey)
+  if (cached) return cached
+
   const user = await db.user.findUnique({
     where: { id: userId },
     select: { openaiVectorStoreId: true },
   })
 
   if (user?.openaiVectorStoreId) {
-    // Verify the store still exists on OpenAI (guard against manual dashboard deletion)
-    try {
-      await openai.vectorStores.retrieve(user.openaiVectorStoreId)
-      return user.openaiVectorStoreId
-    } catch {
-      // Store was deleted externally — fall through to create a new one
-    }
+    await redis.set(cacheKey, user.openaiVectorStoreId, "EX", VS_CACHE_TTL)
+    return user.openaiVectorStoreId
   }
 
   const vectorStore = await openai.vectorStores.create({
@@ -30,7 +35,50 @@ export async function getOrCreateVectorStore(userId: string): Promise<string> {
     data: { openaiVectorStoreId: vectorStore.id },
   })
 
+  await redis.set(cacheKey, vectorStore.id, "EX", VS_CACHE_TTL)
+
   return vectorStore.id
+}
+
+type UserDoc = { id: string; title: string; openaiFileId: string | null }
+
+/**
+ * Returns document metadata for a user, cached in Redis for 5 minutes.
+ * Pass `documentIds` to filter to specific documents.
+ * Call `invalidateUserDocsCache(userId)` after any document mutation.
+ */
+export async function getCachedUserDocs(
+  userId: string,
+  documentIds?: string[]
+): Promise<UserDoc[]> {
+  const cacheKey = `docs:${userId}`
+
+  const cached = await redis.get(cacheKey)
+  let allDocs: UserDoc[]
+
+  if (cached) {
+    allDocs = JSON.parse(cached)
+  } else {
+    allDocs = await db.document.findMany({
+      where: { userId, openaiFileId: { not: null } },
+      select: { id: true, title: true, openaiFileId: true },
+    })
+    await redis.set(cacheKey, JSON.stringify(allDocs), "EX", DOCS_CACHE_TTL)
+  }
+
+  if (documentIds?.length) {
+    const idSet = new Set(documentIds)
+    return allDocs.filter((d) => idSet.has(d.id))
+  }
+  return allDocs
+}
+
+/**
+ * Invalidates the document metadata cache for a user.
+ * Call after any document upload, update, or delete.
+ */
+export async function invalidateUserDocsCache(userId: string): Promise<void> {
+  await redis.del(`docs:${userId}`)
 }
 
 /**

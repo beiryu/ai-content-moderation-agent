@@ -7,7 +7,10 @@ import {
   FileSearchSource,
   streamWithFileSearch,
 } from "@/lib/openai/file-search-stream"
-import { getOrCreateVectorStore } from "@/lib/openai/vector-store-service"
+import {
+  getCachedUserDocs,
+  getOrCreateVectorStore,
+} from "@/lib/openai/vector-store-service"
 import { getCurrentUser } from "@/lib/session"
 import { RagChatRequestSchema } from "@/lib/validations/chat-message"
 
@@ -55,14 +58,10 @@ export async function POST(req: NextRequest) {
           const vectorStoreId = await getOrCreateVectorStore(user.id)
 
           // 2. Build fileId → { documentId, title } map for source annotation
-          const docsWhere = selectedDocuments?.length
-            ? { id: { in: selectedDocuments }, userId: user.id }
-            : { userId: user.id }
-
-          const userDocs = await db.document.findMany({
-            where: { ...docsWhere, openaiFileId: { not: null } },
-            select: { id: true, title: true, openaiFileId: true },
-          })
+          const userDocs = await getCachedUserDocs(
+            user.id,
+            selectedDocuments?.length ? selectedDocuments : undefined
+          )
 
           const fileIdToTitle = new Map(
             userDocs

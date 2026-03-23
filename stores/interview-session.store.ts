@@ -165,8 +165,7 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
           .map((m) => ({ role: m.role, content: m.content }))
 
         try {
-          const selectedDocuments =
-            useChatDocumentStore.getState().coachDocuments
+          const { coachDocuments, fastMode } = useChatDocumentStore.getState()
 
           const response = await fetch("/api/assistant/question", {
             method: "POST",
@@ -176,7 +175,8 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
               agentHistory: get().agentHistory,
               context,
               sessionContext: get().sessionContext,
-              selectedDocuments,
+              selectedDocuments: coachDocuments,
+              fastMode,
             }),
           })
 

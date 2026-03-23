@@ -7,6 +7,9 @@ interface ChatDocumentStore {
   // Coach document selection state (independent from chat)
   coachDocuments: string[]
 
+  // Fast mode: disables file search for lower latency
+  fastMode: boolean
+
   // Session Management State
   activeSessionId: string | undefined
 
@@ -20,6 +23,9 @@ interface ChatDocumentStore {
   toggleCoachDocument: (documentId: string) => void
   clearCoachDocuments: () => void
 
+  // Fast mode actions
+  setFastMode: (enabled: boolean) => void
+
   // Session Management Actions
   setActiveSession: (sessionId: string) => void
   clearActiveSession: () => void
@@ -29,6 +35,7 @@ export const useChatDocumentStore = create<ChatDocumentStore>()((set) => ({
   // Initial state
   selectedDocuments: [],
   coachDocuments: [],
+  fastMode: false,
   activeSessionId: undefined,
 
   // Document chat actions
@@ -64,6 +71,9 @@ export const useChatDocumentStore = create<ChatDocumentStore>()((set) => ({
     })),
 
   clearCoachDocuments: () => set({ coachDocuments: [] }),
+
+  // Fast mode actions
+  setFastMode: (enabled) => set({ fastMode: enabled }),
 
   // Session Management Actions
   setActiveSession: (sessionId: string) => set({ activeSessionId: sessionId }),
