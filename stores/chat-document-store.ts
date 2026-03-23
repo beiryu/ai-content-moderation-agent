@@ -1,17 +1,24 @@
 import { create } from "zustand"
 
 interface ChatDocumentStore {
-  // Document Selection State
+  // Document chat selection state
   selectedDocuments: string[]
+
+  // Coach document selection state (independent from chat)
+  coachDocuments: string[]
 
   // Session Management State
   activeSessionId: string | undefined
 
-  // Document Selection Actions
+  // Document chat actions
   selectDocument: (documentId: string) => void
   deselectDocument: (documentId: string) => void
   toggleDocument: (documentId: string) => void
   clearDocumentSelection: () => void
+
+  // Coach document actions
+  toggleCoachDocument: (documentId: string) => void
+  clearCoachDocuments: () => void
 
   // Session Management Actions
   setActiveSession: (sessionId: string) => void
@@ -21,9 +28,10 @@ interface ChatDocumentStore {
 export const useChatDocumentStore = create<ChatDocumentStore>()((set) => ({
   // Initial state
   selectedDocuments: [],
+  coachDocuments: [],
   activeSessionId: undefined,
 
-  // Document Selection Actions
+  // Document chat actions
   selectDocument: (documentId: string) =>
     set((state) => ({
       selectedDocuments: state.selectedDocuments.includes(documentId)
@@ -46,6 +54,16 @@ export const useChatDocumentStore = create<ChatDocumentStore>()((set) => ({
     })),
 
   clearDocumentSelection: () => set({ selectedDocuments: [] }),
+
+  // Coach document actions
+  toggleCoachDocument: (documentId: string) =>
+    set((state) => ({
+      coachDocuments: state.coachDocuments.includes(documentId)
+        ? state.coachDocuments.filter((id) => id !== documentId)
+        : [...state.coachDocuments, documentId],
+    })),
+
+  clearCoachDocuments: () => set({ coachDocuments: [] }),
 
   // Session Management Actions
   setActiveSession: (sessionId: string) => set({ activeSessionId: sessionId }),

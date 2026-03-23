@@ -45,10 +45,7 @@ export default function RecorderTranscriber() {
           <VideoPreview stream={userMedia} />
         </div>
       ) : (
-        <div className="flex flex-col items-center px-4 py-6">
-          <p className="text-center text-sm font-medium text-muted-foreground">
-            Connect to your interview meeting room
-          </p>
+        <div className="flex flex-col items-center">
           <RecordButton
             micOpen={micOpen}
             onClick={toggleMicrophone}

@@ -11,8 +11,12 @@ import { useStreamingRagChat } from "@/hooks/api/chat/useStreamingRagChat"
 import { useGetDocuments } from "@/hooks/api/document/useGetDocuments"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import { ChatMessage } from "@/components/chat/chat-message"
 import DocumentSelector from "@/components/chat/document-selector"
@@ -252,8 +256,8 @@ export default function StreamingChat() {
             {/* Input Actions */}
             <div className="flex items-center justify-between gap-2 p-2 pt-0">
               <div className="flex items-center">
-                <Sheet>
-                  <SheetTrigger asChild>
+                <Popover>
+                  <PopoverTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -263,11 +267,16 @@ export default function StreamingChat() {
                       <Paperclip className="size-4" />
                       <span className="sr-only">Select documents</span>
                     </Button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-80 p-0">
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="top"
+                    align="start"
+                    className="w-72 p-0"
+                    sideOffset={8}
+                  >
                     <DocumentSelector />
-                  </SheetContent>
-                </Sheet>
+                  </PopoverContent>
+                </Popover>
               </div>
               <Button
                 variant={isStreaming ? "destructive" : "default"}

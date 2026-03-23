@@ -1,3 +1,4 @@
+import { useChatDocumentStore } from "@/stores/chat-document-store"
 import type { AgentInputItem } from "@openai/agents"
 import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
@@ -164,6 +165,9 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
           .map((m) => ({ role: m.role, content: m.content }))
 
         try {
+          const selectedDocuments =
+            useChatDocumentStore.getState().coachDocuments
+
           const response = await fetch("/api/assistant/question", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -172,6 +176,7 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
               agentHistory: get().agentHistory,
               context,
               sessionContext: get().sessionContext,
+              selectedDocuments,
             }),
           })
 

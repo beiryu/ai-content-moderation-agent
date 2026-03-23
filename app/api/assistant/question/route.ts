@@ -4,21 +4,33 @@ import {
   run,
   type AgentInputItem,
 } from "@openai/agents"
+import { getServerSession } from "next-auth"
 
 import { createAnswerCoachAgent } from "@/lib/agents/interview-agents"
+import { authOptions } from "@/lib/auth"
+import { getOrCreateVectorStore } from "@/lib/openai/vector-store-service"
 
 export async function POST(req: Request) {
+  const authSession = await getServerSession(authOptions)
+  if (!authSession?.user?.id) {
+    return new Response("Unauthorized", { status: 401 })
+  }
+
   const {
     text,
     agentHistory = [],
     context = [],
     sessionContext,
+    selectedDocuments,
   }: {
     text: string
     agentHistory: AgentInputItem[]
     context: { role: string; content: string }[]
     sessionContext?: string
+    selectedDocuments?: string[]
   } = await req.json()
+
+  const vectorStoreId = await getOrCreateVectorStore(authSession.user.id)
 
   const contextBlock =
     context.length > 0
@@ -43,7 +55,11 @@ export async function POST(req: Request) {
       compactionCandidateItems.length >= 12,
   })
 
-  const agent = createAnswerCoachAgent(sessionContext)
+  const agent = createAnswerCoachAgent(
+    sessionContext,
+    vectorStoreId,
+    selectedDocuments
+  )
 
   try {
     const streamed = await run(agent, input, {

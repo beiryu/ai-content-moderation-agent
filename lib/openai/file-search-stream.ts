@@ -1,6 +1,6 @@
 import type {
-  EasyInputMessage,
   FileSearchTool,
+  ResponseCompletedEvent,
   ResponseOutputTextAnnotationAddedEvent,
   ResponseTextDeltaEvent,
 } from "openai/resources/responses/responses"
@@ -20,16 +20,18 @@ export interface FileSearchSource {
 export interface FileSearchChunk {
   content: string | null
   sources: FileSearchSource[] | null
+  responseId?: string
 }
 
 /**
  * Streams a response from the OpenAI Responses API using the file_search tool.
- * Yields { content, sources } chunks compatible with the existing SSE handler.
+ * Uses previous_response_id for server-side conversation state management.
+ * Yields { content, sources, responseId } chunks compatible with the existing SSE handler.
  */
 export async function* streamWithFileSearch(
   query: string,
   vectorStoreId: string,
-  conversationMessages: Array<{ role: "user" | "assistant"; content: string }>,
+  previousResponseId: string | undefined,
   documentIds?: string[],
   fileIdToTitle?: Map<string, { documentId: string; title: string }>
 ): AsyncGenerator<FileSearchChunk> {
@@ -41,14 +43,6 @@ export async function* streamWithFileSearch(
     ...(filter ? { filters: filter as FileSearchTool["filters"] } : {}),
   }
 
-  const input: EasyInputMessage[] = [
-    ...conversationMessages.map((m) => ({
-      role: m.role as EasyInputMessage["role"],
-      content: m.content,
-    })),
-    { role: "user" as const, content: query },
-  ]
-
   const stream = await openai.responses.create({
     model: RAG_CONFIG.models.chat.model,
     instructions: `You are acting as the person whose documents are provided.
@@ -56,7 +50,8 @@ Answer every question in the first person ("I", "my", "me") as if you are that p
 Use the uploaded documents as the authoritative source of facts about yourself — experience, skills, projects, education, etc.
 If the documents don't contain enough detail to answer precisely, give a natural, confident response consistent with what is known.
 Never say you are an AI, a language model, or an assistant. You are the candidate.`,
-    input,
+    input: [{ role: "user" as const, content: query }],
+    ...(previousResponseId ? { previous_response_id: previousResponseId } : {}),
     tools: [fileSearchTool],
     stream: true,
     temperature: RAG_CONFIG.models.chat.temperature,
@@ -95,10 +90,18 @@ Never say you are an AI, a language model, or an assistant. You are the candidat
       yield { content: deltaEvent.delta, sources: null }
     }
 
-    // Ensure sources are always yielded at least once
-    if (event.type === "response.completed" && !sourcesYielded) {
-      yield { content: null, sources }
-      sourcesYielded = true
+    // Yield response ID and ensure sources are always yielded at least once
+    if (event.type === "response.completed") {
+      if (!sourcesYielded) {
+        yield { content: null, sources }
+        sourcesYielded = true
+      }
+      const completedEvent = event as unknown as ResponseCompletedEvent
+      yield {
+        content: null,
+        sources: null,
+        responseId: completedEvent.response.id,
+      }
     }
   }
 }

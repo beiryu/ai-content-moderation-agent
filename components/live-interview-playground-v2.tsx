@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useChatDocumentStore } from "@/stores/chat-document-store"
 import { useInterviewSessionStore } from "@/stores/interview-session.store"
-import { Clock } from "lucide-react"
+import { Clock, Settings } from "lucide-react"
 
 import useCreateInterviewSession from "@/hooks/api/interview-session/useCreateInterviewSession"
 import useUpdateInterviewSession from "@/hooks/api/interview-session/useUpdateInterviewSession"
@@ -15,7 +15,15 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import { Separator } from "@/components/ui/separator"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import DocumentSelector from "@/components/chat/document-selector"
 import StreamingChat from "@/components/chat/streaming-chat"
 import { LiveInterviewResponses } from "@/components/live-interview-responses"
 import MicOnlyRecorder from "@/components/mic-only-recorder"
@@ -34,7 +42,13 @@ export function LiveInterviewPlaygroundV2({
 }: LiveInterviewPlaygroundV2Props) {
   const router = useRouter()
   const { setCurrentSessionId, setSessionContext } = useInterviewSessionStore()
-  const { clearDocumentSelection, clearActiveSession } = useChatDocumentStore()
+  const {
+    clearDocumentSelection,
+    clearActiveSession,
+    coachDocuments,
+    toggleCoachDocument,
+    clearCoachDocuments,
+  } = useChatDocumentStore()
 
   const { mutateAsync: createSession } = useCreateInterviewSession()
   const { mutateAsync: updateSession } = useUpdateInterviewSession()
@@ -69,7 +83,13 @@ export function LiveInterviewPlaygroundV2({
   useEffect(() => {
     clearDocumentSelection()
     clearActiveSession()
-  }, [interviewId, clearDocumentSelection, clearActiveSession])
+    clearCoachDocuments()
+  }, [
+    interviewId,
+    clearDocumentSelection,
+    clearActiveSession,
+    clearCoachDocuments,
+  ])
 
   // Start new session when component mounts
   useEffect(() => {
@@ -223,9 +243,40 @@ export function LiveInterviewPlaygroundV2({
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     AI Suggestions
                   </span>
-                  <div className="flex items-center gap-1.5">
-                    <div className="size-1.5 rounded-full bg-green-500" />
-                    <span className="text-xs text-muted-foreground">Ready</span>
+                  <div className="flex items-center gap-2">
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7"
+                          title="Select documents for Answer Coach"
+                        >
+                          <Settings className="size-3.5" />
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent side="right" className="w-80 p-0">
+                        <SheetHeader className="px-4 py-3 border-b">
+                          <SheetTitle className="text-sm">
+                            Coach Documents
+                          </SheetTitle>
+                        </SheetHeader>
+                        <p className="px-4 py-2 text-xs text-muted-foreground">
+                          Select documents for the Answer Coach to reference. If
+                          none selected, all documents are searched.
+                        </p>
+                        <DocumentSelector
+                          selectedDocuments={coachDocuments}
+                          onToggle={toggleCoachDocument}
+                        />
+                      </SheetContent>
+                    </Sheet>
+                    <div className="flex items-center gap-1.5">
+                      <div className="size-1.5 rounded-full bg-green-500" />
+                      <span className="text-xs text-muted-foreground">
+                        Ready
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="min-h-0 flex-1 overflow-hidden">

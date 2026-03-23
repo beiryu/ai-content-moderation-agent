@@ -151,14 +151,15 @@ model Document {
 // ─── Chat ─────────────────────────────────────────────────────────────────────
 
 model ChatConversation {
-  id          String        @id @default(cuid())
-  userId      String
-  user        User          @relation("UserChatConversations", fields: [userId], references: [id], onDelete: Cascade)
-  title       String
-  documentIds String[]
-  messages    ChatMessage[]
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  id                 String        @id @default(cuid())
+  userId             String
+  user               User          @relation("UserChatConversations", fields: [userId], references: [id], onDelete: Cascade)
+  title              String
+  documentIds        String[]
+  previousResponseId String?       @map("previous_response_id")
+  messages           ChatMessage[]
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
 
   @@map("chat_conversations")
 }

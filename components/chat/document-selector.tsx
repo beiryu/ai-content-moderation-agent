@@ -25,8 +25,22 @@ const documentTypeColors = {
   NOTES: "bg-gray-100 text-gray-800 dark:bg-gray-900/40 dark:text-gray-300",
 }
 
-export default function DocumentSelector() {
-  const { selectedDocuments, toggleDocument } = useChatDocumentStore()
+interface DocumentSelectorProps {
+  /** Override selected doc IDs. Defaults to chat store's selectedDocuments. */
+  selectedDocuments?: string[]
+  /** Override toggle handler. Defaults to chat store's toggleDocument. */
+  onToggle?: (id: string) => void
+}
+
+export default function DocumentSelector({
+  selectedDocuments: selectedDocumentsProp,
+  onToggle,
+}: DocumentSelectorProps = {}) {
+  const { selectedDocuments: storeSelected, toggleDocument } =
+    useChatDocumentStore()
+
+  const selectedDocuments = selectedDocumentsProp ?? storeSelected
+  const handleToggle = onToggle ?? toggleDocument
 
   const { documents, isLoading } = useGetDocuments()
 
@@ -92,7 +106,7 @@ export default function DocumentSelector() {
                       ? "bg-primary/10 border-primary/30 border"
                       : "hover:bg-muted/50 border border-muted"
                   }`}
-                  onClick={() => toggleDocument(document.id)}
+                  onClick={() => handleToggle(document.id)}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">

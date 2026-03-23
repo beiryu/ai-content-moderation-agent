@@ -50,7 +50,6 @@ export function CreateInterviewDialog() {
       dueDate: new Date().toISOString(),
       jobTitle: "",
       companyName: "",
-      notes: "",
     },
   })
 
@@ -104,28 +103,6 @@ export function CreateInterviewDialog() {
                   <FormLabel>Session name</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g. Google SWE round 1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Notes{" "}
-                    <span className="font-normal text-muted-foreground">
-                      (optional)
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="e.g. Round 2, focus on system design. Already mentioned React experience in round 1..."
-                      rows={3}
-                      {...field}
-                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
 import { db } from "@/lib/db"
-import {
-  appendToRedisHistory,
-  loadMessagesForResponsesAPI,
-  saveChatInteraction,
-} from "@/lib/langchain/memory"
+import { saveChatInteraction } from "@/lib/langchain/memory"
 import { streamWithFileSearch } from "@/lib/openai/file-search-stream"
 import { getOrCreateVectorStore } from "@/lib/openai/vector-store-service"
 import { getCurrentUser } from "@/lib/session"
@@ -56,27 +52,28 @@ export async function POST(req: NextRequest) {
         .map((d) => [d.openaiFileId!, { documentId: d.id, title: d.title }])
     )
 
-    const conversationMessages = await loadMessagesForResponsesAPI(
-      user.id,
-      conversationId!
-    )
+    const conversation = await db.chatConversation.findUnique({
+      where: { id: conversationId! },
+      select: { previousResponseId: true },
+    })
 
     // Collect full response from the streaming generator
     let fullResponse = ""
     let sources: any[] = []
+    let newResponseId: string | undefined
 
     for await (const chunk of streamWithFileSearch(
       message,
       vectorStoreId,
-      conversationMessages,
+      conversation?.previousResponseId ?? undefined,
       selectedDocuments || [],
       fileIdToTitle
     )) {
+      if (chunk.responseId) newResponseId = chunk.responseId
       if (chunk.sources) sources = chunk.sources
       if (chunk.content) fullResponse += chunk.content
     }
 
-    await appendToRedisHistory(conversationId!, message, fullResponse)
     const assistantMessage = await saveChatInteraction(
       user.id,
       conversationId!,
@@ -84,6 +81,13 @@ export async function POST(req: NextRequest) {
       fullResponse,
       sources
     )
+
+    if (newResponseId) {
+      await db.chatConversation.update({
+        where: { id: conversationId! },
+        data: { previousResponseId: newResponseId },
+      })
+    }
 
     return NextResponse.json(assistantMessage)
   } catch (error) {

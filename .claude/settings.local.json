@@ -30,7 +30,13 @@
       "Bash(grep -r contentlayer /Users/beiryu/Development/Beiryu/ai-interview-old/app --include=*.tsx --include=*.ts)",
       "Bash(grep -r contentlayer /Users/beiryu/Development/Beiryu/ai-interview-old/lib --include=*.tsx --include=*.ts)",
       "Bash(grep -r \"contentlayer\\\\|next-contentlayer\" /Users/beiryu/Development/Beiryu/ai-interview-old --include=*.ts --include=*.tsx --include=*.js --include=*.mjs --include=*.json)",
-      "Bash(grep -r \"contentlayer\\\\|next-contentlayer\" /Users/beiryu/Development/Beiryu/ai-interview-old --include=*.ts --include=*.tsx --include=*.js --include=*.mjs)"
+      "Bash(grep -r \"contentlayer\\\\|next-contentlayer\" /Users/beiryu/Development/Beiryu/ai-interview-old --include=*.ts --include=*.tsx --include=*.js --include=*.mjs)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "Bash(find /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/@openai/agents -name *.d.ts)",
+      "Bash(find /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/@openai -name *.d.ts)",
+      "Bash(find /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/.pnpm/@openai+agents-openai@0.7.2_@cfworker+json-schema@4.1.1_ws@8.18.3_zod@3.25.76/node_modules/@openai/agents-openai -name *.d.ts)",
+      "Bash(find /Users/beiryu/Development/Beiryu/ai-interview-old/node_modules/.pnpm -path */openai/resources/responses/responses.d.ts)"
     ]
   }
 }

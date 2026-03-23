@@ -2,11 +2,7 @@ import { NextRequest } from "next/server"
 import { z } from "zod"
 
 import { db } from "@/lib/db"
-import {
-  appendToRedisHistory,
-  loadMessagesForResponsesAPI,
-  saveChatInteraction,
-} from "@/lib/langchain/memory"
+import { saveChatInteraction } from "@/lib/langchain/memory"
 import {
   FileSearchSource,
   streamWithFileSearch,
@@ -77,22 +73,27 @@ export async function POST(req: NextRequest) {
               ])
           )
 
-          // 3. Load conversation history as plain messages array
-          const conversationMessages = await loadMessagesForResponsesAPI(
-            user.id,
-            conversationId!
-          )
+          // 3. Get previous response ID for conversation continuity
+          const conversation = await db.chatConversation.findUnique({
+            where: { id: conversationId! },
+            select: { previousResponseId: true },
+          })
 
           // 4. Stream from Responses API with file_search tool
+          let newResponseId: string | undefined
           const streamIterator = streamWithFileSearch(
             message,
             vectorStoreId,
-            conversationMessages,
+            conversation?.previousResponseId ?? undefined,
             selectedDocuments || [],
             fileIdToTitle
           )
 
           for await (const chunk of streamIterator) {
+            if (chunk.responseId) {
+              newResponseId = chunk.responseId
+            }
+
             if (chunk.sources) {
               sources = chunk.sources
             }
@@ -111,8 +112,7 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          // 5. Persist conversation
-          await appendToRedisHistory(conversationId!, message, fullResponse)
+          // 5. Persist conversation and save new response ID
           const assistantMessage = await saveChatInteraction(
             user.id,
             conversationId!,
@@ -120,6 +120,13 @@ export async function POST(req: NextRequest) {
             fullResponse,
             sources
           )
+
+          if (newResponseId) {
+            await db.chatConversation.update({
+              where: { id: conversationId! },
+              data: { previousResponseId: newResponseId },
+            })
+          }
 
           // 6. Send complete event (same shape as before — no frontend changes needed)
           const finalData = JSON.stringify({

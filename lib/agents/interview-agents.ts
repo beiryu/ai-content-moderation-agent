@@ -1,9 +1,19 @@
-import { Agent } from "@openai/agents"
+import { Agent, fileSearchTool } from "@openai/agents"
 
-export function createAnswerCoachAgent(sessionContext?: string): Agent {
+import { buildFileSearchFilter } from "@/lib/openai/vector-store-service"
+
+export function createAnswerCoachAgent(
+  sessionContext?: string,
+  vectorStoreId?: string,
+  selectedDocumentIds?: string[]
+): Agent {
   const contextBlock = sessionContext
     ? `\nSESSION CONTEXT:\n${sessionContext}\n\nUse this context when tailoring suggested answers.\n`
     : ""
+
+  const filter = selectedDocumentIds?.length
+    ? buildFileSearchFilter(selectedDocumentIds)
+    : undefined
 
   return new Agent({
     name: "AnswerCoach",
@@ -22,6 +32,18 @@ If CONVERSATION SO FAR is provided, use it to:
 - Build naturally on what was already said
 - Fill genuine gaps in the candidate's previous answers
 
+When the question requires specific facts about the candidate's background, experience, or projects — use the file_search tool to retrieve relevant context.
+
 Return ONLY the answer text. No JSON, no labels, no prefixes.`,
+    ...(vectorStoreId
+      ? {
+          tools: [
+            fileSearchTool(
+              vectorStoreId,
+              filter ? { filters: filter as any } : undefined
+            ),
+          ],
+        }
+      : {}),
   })
 }
