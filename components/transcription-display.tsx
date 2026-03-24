@@ -13,63 +13,50 @@ const useScrollToTop = (ref: React.RefObject<HTMLElement>, deps: unknown[]) => {
 }
 
 export function TranscriptionDisplay() {
-  const { messages, interviewerBuffer, candidateBuffer, interimText } =
+  const { messages, interviewerBuffer, candidateBuffer, interimRole } =
     useInterviewSessionStore()
 
   const scrollRef = useRef<HTMLDivElement>(null)
 
+  const showInterviewerSpeaking =
+    interimRole === "interviewer" || !!interviewerBuffer
+  const showCandidateSpeaking = interimRole === "candidate" || !!candidateBuffer
+
   useScrollToTop(scrollRef, [
     messages.length,
-    interimText,
-    interviewerBuffer,
-    candidateBuffer,
+    showInterviewerSpeaking,
+    showCandidateSpeaking,
   ])
+
+  const now = new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto" ref={scrollRef}>
         <div className="flex flex-col gap-2 p-4">
-          {/* Most recent live text at top, then finalized messages newest → oldest */}
-          {interimText && (
+          {showInterviewerSpeaking && (
             <TranscriptionMessage
-              timestamp={new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-              text={interimText}
-              type="interim"
+              timestamp={now}
+              type="speaking"
               role="interviewer"
             />
           )}
 
-          {candidateBuffer && (
+          {showCandidateSpeaking && (
             <TranscriptionMessage
-              timestamp={new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-              text={candidateBuffer}
-              type="buffer"
+              timestamp={now}
+              type="speaking"
               role="candidate"
-            />
-          )}
-
-          {interviewerBuffer && (
-            <TranscriptionMessage
-              timestamp={new Date().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-              text={interviewerBuffer}
-              type="buffer"
-              role="interviewer"
             />
           )}
 
           {[...messages].reverse().map((message) => (
             <TranscriptionMessage
               key={message.id}
-              timestamp={message.createdAt.toLocaleTimeString([], {
+              timestamp={new Date(message.createdAt).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
               })}

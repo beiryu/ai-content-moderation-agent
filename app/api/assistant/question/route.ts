@@ -91,10 +91,18 @@ export async function POST(req: Request) {
           const updatedHistory = await session.getItems()
           const done = JSON.stringify({ type: "done", updatedHistory }) + "\n"
           controller.enqueue(encoder.encode(done))
-        } catch (err) {
-          console.error("Stream error:", err)
+        } catch (err: unknown) {
+          const isAbort =
+            err instanceof Error &&
+            (err.name === "AbortError" ||
+              (err as NodeJS.ErrnoException).code === "ERR_INVALID_STATE")
+          if (!isAbort) console.error("Stream error:", err)
         } finally {
-          controller.close()
+          try {
+            controller.close()
+          } catch {
+            // Already closed — client disconnected
+          }
         }
       },
     })

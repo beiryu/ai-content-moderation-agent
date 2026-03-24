@@ -12,7 +12,9 @@ interface InterviewSessionStore {
   interviewerBuffer: string
   candidateBuffer: string
   interimText: string
+  interimRole: "interviewer" | "candidate" | null
   lastSpeakTime: number
+  isClassifying: boolean
 
   messages: InterviewMessage[]
   currentAnalysis: QuestionAnalysis | null
@@ -32,8 +34,8 @@ interface InterviewSessionStore {
     isFinal: boolean,
     role?: "interviewer" | "candidate"
   ) => void
-  flushTranscript: (role: "interviewer" | "candidate") => void
-  analyzeMessage: (messageId: string) => Promise<void>
+  flushTranscript: (role: "interviewer" | "candidate") => Promise<void>
+  analyzeMessage: (messageId: string, abortSignal?: AbortSignal) => Promise<void>
 }
 
 export const useInterviewSessionStore = create<InterviewSessionStore>()(
@@ -44,7 +46,9 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
       interviewerBuffer: "",
       candidateBuffer: "",
       interimText: "",
+      interimRole: null,
       lastSpeakTime: Date.now(),
+      isClassifying: false,
 
       messages: [],
       currentAnalysis: null,
@@ -84,7 +88,7 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
         }
       },
 
-      flushTranscript: (role: "interviewer" | "candidate") => {
+      flushTranscript: async (role: "interviewer" | "candidate") => {
         const state = get()
         const bufferKey =
           role === "interviewer" ? "interviewerBuffer" : "candidateBuffer"
@@ -92,6 +96,9 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
         if (!buffer) return
 
         const messageId = Date.now().toString()
+        const currentIndex = state.messages.length
+
+        // Append message synchronously so UI updates immediately
         set({
           messages: [
             ...state.messages,
@@ -108,10 +115,49 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
           ],
           [bufferKey]: "",
           interimText: "",
+          interimRole: null,
         })
 
-        if (role === "interviewer") {
-          get().analyzeMessage(messageId)
+        if (role !== "interviewer") return
+
+        // Client-side word count gate — free, no LLM round-trip
+        if (buffer.trim().split(/\s+/).length < 4) return
+
+        set({ isClassifying: true })
+
+        const context = get()
+          .messages.slice(Math.max(0, currentIndex - 3), currentIndex)
+          .map((m) => ({ role: m.role, content: m.content }))
+
+        // Start analysis immediately — don't wait for classifier
+        const abortController = new AbortController()
+        get().analyzeMessage(messageId, abortController.signal)
+
+        try {
+          const res = await fetch("/api/assistant/classify-question", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: buffer, context }),
+          })
+          const { isQuestion } = await res.json()
+
+          if (!isQuestion) {
+            // Not a question — abort the in-flight analysis and remove the card
+            abortController.abort()
+            set((s) => ({
+              messages: s.messages.map((m) =>
+                m.id === messageId ? { ...m, questionAnalysis: null } : m
+              ),
+              currentAnalysis:
+                s.currentAnalysis?.messageId === messageId
+                  ? null
+                  : s.currentAnalysis,
+            }))
+          }
+        } catch {
+          // Fail open: analysis already started, just let it run
+        } finally {
+          set({ isClassifying: false })
         }
       },
 
@@ -132,12 +178,13 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
         } else {
           set({
             interimText: transcript,
+            interimRole: role,
             lastSpeakTime: now,
           })
         }
       },
 
-      analyzeMessage: async (messageId: string) => {
+      analyzeMessage: async (messageId: string, abortSignal?: AbortSignal) => {
         const state = get()
         const message = state.messages.find((m) => m.id === messageId)
 
@@ -178,6 +225,7 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
               selectedDocuments: coachDocuments,
               fastMode,
             }),
+            signal: abortSignal,
           })
 
           const reader = response.body!.getReader()
@@ -215,6 +263,7 @@ export const useInterviewSessionStore = create<InterviewSessionStore>()(
             }
           }
         } catch (error) {
+          if (abortSignal?.aborted) return
           console.error("Error streaming answer:", error)
         }
       },

@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 
+export const dynamic = "force-dynamic"
+
 /**
  * GET /api/chat/conversations/[conversationId]/messages
  * Get messages for a specific conversation

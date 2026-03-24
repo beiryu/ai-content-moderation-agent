@@ -1,8 +1,8 @@
-type TranscriptionMessageType = "buffer" | "interim" | "final"
+type TranscriptionMessageType = "buffer" | "interim" | "final" | "speaking"
 
 interface TranscriptionMessageProps {
   timestamp: string
-  text: string
+  text?: string
   type: TranscriptionMessageType
   role?: "interviewer" | "candidate"
 }
@@ -14,41 +14,65 @@ export function TranscriptionMessage({
   role,
 }: TranscriptionMessageProps) {
   const isCandidate = role === "candidate"
-  const isInterim = type === "interim"
-  const isBuffer = type === "buffer"
 
-  if (isInterim || isBuffer) {
+  if (type === "speaking") {
     return (
-      <div className="flex items-start gap-3 py-1 animate-fade-in">
-        <div className="min-w-12 text-xs text-muted-foreground">
-          {timestamp}
-        </div>
-        <div className="rounded-lg px-4 py-2 text-sm bg-muted/50 text-muted-foreground italic opacity-60">
-          {text}
+      <div
+        className={`flex flex-col gap-1 py-1 animate-fade-in ${
+          isCandidate ? "items-end" : "items-start"
+        }`}
+      >
+        <span className="text-xs text-muted-foreground px-1">
+          {isCandidate ? "Me" : "Interviewer"}
+        </span>
+        <div
+          className={`rounded-2xl px-4 py-3 ${
+            isCandidate
+              ? "bg-primary/15 rounded-tr-sm"
+              : "bg-muted rounded-tl-sm"
+          }`}
+        >
+          <div className="flex items-center gap-[5px] h-4">
+            <span
+              className="size-2 rounded-full bg-foreground/40 animate-bounce"
+              style={{ animationDelay: "-0.3s" }}
+            />
+            <span
+              className="size-2 rounded-full bg-foreground/40 animate-bounce"
+              style={{ animationDelay: "-0.15s" }}
+            />
+            <span className="size-2 rounded-full bg-foreground/40 animate-bounce" />
+          </div>
         </div>
       </div>
     )
   }
 
-  return (
-    <div
-      className={`flex flex-col gap-1 py-1 animate-fade-in ${
-        isCandidate ? "items-end" : "items-start"
-      }`}
-    >
-      <span className="text-xs text-muted-foreground px-1">
-        {isCandidate ? "Me" : "Interviewer"}
-      </span>
+  if (type === "final") {
+    return (
       <div
-        className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
-          isCandidate
-            ? "bg-primary/15 text-foreground rounded-tr-sm"
-            : "bg-muted text-foreground rounded-tl-sm"
+        className={`flex flex-col gap-1 py-1 animate-fade-in ${
+          isCandidate ? "items-end" : "items-start"
         }`}
       >
-        {text}
+        <span className="text-xs text-muted-foreground px-1">
+          {isCandidate ? "Me" : "Interviewer"}
+        </span>
+        <div
+          className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
+            isCandidate
+              ? "bg-primary/15 text-foreground rounded-tr-sm"
+              : "bg-muted text-foreground rounded-tl-sm"
+          }`}
+        >
+          {text}
+        </div>
+        <span className="text-xs text-muted-foreground/60 px-1">
+          {timestamp}
+        </span>
       </div>
-      <span className="text-xs text-muted-foreground/60 px-1">{timestamp}</span>
-    </div>
-  )
+    )
+  }
+
+  return null
 }

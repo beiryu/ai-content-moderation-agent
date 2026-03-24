@@ -7,11 +7,11 @@ import {
   FileSearchSource,
   streamWithFileSearch,
 } from "@/lib/openai/file-search-stream"
-import redis from "@/lib/redis"
 import {
   getCachedUserDocs,
   getOrCreateVectorStore,
 } from "@/lib/openai/vector-store-service"
+import redis from "@/lib/redis"
 import { getCurrentUser } from "@/lib/session"
 import { RagChatRequestSchema } from "@/lib/validations/chat-message"
 
@@ -82,10 +82,7 @@ export async function POST(req: NextRequest) {
     const fileIdToTitle = new Map(
       userDocs
         .filter((d) => d.openaiFileId)
-        .map((d) => [
-          d.openaiFileId!,
-          { documentId: d.id, title: d.title },
-        ])
+        .map((d) => [d.openaiFileId!, { documentId: d.id, title: d.title }])
     )
 
     const stream = new ReadableStream({
@@ -95,7 +92,10 @@ export async function POST(req: NextRequest) {
           // before the OpenAI file_search round-trip completes (~400-1500ms)
           controller.enqueue(
             encoder.encode(
-              `data: ${JSON.stringify({ type: "thinking", conversationId })}\n\n`
+              `data: ${JSON.stringify({
+                type: "thinking",
+                conversationId,
+              })}\n\n`
             )
           )
 

@@ -101,6 +101,7 @@ Connects to `wss://api.openai.com/v1/realtime?model=gpt-4o-transcribe` via nativ
 ```
 
 Notes:
+
 - `language` field is **omitted** entirely (not set to `null`) — omitting it enables automatic language detection.
 - `silence_duration_ms: 1200ms` vs current 300ms — allows natural pauses for non-native speakers.
 - `server_vad` — OpenAI handles VAD server-side, replacing Deepgram's `endpointing`.
@@ -110,14 +111,14 @@ The existing hook has a 1-second polling interval that calls `flushTranscript` i
 
 **Events handled:**
 
-| Event | Action |
-|-------|--------|
-| `session.created` | Send `session.update` config; set status `"ready"`, `isListening: true` |
-| `conversation.item.input_audio_transcription.delta` | `processTranscript(delta, false)` |
-| `conversation.item.input_audio_transcription.completed` | `processTranscript(text, true)` |
-| `input_audio_buffer.speech_stopped` | `flushTranscript(role)` |
-| WebSocket `close` | set `isListening: false`, attempt reconnect |
-| WebSocket `error` | set status `"error"` |
+| Event                                                   | Action                                                                  |
+| ------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `session.created`                                       | Send `session.update` config; set status `"ready"`, `isListening: true` |
+| `conversation.item.input_audio_transcription.delta`     | `processTranscript(delta, false)`                                       |
+| `conversation.item.input_audio_transcription.completed` | `processTranscript(text, true)`                                         |
+| `input_audio_buffer.speech_stopped`                     | `flushTranscript(role)`                                                 |
+| WebSocket `close`                                       | set `isListening: false`, attempt reconnect                             |
+| WebSocket `error`                                       | set status `"error"`                                                    |
 
 **Return interface** (updated — `connection` removed, `startListening`/`stopListening` added):
 
@@ -185,7 +186,7 @@ Return true for:
 **New state:**
 
 ```ts
-isClassifying: boolean  // used by the interviewer panel to show a brief loading indicator
+isClassifying: boolean // used by the interviewer panel to show a brief loading indicator
 ```
 
 **`flushTranscript` signature change:**
@@ -225,13 +226,13 @@ Note: Messages are always saved to history regardless of classification result. 
 
 ## Error Handling Summary
 
-| Scenario | Behavior |
-|----------|----------|
-| Classifier timeout (>2s) | Fallback: call `analyzeMessage()` |
-| Classifier API error | Fallback: call `analyzeMessage()` |
-| WebSocket disconnect | Auto-reconnect, max 3 attempts with backoff |
-| Reconnect fails | status `"error"`, toast notification |
-| Language detection failure | OpenAI auto-detect handles gracefully |
+| Scenario                     | Behavior                                      |
+| ---------------------------- | --------------------------------------------- |
+| Classifier timeout (>2s)     | Fallback: call `analyzeMessage()`             |
+| Classifier API error         | Fallback: call `analyzeMessage()`             |
+| WebSocket disconnect         | Auto-reconnect, max 3 attempts with backoff   |
+| Reconnect fails              | status `"error"`, toast notification          |
+| Language detection failure   | OpenAI auto-detect handles gracefully         |
 | `speech_stopped` never fires | Silence fallback interval (5s) flushes buffer |
 
 ---
@@ -248,11 +249,11 @@ Note: Messages are always saved to history regardless of classification result. 
 
 ## Cost Impact
 
-| | Current | New |
-|--|---------|-----|
-| STT | Deepgram Nova-2: $0.0043/min | OpenAI gpt-4o-transcribe: $0.006/min (verify current pricing) |
-| Classifier | — | GPT-4o-mini: ~$0.00001/call |
-| Delta | +$0.0017/min STT | negligible classifier cost |
+|            | Current                      | New                                                           |
+| ---------- | ---------------------------- | ------------------------------------------------------------- |
+| STT        | Deepgram Nova-2: $0.0043/min | OpenAI gpt-4o-transcribe: $0.006/min (verify current pricing) |
+| Classifier | —                            | GPT-4o-mini: ~$0.00001/call                                   |
+| Delta      | +$0.0017/min STT             | negligible classifier cost                                    |
 
 For a 60-minute interview session: ~$0.10 additional cost. Justified by Vietnamese support and elimination of false-positive analysis calls.
 
@@ -260,13 +261,13 @@ For a 60-minute interview session: ~$0.10 additional cost. Justified by Vietname
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `hooks/use-openai-transcription.ts` | New — full audio pipeline + WebSocket to OpenAI |
-| `app/api/transcription-session/route.ts` | New — ephemeral token endpoint |
-| `app/api/assistant/classify-question/route.ts` | New — question classifier endpoint |
-| `stores/interview-session.store.ts` | Add `isClassifying`, make `flushTranscript` async |
-| `components/recorder-transcriber.tsx` | Replace `useDeepgramConnection` import + `connection.send` with `startListening`/`stopListening` |
-| `components/mic-only-recorder.tsx` | Same as above |
-| `hooks/use-microphone.ts` | May be internalised into new hook; no longer used by consumers directly |
-| `hooks/use-microphone-only.ts` | Same as above |
+| File                                           | Change                                                                                           |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `hooks/use-openai-transcription.ts`            | New — full audio pipeline + WebSocket to OpenAI                                                  |
+| `app/api/transcription-session/route.ts`       | New — ephemeral token endpoint                                                                   |
+| `app/api/assistant/classify-question/route.ts` | New — question classifier endpoint                                                               |
+| `stores/interview-session.store.ts`            | Add `isClassifying`, make `flushTranscript` async                                                |
+| `components/recorder-transcriber.tsx`          | Replace `useDeepgramConnection` import + `connection.send` with `startListening`/`stopListening` |
+| `components/mic-only-recorder.tsx`             | Same as above                                                                                    |
+| `hooks/use-microphone.ts`                      | May be internalised into new hook; no longer used by consumers directly                          |
+| `hooks/use-microphone-only.ts`                 | Same as above                                                                                    |
