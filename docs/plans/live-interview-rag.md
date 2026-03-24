@@ -19,7 +19,7 @@
 | `LiveInterviewPlaygroundV2` | Cột phải render `<StreamingChat />` — gọi `POST /api/chat/rag/stream`, dùng `useChatDocumentStore` (`selectedDocuments`, `activeSessionId`). |
 | `ChatWithDocuments`         | Có đủ 3 vùng: sessions \| `StreamingChat` \| `DocumentSelector`.                                                                             |
 | `StreamingChat`             | Copy UX nhắc “chọn tài liệu ở panel bên phải” — **đúng trên layout Chat, sai trên Live Interview** vì **không có** `DocumentSelector`.       |
-| API RAG stream              | `file_search` trên vector store user, filter theo `selectedDocuments` (rỗng = mọi file có `openaiFileId`).                                   |
+| API RAG stream              | `file_search` **chỉ khi** `selectedDocuments` có ít nhất một id; rỗng = chat chung (không search vector store), xem `streamDocumentChatWithoutFileSearch`. |
 | `ChatConversation`          | Tách biệt `InterviewSession`; `sessionId` trên URL (`?sessionId=`) là conversation chat, không gắn DB với `interviewId`.                     |
 
 **Kết luận:** Backend RAG đủ cho live; **thiếu UI chọn tài liệu trong playground** và có thể thiếu **ràng buộc ngữ cảnh interview** (prompt / optional link `interviewId`).

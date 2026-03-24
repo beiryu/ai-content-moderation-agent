@@ -133,7 +133,7 @@ export async function removeFileFromVectorStore(
 
 /**
  * Builds the OpenAI file_search filter for a set of document IDs.
- * Returns undefined when documentIds is empty (search all files in store).
+ * Document Chat only calls file_search when the user has selected ≥1 doc; callers must not pass an empty list.
  */
 export function buildFileSearchFilter(
   documentIds: string[]

@@ -4,7 +4,10 @@ import { z } from "zod"
 import { ConfigService } from "@/lib/config/config.service"
 import { db } from "@/lib/db"
 import { saveChatInteraction } from "@/lib/langchain/memory"
-import { streamWithFileSearch } from "@/lib/openai/file-search-stream"
+import {
+  streamDocumentChatWithoutFileSearch,
+  streamWithFileSearch,
+} from "@/lib/openai/file-search-stream"
 import {
   getCachedUserDocs,
   getOrCreateVectorStore,
@@ -41,12 +44,18 @@ export async function POST(req: NextRequest) {
       conversationId = conversation.id
     }
 
-    const vectorStoreId = await getOrCreateVectorStore(user.id)
+    const hasDocSelection =
+      Array.isArray(selectedDocuments) && selectedDocuments.length > 0
 
-    const userDocs = await getCachedUserDocs(
-      user.id,
-      selectedDocuments?.length ? selectedDocuments : undefined
-    )
+    let vectorStoreId = ""
+    let userDocs: Awaited<ReturnType<typeof getCachedUserDocs>> = []
+
+    if (hasDocSelection) {
+      ;[vectorStoreId, userDocs] = await Promise.all([
+        getOrCreateVectorStore(user.id),
+        getCachedUserDocs(user.id, selectedDocuments),
+      ])
+    }
 
     const fileIdToTitle = new Map(
       userDocs
@@ -59,23 +68,30 @@ export async function POST(req: NextRequest) {
       select: { previousResponseId: true },
     })
 
+    const prevId = conversation?.previousResponseId ?? undefined
+    const modelArgs = {
+      model: config.openai.chat.model,
+      temperature: config.openai.chat.temperature,
+      maxOutputTokens: config.openai.chat.maxTokens,
+    }
+
     // Collect full response from the streaming generator
     let fullResponse = ""
     let sources: any[] = []
     let newResponseId: string | undefined
 
-    for await (const chunk of streamWithFileSearch(
-      message,
-      vectorStoreId,
-      conversation?.previousResponseId ?? undefined,
-      selectedDocuments || [],
-      fileIdToTitle,
-      {
-        model: config.openai.chat.model,
-        temperature: config.openai.chat.temperature,
-        maxOutputTokens: config.openai.chat.maxTokens,
-      }
-    )) {
+    const streamIterator = hasDocSelection
+      ? streamWithFileSearch(
+          message,
+          vectorStoreId,
+          prevId,
+          selectedDocuments,
+          fileIdToTitle,
+          modelArgs
+        )
+      : streamDocumentChatWithoutFileSearch(message, prevId, modelArgs)
+
+    for await (const chunk of streamIterator) {
       if (chunk.responseId) newResponseId = chunk.responseId
       if (chunk.sources) sources = chunk.sources
       if (chunk.content) fullResponse += chunk.content

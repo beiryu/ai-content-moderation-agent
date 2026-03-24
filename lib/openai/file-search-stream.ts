@@ -2,6 +2,7 @@ import type {
   FileSearchTool,
   ResponseCompletedEvent,
   ResponseOutputTextAnnotationAddedEvent,
+  ResponseStreamEvent,
   ResponseTextDeltaEvent,
 } from "openai/resources/responses/responses"
 
@@ -23,46 +24,31 @@ export interface FileSearchChunk {
   responseId?: string
 }
 
-/**
- * Streams a response from the OpenAI Responses API using the file_search tool.
- * Uses previous_response_id for server-side conversation state management.
- * Yields { content, sources, responseId } chunks compatible with the existing SSE handler.
- *
- * modelConfig is provided by the calling route (resolved via ConfigService).
- * Falls back to OPENAI_DEFAULTS if not provided.
- */
-export async function* streamWithFileSearch(
-  query: string,
-  vectorStoreId: string,
-  previousResponseId: string | undefined,
-  documentIds?: string[],
-  fileIdToTitle?: Map<string, { documentId: string; title: string }>,
-  // maxOutputTokens: uses the OpenAI Responses API field name (not max_tokens)
-  modelConfig?: { model: string; temperature: number; maxOutputTokens: number }
-): AsyncGenerator<FileSearchChunk> {
-  const filter = buildFileSearchFilter(documentIds || [])
+const DOMAIN_INTERVIEW_CONTEXT = `Assume all questions are in the context of software engineering and technical interviews. When a term has multiple meanings, always interpret and answer from a software/CS perspective first. If the intent is still unclear, ask one short clarifying question rather than listing unrelated definitions. When explaining a concept, include a short code example whenever it aids understanding.`
 
-  const fileSearchTool: FileSearchTool = {
-    type: "file_search",
-    vector_store_ids: [vectorStoreId],
-    ...(filter ? { filters: filter as FileSearchTool["filters"] } : {}),
-  }
-
-  const stream = await openai.responses.create({
-    model: modelConfig?.model ?? OPENAI_DEFAULTS.chat.model,
-    instructions: `You are a concise, accurate assistant for technical interview preparation.
+const INSTRUCTIONS_DOCUMENT_CHAT_WITH_RAG = `You are a concise, accurate assistant for technical interview preparation.
+${DOMAIN_INTERVIEW_CONTEXT}
 Use file_search results (the user's uploaded documents — CV, job descriptions, notes, etc.) as the primary source. Cite or paraphrase what the documents actually say; if something is not in the documents, say so clearly instead of inventing experience or facts.
 Explain concepts, compare topics, suggest how to phrase answers, and help structure responses when asked. Use neutral, professional wording (no role-play as the candidate; do not write answers as "I" or "we" on their behalf unless the user explicitly asks you to draft a first-person answer).
-Respond in the same language as the user's message (Vietnamese or English). Keep answers focused and scannable unless the user asks for depth.`,
-    input: [{ role: "user" as const, content: query }],
-    ...(previousResponseId ? { previous_response_id: previousResponseId } : {}),
-    tools: [fileSearchTool],
-    stream: true,
-    temperature: modelConfig?.temperature ?? OPENAI_DEFAULTS.chat.temperature,
-    max_output_tokens:
-      modelConfig?.maxOutputTokens ?? OPENAI_DEFAULTS.chat.maxTokens,
-  })
+Respond in the same language as the user's message (Vietnamese or English). Keep answers focused and scannable unless the user asks for depth.`
 
+const INSTRUCTIONS_DOCUMENT_CHAT_NO_FILES = `You are a concise, accurate assistant for technical interview preparation.
+${DOMAIN_INTERVIEW_CONTEXT}
+The user has not selected any documents for this chat, so you must not search, cite, or claim content from their uploaded files. Answer from general knowledge: interview strategy, technical concepts, and how to structure answers.
+If they need answers grounded in their CV, JD, or notes, tell them to select those documents in the Document Chat document picker first.
+Use neutral, professional wording (no role-play as the candidate; do not write answers as "I" or "we" on their behalf unless the user explicitly asks you to draft a first-person answer).
+Respond in the same language as the user's message (Vietnamese or English). Keep answers focused and scannable unless the user asks for depth.`
+
+type ModelConfig = {
+  model: string
+  temperature: number
+  maxOutputTokens: number
+}
+
+async function* iterateResponsesStream(
+  stream: AsyncIterable<ResponseStreamEvent>,
+  fileIdToTitle?: Map<string, { documentId: string; title: string }>
+): AsyncGenerator<FileSearchChunk> {
   const sources: FileSearchSource[] = []
   let sourcesYielded = false
 
@@ -70,7 +56,11 @@ Respond in the same language as the user's message (Vietnamese or English). Keep
     if (event.type === "response.output_text_annotation.added") {
       const annotationEvent =
         event as unknown as ResponseOutputTextAnnotationAddedEvent
-      const annotation = annotationEvent.annotation as any
+      const annotation = annotationEvent.annotation as {
+        type?: string
+        file_id?: string
+        quote?: string
+      }
       if (annotation?.type === "file_citation") {
         const fileId: string = annotation.file_id || ""
         const quote: string = annotation.quote || ""
@@ -106,4 +96,66 @@ Respond in the same language as the user's message (Vietnamese or English). Keep
       }
     }
   }
+}
+
+/**
+ * Document Chat without file_search: no vector lookup until the user selects documents.
+ */
+export async function* streamDocumentChatWithoutFileSearch(
+  query: string,
+  previousResponseId: string | undefined,
+  modelConfig?: ModelConfig
+): AsyncGenerator<FileSearchChunk> {
+  const stream = await openai.responses.create({
+    model: modelConfig?.model ?? OPENAI_DEFAULTS.chat.model,
+    instructions: INSTRUCTIONS_DOCUMENT_CHAT_NO_FILES,
+    input: [{ role: "user" as const, content: query }],
+    ...(previousResponseId ? { previous_response_id: previousResponseId } : {}),
+    stream: true,
+    temperature: modelConfig?.temperature ?? OPENAI_DEFAULTS.chat.temperature,
+    max_output_tokens:
+      modelConfig?.maxOutputTokens ?? OPENAI_DEFAULTS.chat.maxTokens,
+  })
+
+  yield* iterateResponsesStream(stream)
+}
+
+/**
+ * Streams from the Responses API with file_search (requires ≥1 document id to filter the store).
+ */
+export async function* streamWithFileSearch(
+  query: string,
+  vectorStoreId: string,
+  previousResponseId: string | undefined,
+  documentIds: string[],
+  fileIdToTitle?: Map<string, { documentId: string; title: string }>,
+  modelConfig?: ModelConfig
+): AsyncGenerator<FileSearchChunk> {
+  if (!documentIds.length) {
+    throw new Error(
+      "streamWithFileSearch requires at least one selected document id"
+    )
+  }
+
+  const filter = buildFileSearchFilter(documentIds)
+
+  const fileSearchTool: FileSearchTool = {
+    type: "file_search",
+    vector_store_ids: [vectorStoreId],
+    ...(filter ? { filters: filter as FileSearchTool["filters"] } : {}),
+  }
+
+  const stream = await openai.responses.create({
+    model: modelConfig?.model ?? OPENAI_DEFAULTS.chat.model,
+    instructions: INSTRUCTIONS_DOCUMENT_CHAT_WITH_RAG,
+    input: [{ role: "user" as const, content: query }],
+    ...(previousResponseId ? { previous_response_id: previousResponseId } : {}),
+    tools: [fileSearchTool],
+    stream: true,
+    temperature: modelConfig?.temperature ?? OPENAI_DEFAULTS.chat.temperature,
+    max_output_tokens:
+      modelConfig?.maxOutputTokens ?? OPENAI_DEFAULTS.chat.maxTokens,
+  })
+
+  yield* iterateResponsesStream(stream, fileIdToTitle)
 }

@@ -6,6 +6,7 @@ import { db } from "@/lib/db"
 import { saveChatInteraction } from "@/lib/langchain/memory"
 import {
   FileSearchSource,
+  streamDocumentChatWithoutFileSearch,
   streamWithFileSearch,
 } from "@/lib/openai/file-search-stream"
 import {
@@ -62,14 +63,22 @@ export async function POST(req: NextRequest) {
       ? `prev_resp:${conversationId}`
       : null
 
-    const [vectorStoreId, userDocs, cachedPrevRespId] = await Promise.all([
-      getOrCreateVectorStore(user.id),
-      getCachedUserDocs(
-        user.id,
-        selectedDocuments?.length ? selectedDocuments : undefined
-      ),
-      prevRespCacheKey ? redis.get(prevRespCacheKey) : Promise.resolve(null),
-    ])
+    const hasDocSelection =
+      Array.isArray(selectedDocuments) && selectedDocuments.length > 0
+
+    const cachedPrevRespId = prevRespCacheKey
+      ? await redis.get(prevRespCacheKey)
+      : null
+
+    let vectorStoreId = ""
+    let userDocs: Awaited<ReturnType<typeof getCachedUserDocs>> = []
+
+    if (hasDocSelection) {
+      ;[vectorStoreId, userDocs] = await Promise.all([
+        getOrCreateVectorStore(user.id),
+        getCachedUserDocs(user.id, selectedDocuments),
+      ])
+    }
 
     // Fall back to DB only on Redis miss (first turn or cache eviction)
     let previousResponseId: string | null | undefined = cachedPrevRespId
@@ -101,20 +110,27 @@ export async function POST(req: NextRequest) {
             )
           )
 
-          // Stream from Responses API with file_search tool
+          // With selected docs: file_search on vector store; otherwise general chat (no RAG).
           let newResponseId: string | undefined
-          const streamIterator = streamWithFileSearch(
-            message,
-            vectorStoreId,
-            previousResponseId ?? undefined,
-            selectedDocuments || [],
-            fileIdToTitle,
-            {
-              model: config.openai.chat.model,
-              temperature: config.openai.chat.temperature,
-              maxOutputTokens: config.openai.chat.maxTokens,
-            }
-          )
+          const modelArgs = {
+            model: config.openai.chat.model,
+            temperature: config.openai.chat.temperature,
+            maxOutputTokens: config.openai.chat.maxTokens,
+          }
+          const streamIterator = hasDocSelection
+            ? streamWithFileSearch(
+                message,
+                vectorStoreId,
+                previousResponseId ?? undefined,
+                selectedDocuments,
+                fileIdToTitle,
+                modelArgs
+              )
+            : streamDocumentChatWithoutFileSearch(
+                message,
+                previousResponseId ?? undefined,
+                modelArgs
+              )
 
           for await (const chunk of streamIterator) {
             if (chunk.responseId) {
