@@ -35,7 +35,7 @@ export const useChatDocumentStore = create<ChatDocumentStore>()((set) => ({
   // Initial state
   selectedDocuments: [],
   coachDocuments: [],
-  fastMode: false,
+  fastMode: true,
   activeSessionId: undefined,
 
   // Document chat actions

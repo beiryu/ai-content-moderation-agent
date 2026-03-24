@@ -67,6 +67,8 @@ function applyUserConfig(
     result.interview.silenceThresholdMs = userConfig.silenceThresholdMs
   if (userConfig.utteranceEndMs != null)
     result.deepgram.utteranceEndMs = userConfig.utteranceEndMs
+  if (userConfig.deepgramEndpointing != null)
+    result.deepgram.endpointing = userConfig.deepgramEndpointing
   return result
 }
 

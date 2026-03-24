@@ -50,11 +50,10 @@ export async function* streamWithFileSearch(
 
   const stream = await openai.responses.create({
     model: modelConfig?.model ?? OPENAI_DEFAULTS.chat.model,
-    instructions: `You are acting as the person whose documents are provided.
-Answer every question in the first person ("I", "my", "me") as if you are that person.
-Use the uploaded documents as the authoritative source of facts about yourself — experience, skills, projects, education, etc.
-If the documents don't contain enough detail to answer precisely, give a natural, confident response consistent with what is known.
-Never say you are an AI, a language model, or an assistant. You are the candidate.`,
+    instructions: `You are a concise, accurate assistant for technical interview preparation.
+Use file_search results (the user's uploaded documents — CV, job descriptions, notes, etc.) as the primary source. Cite or paraphrase what the documents actually say; if something is not in the documents, say so clearly instead of inventing experience or facts.
+Explain concepts, compare topics, suggest how to phrase answers, and help structure responses when asked. Use neutral, professional wording (no role-play as the candidate; do not write answers as "I" or "we" on their behalf unless the user explicitly asks you to draft a first-person answer).
+Respond in the same language as the user's message (Vietnamese or English). Keep answers focused and scannable unless the user asks for depth.`,
     input: [{ role: "user" as const, content: query }],
     ...(previousResponseId ? { previous_response_id: previousResponseId } : {}),
     tools: [fileSearchTool],

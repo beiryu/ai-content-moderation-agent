@@ -113,6 +113,7 @@ export class ConfigService {
             deepgramLanguage: null,
             silenceThresholdMs: null,
             utteranceEndMs: null,
+            deepgramEndpointing: null,
           },
         })
       } catch {
@@ -150,6 +151,8 @@ export class ConfigService {
       base.interview.silenceThresholdMs = userConfig.silenceThresholdMs
     if (userConfig.utteranceEndMs != null)
       base.deepgram.utteranceEndMs = userConfig.utteranceEndMs
+    if (userConfig.deepgramEndpointing != null)
+      base.deepgram.endpointing = userConfig.deepgramEndpointing
 
     return base
   }

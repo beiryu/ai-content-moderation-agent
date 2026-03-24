@@ -1,6 +1,6 @@
 export const OPENAI_DEFAULTS = {
   chat: {
-    model: "gpt-4o-mini",
+    model: "gpt-4.1-mini",
     temperature: 0.2,
     maxTokens: 2000,
     presencePenalty: 0.1,
@@ -23,7 +23,7 @@ export const OPENAI_DEFAULTS = {
     model: "gpt-4o-transcribe",
   },
   agent: {
-    answerCoachModel: "gpt-4o-mini",
+    answerCoachModel: "gpt-4.1-mini",
   },
   cache: {
     prevResponseTtlSec: 86400,

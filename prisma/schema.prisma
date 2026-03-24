@@ -99,8 +99,9 @@ model UserConfig {
   deepgramLanguage String?
 
   // Interview behavior
-  silenceThresholdMs Int?
-  utteranceEndMs     Int?
+  silenceThresholdMs    Int?
+  utteranceEndMs        Int?
+  deepgramEndpointing   Int?
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

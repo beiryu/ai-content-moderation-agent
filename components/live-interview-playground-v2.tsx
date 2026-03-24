@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useChatDocumentStore } from "@/stores/chat-document-store"
 import { useInterviewSessionStore } from "@/stores/interview-session.store"
-import { Clock, Settings, Zap } from "lucide-react"
+import { Clock, FileText, Zap } from "lucide-react"
 
 import useCreateInterviewSession from "@/hooks/api/interview-session/useCreateInterviewSession"
 import useUpdateInterviewSession from "@/hooks/api/interview-session/useUpdateInterviewSession"
@@ -25,6 +25,7 @@ import {
 import { TooltipProvider } from "@/components/ui/tooltip"
 import DocumentSelector from "@/components/chat/document-selector"
 import StreamingChat from "@/components/chat/streaming-chat"
+import { InterviewSettingsSheet } from "@/components/interview-settings-sheet"
 import { LiveInterviewResponses } from "@/components/live-interview-responses"
 import MicOnlyRecorder from "@/components/mic-only-recorder"
 import { MicrophoneConnectionStatus } from "@/components/microphone-connection-status"
@@ -181,6 +182,7 @@ export function LiveInterviewPlaygroundV2({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <InterviewSettingsSheet />
             <MicOnlyRecorder />
             <Button variant="destructive" size="sm" onClick={handleLeave}>
               End Session
@@ -269,7 +271,7 @@ export function LiveInterviewPlaygroundV2({
                           title="Select documents for Answer Coach"
                           disabled={fastMode}
                         >
-                          <Settings className="size-3.5" />
+                          <FileText className="size-3.5" />
                         </Button>
                       </SheetTrigger>
                       <SheetContent side="right" className="w-80 p-0">

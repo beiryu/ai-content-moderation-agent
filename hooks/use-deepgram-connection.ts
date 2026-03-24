@@ -31,8 +31,24 @@ export function useDeepgramConnection(
   const [isListening, setIsListening] = useState(false)
   const [connection, setConnection] = useState<LiveClient | null>(null)
 
+  const connectionRef = useRef<LiveClient | null>(null)
   const keepAliveInterval = useRef<NodeJS.Timeout>()
   const silenceInterval = useRef<NodeJS.Timeout>()
+
+  const cleanupConnection = useCallback(() => {
+    if (keepAliveInterval.current) clearInterval(keepAliveInterval.current)
+    if (silenceInterval.current) clearInterval(silenceInterval.current)
+    if (connectionRef.current) {
+      try {
+        connectionRef.current.requestClose?.()
+      } catch {
+        /* ignore close errors */
+      }
+      connectionRef.current = null
+    }
+    setConnection(null)
+    setIsListening(false)
+  }, [])
 
   const initializeConnection = useCallback(async () => {
     const cfg = configRef.current
@@ -109,6 +125,7 @@ export function useDeepgramConnection(
           .processTranscript(currentTranscript, data.is_final, role)
       })
 
+      connectionRef.current = conn
       setConnection(conn)
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Unknown error"))
@@ -116,21 +133,34 @@ export function useDeepgramConnection(
     }
   }, [role])
 
+  // Initial connection on mount
   useEffect(() => {
     initializeConnection()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Reconnect when transcription-relevant config values change (skip initial mount)
+  const isFirstMount = useRef(true)
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false
+      return
+    }
+    cleanupConnection()
+    initializeConnection()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    config.deepgram.language,
+    config.deepgram.utteranceEndMs,
+    config.deepgram.endpointing,
+  ])
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (keepAliveInterval.current) {
-        clearInterval(keepAliveInterval.current)
-      }
-      if (silenceInterval.current) {
-        clearInterval(silenceInterval.current)
-      }
+      cleanupConnection()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return {

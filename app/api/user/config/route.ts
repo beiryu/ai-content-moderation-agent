@@ -30,6 +30,7 @@ export async function GET() {
       deepgramLanguage: null,
       silenceThresholdMs: null,
       utteranceEndMs: null,
+      deepgramEndpointing: null,
     })
   }
 
@@ -63,6 +64,7 @@ export async function PUT(req: Request) {
     deepgramLanguage: data.deepgramLanguage ?? null,
     silenceThresholdMs: data.silenceThresholdMs ?? null,
     utteranceEndMs: data.utteranceEndMs ?? null,
+    deepgramEndpointing: data.deepgramEndpointing ?? null,
   }
 
   const updated = await db.userConfig.upsert({
@@ -79,6 +81,7 @@ export async function PUT(req: Request) {
       deepgramLanguage: true,
       silenceThresholdMs: true,
       utteranceEndMs: true,
+      deepgramEndpointing: true,
     },
   })
 
