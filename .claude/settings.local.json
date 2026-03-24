@@ -42,7 +42,9 @@
       "Bash(git commit:*)",
       "Bash(find /Users/beiryu/Development/Beiryu/ai-interview-old -type f \\\\\\(-name *deepgram* -o -name *transcri* -o -name *speech* -o -name *websocket* -o -name *audio* \\\\\\))",
       "Bash(find /Users/beiryu/Development/Beiryu/ai-interview-old/app -type f \\\\\\(-name *.ts -o -name *.tsx -o -name *.js \\\\\\))",
-      "Bash(find /Users/beiryu/Development/Beiryu/ai-interview-old -name use-queue* -o -name use-microphone*)"
+      "Bash(find /Users/beiryu/Development/Beiryu/ai-interview-old -name use-queue* -o -name use-microphone*)",
+      "Bash(grep -rn \"useConfig\\\\|ConfigService\\\\|config\\\\.context\\\\|config\\\\.hooks\\\\|lib/config\" /Users/beiryu/Development/Beiryu/ai-interview-old/app /Users/beiryu/Development/Beiryu/ai-interview-old/lib /Users/beiryu/Development/Beiryu/ai-interview-old/hooks /Users/beiryu/Development/Beiryu/ai-interview-old/components --include=*.ts --include=*.tsx)",
+      "Bash(grep -rn \"openaiApiKey\\\\|deepgramApiKey\" /Users/beiryu/Development/Beiryu/ai-interview-old --include=*.ts --include=*.tsx)"
     ]
   }
 }
