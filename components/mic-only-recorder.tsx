@@ -1,23 +1,41 @@
 "use client"
 
+import { useCallback, useEffect } from "react"
 import { Mic, MicOff } from "lucide-react"
 
-import { useOpenAITranscription } from "@/hooks/use-openai-transcription"
+import { useDeepgramConnection } from "@/hooks/use-deepgram-connection"
+import { useMicrophoneOnly } from "@/hooks/use-microphone-only"
+import { useQueue } from "@/hooks/use-queue"
 
 import { Button } from "./ui/button"
 
 export default function MicOnlyRecorder() {
-  const { isListening, startListening, stopListening } =
-    useOpenAITranscription("candidate")
+  const { add, remove, first, size } = useQueue([])
+  const { connection } = useDeepgramConnection("candidate")
+
+  const handleDataAvailable = useCallback(
+    (e: BlobEvent) => {
+      if (e.data.size > 0) add(e.data)
+    },
+    [add]
+  )
+
+  const { micOpen, toggleMicrophone } = useMicrophoneOnly(handleDataAvailable)
+
+  useEffect(() => {
+    if (!connection || size === 0) return
+    connection.send(first)
+    remove()
+  }, [connection, size, first, remove])
 
   return (
     <Button
-      variant={isListening ? "default" : "ghost"}
+      variant={micOpen ? "default" : "ghost"}
       size="icon"
-      onClick={isListening ? stopListening : startListening}
-      title={isListening ? "Stop my microphone" : "Start my microphone"}
+      onClick={toggleMicrophone}
+      title={micOpen ? "Stop my microphone" : "Start my microphone"}
     >
-      {isListening ? <Mic className="size-4" /> : <MicOff className="size-4" />}
+      {micOpen ? <Mic className="size-4" /> : <MicOff className="size-4" />}
     </Button>
   )
 }

@@ -13,8 +13,13 @@ const useScrollToTop = (ref: React.RefObject<HTMLElement>, deps: unknown[]) => {
 }
 
 export function TranscriptionDisplay() {
-  const { messages, interviewerBuffer, candidateBuffer, interimRole } =
-    useInterviewSessionStore()
+  const {
+    messages,
+    interviewerBuffer,
+    candidateBuffer,
+    interimText,
+    interimRole,
+  } = useInterviewSessionStore()
 
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -33,6 +38,20 @@ export function TranscriptionDisplay() {
     minute: "2-digit",
   })
 
+  const interviewerLiveText = [
+    interviewerBuffer,
+    interimRole === "interviewer" ? interimText : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+
+  const candidateLiveText = [
+    candidateBuffer,
+    interimRole === "candidate" ? interimText : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto" ref={scrollRef}>
@@ -42,6 +61,7 @@ export function TranscriptionDisplay() {
               timestamp={now}
               type="speaking"
               role="interviewer"
+              text={interviewerLiveText}
             />
           )}
 
@@ -50,6 +70,7 @@ export function TranscriptionDisplay() {
               timestamp={now}
               type="speaking"
               role="candidate"
+              text={candidateLiveText}
             />
           )}
 

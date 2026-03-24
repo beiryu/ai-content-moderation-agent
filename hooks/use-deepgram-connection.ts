@@ -18,8 +18,6 @@ interface UseDeepgramConnectionReturn {
 export function useDeepgramConnection(
   role: "interviewer" | "candidate" = "interviewer"
 ): UseDeepgramConnectionReturn {
-  const { processTranscript, flushTranscript } = useInterviewSessionStore()
-
   const [status, setStatus] = useState<DeepgramConnectionStatus>("idle")
   const [error, setError] = useState<Error | null>(null)
   const [isListening, setIsListening] = useState(false)
@@ -40,11 +38,12 @@ export function useDeepgramConnection(
 
       const deepgram = createClient(data.key)
       const conn = deepgram.listen.live({
-        model: "nova-2",
+        model: "nova-3",
+        language: "multi",
         interim_results: true,
         smart_format: true,
-        utterance_end_ms: 1000,
-        endpointing: 300,
+        utterance_end_ms: 2500,
+        endpointing: 1200,
       })
 
       // Setup keepAlive interval
@@ -80,18 +79,27 @@ export function useDeepgramConnection(
       })
 
       conn.on(LiveTranscriptionEvents.UtteranceEnd, () => {
-        flushTranscript(role)
+        void useInterviewSessionStore.getState().flushTranscript(role)
       })
 
       conn.on(LiveTranscriptionEvents.Transcript, (data) => {
-        const words = data.channel.alternatives[0].words
-        if (words.length === 0) return
+        const alt = data.channel.alternatives[0]
+        const words = alt.words ?? []
+        const fromWords =
+          words.length > 0
+            ? words
+                .map(
+                  (w: { punctuated_word?: string; word?: string }) =>
+                    w.punctuated_word ?? w.word
+                )
+                .join(" ")
+            : ""
+        const currentTranscript = (fromWords || alt.transcript || "").trim()
+        if (!currentTranscript) return
 
-        const currentTranscript = words
-          .map((word: any) => word.punctuated_word ?? word.word)
-          .join(" ")
-
-        processTranscript(currentTranscript, data.is_final, role)
+        useInterviewSessionStore
+          .getState()
+          .processTranscript(currentTranscript, data.is_final, role)
       })
 
       setConnection(conn)
@@ -99,7 +107,7 @@ export function useDeepgramConnection(
       setError(err instanceof Error ? err : new Error("Unknown error"))
       setStatus("error")
     }
-  }, [processTranscript])
+  }, [role])
 
   useEffect(() => {
     initializeConnection()

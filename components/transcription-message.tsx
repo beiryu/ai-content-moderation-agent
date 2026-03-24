@@ -26,23 +26,30 @@ export function TranscriptionMessage({
           {isCandidate ? "Me" : "Interviewer"}
         </span>
         <div
-          className={`rounded-2xl px-4 py-3 ${
+          className={`max-w-[80%] rounded-2xl px-4 py-3 ${
             isCandidate
               ? "bg-primary/15 rounded-tr-sm"
               : "bg-muted rounded-tl-sm"
           }`}
         >
-          <div className="flex items-center gap-[5px] h-4">
-            <span
-              className="size-2 rounded-full bg-foreground/40 animate-bounce"
-              style={{ animationDelay: "-0.3s" }}
-            />
-            <span
-              className="size-2 rounded-full bg-foreground/40 animate-bounce"
-              style={{ animationDelay: "-0.15s" }}
-            />
-            <span className="size-2 rounded-full bg-foreground/40 animate-bounce" />
-          </div>
+          {text ? (
+            <p className="text-sm text-foreground leading-relaxed">
+              {text}
+              <span className="inline-block w-[2px] h-[1em] ml-[2px] bg-foreground/50 align-middle animate-pulse" />
+            </p>
+          ) : (
+            <div className="flex items-center gap-[5px] h-4">
+              <span
+                className="size-2 rounded-full bg-foreground/40 animate-bounce"
+                style={{ animationDelay: "-0.3s" }}
+              />
+              <span
+                className="size-2 rounded-full bg-foreground/40 animate-bounce"
+                style={{ animationDelay: "-0.15s" }}
+              />
+              <span className="size-2 rounded-full bg-foreground/40 animate-bounce" />
+            </div>
+          )}
         </div>
       </div>
     )

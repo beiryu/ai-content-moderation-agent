@@ -1,33 +1,46 @@
-import { useOpenAITranscription } from "@/hooks/use-openai-transcription"
+"use client"
+
+import { useCallback, useEffect } from "react"
+
+import { useDeepgramConnection } from "@/hooks/use-deepgram-connection"
+import { useMicrophone } from "@/hooks/use-microphone"
+import { useQueue } from "@/hooks/use-queue"
 
 import { RecordButton } from "./record-button"
-import { Button } from "./ui/button"
 import { VideoPreview } from "./video-preview"
 
 export default function RecorderTranscriber() {
-  const { isListening, startListening, stopListening, status, error, stream } =
-    useOpenAITranscription("interviewer")
+  const { add, remove, first, size } = useQueue([])
+  const { connection, status } = useDeepgramConnection("interviewer")
 
-  if (status === "error") {
-    return (
-      <Button variant="destructive" className="cursor-not-allowed">
-        Error: {error?.message}
-      </Button>
-    )
-  }
+  const handleDataAvailable = useCallback(
+    (e: BlobEvent) => {
+      if (e.data.size > 0) add(e.data)
+    },
+    [add]
+  )
+
+  const { micOpen, userMedia, toggleMicrophone } =
+    useMicrophone(handleDataAvailable)
+
+  useEffect(() => {
+    if (!connection || size === 0) return
+    connection.send(first)
+    remove()
+  }, [connection, size, first, remove])
 
   return (
     <div className="relative w-full">
-      {isListening && stream ? (
+      {micOpen && userMedia ? (
         <div className="flex max-h-[min(42vh,320px)] items-center justify-center overflow-hidden p-2">
-          <VideoPreview stream={stream} />
+          <VideoPreview stream={userMedia} />
         </div>
       ) : (
         <div className="flex flex-col items-center">
           <RecordButton
-            micOpen={isListening}
-            onClick={isListening ? stopListening : startListening}
-            disabled={status === "loading"}
+            micOpen={micOpen}
+            onClick={toggleMicrophone}
+            disabled={status !== "ready"}
           />
         </div>
       )}
