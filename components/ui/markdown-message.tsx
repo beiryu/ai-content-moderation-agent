@@ -23,8 +23,8 @@ interface MarkdownMessageProps {
  */
 export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
   return (
-    <Card className={cn("px-4 py-3", className)}>
-      <div className="markdown-message prose prose-sm dark:prose-invert max-w-none">
+    <Card className={cn("px-4 py-3 overflow-hidden min-w-0", className)}>
+      <div className="markdown-message prose prose-sm dark:prose-invert max-w-none min-w-0 break-words">
         <ReactMarkdown
           rehypePlugins={[rehypeHighlight]}
           components={{
@@ -44,7 +44,7 @@ export function MarkdownMessage({ content, className }: MarkdownMessageProps) {
               const match = /language-(\w+)/.exec(className || "")
               return !inline && match ? (
                 <div className="not-prose relative">
-                  <pre className="rounded bg-muted p-4 overflow-x-auto">
+                  <pre className="rounded bg-muted p-4 overflow-x-auto max-w-full">
                     <code className={className} {...props}>
                       {children}
                     </code>

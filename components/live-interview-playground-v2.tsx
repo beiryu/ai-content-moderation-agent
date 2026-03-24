@@ -197,7 +197,7 @@ export function LiveInterviewPlaygroundV2({
           {/* Left panel: Transcription */}
           <ResizablePanel
             defaultSize={defaultLayout[0]}
-            minSize={25}
+            minSize={0}
             className="flex min-h-0 flex-col"
           >
             <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
@@ -214,14 +214,14 @@ export function LiveInterviewPlaygroundV2({
           {/* Center panel: Connection status + AI Responses */}
           <ResizablePanel
             defaultSize={defaultLayout[1]}
-            minSize={30}
+            minSize={25}
             className="flex min-h-0 flex-col"
           >
             <ResizablePanelGroup direction="vertical">
               {/* Meeting room: connect flow + screen preview */}
               <ResizablePanel
                 defaultSize={28}
-                minSize={15}
+                minSize={0}
                 className="flex min-h-0 flex-col"
               >
                 <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
@@ -240,7 +240,7 @@ export function LiveInterviewPlaygroundV2({
               {/* AI Suggestions */}
               <ResizablePanel
                 defaultSize={72}
-                minSize={20}
+                minSize={0}
                 className="flex min-h-0 flex-col"
               >
                 <div className="flex h-10 shrink-0 items-center justify-between border-b px-4">
@@ -304,7 +304,7 @@ export function LiveInterviewPlaygroundV2({
           {/* Right panel: Chat */}
           <ResizablePanel
             defaultSize={defaultLayout[2]}
-            minSize={25}
+            minSize={0}
             className="flex min-h-0 flex-col"
           >
             <div className="flex h-full min-h-0 flex-col overflow-hidden">

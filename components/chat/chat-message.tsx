@@ -44,7 +44,7 @@ export function ChatMessage({
         isUser && "justify-end"
       )}
     >
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         {isUser ? (
           <Card className={cn("px-4 py-2", "bg-primary/10 border-primary/20")}>
             <div className="flex flex-col gap-2.5">

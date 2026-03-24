@@ -161,7 +161,7 @@ export default function StreamingChat() {
 
       {/* Conversation Area with ScrollArea */}
       <ScrollArea ref={scrollAreaRef} className="min-h-0 flex-1 p-4">
-        <div className="mx-auto max-w-4xl space-y-1">
+        <div className="mx-auto max-w-4xl w-full space-y-1">
           {messages.length === 0 && (
             <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed border-border/80 bg-muted/20 p-8 text-center">
               <p className="text-sm font-medium text-foreground">
