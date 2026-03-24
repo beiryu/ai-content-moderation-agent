@@ -1,0 +1,47 @@
+import { z } from "zod"
+
+export const InterviewSchema = z.object({
+  id: z.string(),
+
+  name: z.string(),
+  status: z.string(),
+  priority: z.string(),
+  dueDate: z.string(),
+  type: z.string(),
+  jobTitle: z.string(),
+  companyName: z.string(),
+  notes: z.string().optional().nullable(),
+
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
+export const CreateInterviewRequestSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+  status: z.string(),
+  priority: z.string(),
+  dueDate: z.string(),
+  jobTitle: z.string(),
+  companyName: z.string(),
+  notes: z.string().optional(),
+})
+
+export const UpdateInterviewRequestSchema = z.object({
+  id: z.string(),
+
+  name: z.string().optional(),
+  status: z.string().optional(),
+  priority: z.string().optional(),
+  dueDate: z.string().optional(),
+  type: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+export type Interview = z.infer<typeof InterviewSchema>
+export type CreateInterviewRequest = z.infer<
+  typeof CreateInterviewRequestSchema
+>
+export type UpdateInterviewRequest = z.infer<
+  typeof UpdateInterviewRequestSchema
+>

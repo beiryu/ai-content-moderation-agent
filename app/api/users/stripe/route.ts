@@ -1,10 +1,9 @@
 import { getServerSession } from "next-auth/next"
 import { z } from "zod"
 
-import { proPlan } from "@/config/subscriptions"
 import { authOptions } from "@/lib/auth"
 import { stripe } from "@/lib/stripe"
-import { getUserSubscriptionPlan } from "@/lib/subscription"
+import { PRO_PLAN_PRICE_ID, getUserSubscriptionPlan } from "@/lib/subscription"
 import { absoluteUrl } from "@/lib/utils"
 
 const billingUrl = absoluteUrl("/dashboard/billing")
@@ -41,7 +40,7 @@ export async function GET(req: Request) {
       customer_email: session.user.email,
       line_items: [
         {
-          price: proPlan.stripePriceId,
+          price: PRO_PLAN_PRICE_ID,
           quantity: 1,
         },
       ],

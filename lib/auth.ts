@@ -2,13 +2,14 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { NextAuthOptions } from "next-auth"
 import EmailProvider from "next-auth/providers/email"
 import GitHubProvider from "next-auth/providers/github"
-import { Client } from "postmark"
+import { Resend } from "resend"
 
 import { env } from "@/env.mjs"
-import { siteConfig } from "@/config/site"
+import { siteConfig } from "@/config/defaults/site"
 import { db } from "@/lib/db"
+import { EmailTemplate } from "@/components/email-template"
 
-const postmarkClient = new Client(env.POSTMARK_API_TOKEN)
+const resend = new Resend(env.RESEND_API_KEY)
 
 export const authOptions: NextAuthOptions = {
   // huh any! I know.
@@ -38,33 +39,33 @@ export const authOptions: NextAuthOptions = {
           },
         })
 
-        const templateId = user?.emailVerified
-          ? env.POSTMARK_SIGN_IN_TEMPLATE
-          : env.POSTMARK_ACTIVATION_TEMPLATE
-        if (!templateId) {
-          throw new Error("Missing template id")
-        }
+        // Determine email type based on whether user is verified
+        // const emailType = user?.emailVerified ? "sign-in" : "activation"
+        const emailType = "sign-in"
 
-        const result = await postmarkClient.sendEmailWithTemplate({
-          TemplateId: parseInt(templateId),
-          To: identifier,
-          From: provider.from as string,
-          TemplateModel: {
-            action_url: url,
-            product_name: siteConfig.name,
+        // Create email subject based on email type
+        const subject = user?.emailVerified
+          ? `Sign in to ${siteConfig.name}`
+          : `Activate your ${siteConfig.name} account`
+
+        // Send email using Resend with React template
+        const { error } = await resend.emails.send({
+          from: provider.from as string,
+          to: identifier,
+          subject: subject,
+          react: EmailTemplate({
+            type: emailType as "sign-in" | "activation",
+            url,
+            productName: siteConfig.name,
+          }),
+          headers: {
+            // Set this to prevent Gmail from threading emails
+            "X-Entity-Ref-ID": new Date().getTime() + "",
           },
-          Headers: [
-            {
-              // Set this to prevent Gmail from threading emails.
-              // See https://stackoverflow.com/questions/23434110/force-emails-not-to-be-grouped-into-conversations/25435722.
-              Name: "X-Entity-Ref-ID",
-              Value: new Date().getTime() + "",
-            },
-          ],
         })
 
-        if (result.ErrorCode) {
-          throw new Error(result.Message)
+        if (error) {
+          throw new Error(error.message)
         }
       },
     }),

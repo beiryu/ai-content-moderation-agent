@@ -1,0 +1,56 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Commands
+
+```bash
+pnpm install          # Install dependencies (postinstall runs prisma generate)
+pnpm dev              # Run contentlayer + next dev concurrently
+pnpm build            # contentlayer build + next build
+pnpm lint             # Run ESLint
+pnpm start            # Start production server
+```
+
+Database setup (requires Docker):
+
+```bash
+docker-compose up -d  # Start PostgreSQL on port 5432
+pnpm prisma migrate dev   # Run migrations
+pnpm prisma studio        # Open Prisma Studio GUI
+```
+
+Environment: copy `.env.example` to `.env.local` and fill in values.
+
+## Architecture
+
+**Next.js 13 App Router** with route groups organizing the app into logical sections:
+
+- `app/(auth)` — Login/register pages, no layout shell
+- `app/(dashboard)` — Protected pages (sidebar layout), requires auth
+- `app/(docs)` — MDX-based documentation with table of contents
+- `app/(editor)` — Editor.js-based post editor
+- `app/(marketing)` — Public pages (home, pricing, blog)
+- `app/api` — Route handlers for posts, auth, Stripe webhooks, user settings
+
+**Middleware** (`middleware.ts`) protects `/dashboard`, `/editor`, `/login`, `/register` routes via NextAuth session checks.
+
+**Content layer** (`contentlayer.config.js`) processes MDX files in `/content/{authors,blog,docs,guides,pages}` into typed collections — these are statically generated at build time.
+
+**Database** (Prisma + PostgreSQL): `User`, `Account`, `Session`, `Post`, `VerificationToken` models. The `Post` model stores content as JSON (Editor.js block format).
+
+**Payments**: Stripe checkout and billing portal; webhook handler under `app/api/webhooks/stripe`.
+
+**Auth**: NextAuth with GitHub OAuth. Session data is extended with `id` and `stripeSubscriptionStatus` in `types/next-auth.d.ts`.
+
+**Config** (`/config`): Site metadata, dashboard nav, docs nav, and marketing nav are centralized here — update these when adding new routes/pages.
+
+**Environment validation** (`env.mjs`): All env vars are validated with Zod at startup. Add new variables here when introducing new integrations.
+
+## Key Patterns
+
+- Server Components are the default; Client Components use `"use client"` directive
+- UI primitives live in `components/ui/` (Radix-based, unstyled) — these are composable building blocks, not page-level components
+- `lib/utils.ts` exports `cn()` (clsx + tailwind-merge) for conditional classnames
+- API routes validate request bodies with Zod schemas defined inline
+- `lib/auth.ts` exports `authOptions` and `getCurrentUser()` helper used across server components

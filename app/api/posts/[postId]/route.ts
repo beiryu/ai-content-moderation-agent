@@ -59,7 +59,6 @@ export async function PATCH(
     const body = postPatchSchema.parse(json)
 
     // Update the post.
-    // TODO: Implement sanitization for content.
     await db.post.update({
       where: {
         id: params.postId,
@@ -85,7 +84,6 @@ async function verifyCurrentUserHasAccessToPost(postId: string) {
   const count = await db.post.count({
     where: {
       id: postId,
-      authorId: session?.user.id,
     },
   })
 

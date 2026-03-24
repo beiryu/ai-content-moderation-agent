@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,6 +6,8 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ─── Auth (NextAuth) ──────────────────────────────────────────────────────────
 
 model Account {
   id                String   @id @default(cuid())
@@ -23,13 +22,13 @@ model Account {
   scope             String?
   id_token          String?  @db.Text
   session_state     String?
-  createdAt         DateTime @default(now()) @map(name: "created_at")
-  updatedAt         DateTime @default(now()) @map(name: "updated_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
-  @@map(name: "accounts")
+  @@map("accounts")
 }
 
 model Session {
@@ -39,35 +38,7 @@ model Session {
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map(name: "sessions")
-}
-
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  phone         String?
-  emailVerified DateTime?
-  image         String?
-  createdAt     DateTime  @default(now()) @map(name: "created_at")
-  updatedAt     DateTime  @default(now()) @map(name: "updated_at")
-
-  accounts Account[]
-  sessions Session[]
-  Post     Post[]
-
-  stripeCustomerId       String?   @unique @map(name: "stripe_customer_id")
-  stripeSubscriptionId   String?   @unique @map(name: "stripe_subscription_id")
-  stripePriceId          String?   @map(name: "stripe_price_id")
-  stripeCurrentPeriodEnd DateTime? @map(name: "stripe_current_period_end")
-
-  // Momo fields
-  momoCustomerId       String?   @unique @map(name: "momo_customer_id")
-  momoSubscriptionId   String?   @unique @map(name: "momo_subscription_id")
-  momoPriceId         String?   @map(name: "momo_price_id") 
-  momoCurrentPeriodEnd DateTime? @map(name: "momo_current_period_end")
-
-  @@map(name: "users")
+  @@map("sessions")
 }
 
 model VerificationToken {
@@ -76,19 +47,180 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
-  @@map(name: "verification_tokens")
+  @@map("verification_tokens")
 }
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  phone         String?
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @map("updated_at")
+
+  stripeCustomerId       String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId   String?   @unique @map("stripe_subscription_id")
+  stripePriceId          String?   @map("stripe_price_id")
+  stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
+  openaiVectorStoreId    String?   @map("openai_vector_store_id")
+
+  accounts          Account[]
+  sessions          Session[]
+  interviews        Interview[]        @relation("UserInterviews")
+  interviewSessions InterviewSession[] @relation("UserInterviewSessions")
+  documents         Document[]         @relation("UserDocuments")
+  conversations     ChatConversation[] @relation("UserChatConversations")
+  userConfig        UserConfig?
+
+  @@map("users")
+}
+
+// ─── User Config ──────────────────────────────────────────────────────────────
+
+model UserConfig {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  schemaVersion Int @default(1)
+
+  // OpenAI
+  chatModel        String?
+  chatTemperature  Float?
+  realtimeModel    String?
+  realtimeVoice    String?
+
+  // Deepgram
+  deepgramModel    String?
+  deepgramLanguage String?
+
+  // Interview behavior
+  silenceThresholdMs    Int?
+  utteranceEndMs        Int?
+  deepgramEndpointing   Int?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("user_configs")
+}
+
+// ─── Blog ─────────────────────────────────────────────────────────────────────
 
 model Post {
   id        String   @id @default(cuid())
   title     String
   content   Json?
   published Boolean  @default(false)
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @default(now()) @map(name: "updated_at")
-  authorId  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
 
-  author User @relation(fields: [authorId], references: [id])
+  @@map("posts")
+}
 
-  @@map(name: "posts")
+// ─── Interviews ───────────────────────────────────────────────────────────────
+
+model Interview {
+  id          String             @id @default(cuid())
+  userId      String
+  user        User               @relation("UserInterviews", fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  type        String
+  status      String
+  priority    String
+  dueDate     DateTime
+  jobTitle    String
+  companyName String
+  notes       String?            @db.Text
+  sessions    InterviewSession[]
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @default(now()) @map("updated_at")
+
+  @@map("interviews")
+}
+
+model InterviewSession {
+  id          String    @id @default(cuid())
+  interviewId String
+  interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation("UserInterviewSessions", fields: [userId], references: [id], onDelete: Cascade)
+  title       String?
+  status      String    @default("in_progress")
+  transcripts    String?   @db.Text
+  sessionContext String?   @db.Text
+  feedback       Json?
+  duration    Int?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("interview_sessions")
+}
+
+// ─── Documents ────────────────────────────────────────────────────────────────
+
+model Document {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation("UserDocuments", fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  type         DocumentType
+  content      String       @db.Text
+  metadata     Json?
+  fileUrl      String?
+  openaiFileId String?      @map("openai_file_id")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  @@map("documents")
+}
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+
+model ChatConversation {
+  id                 String        @id @default(cuid())
+  userId             String
+  user               User          @relation("UserChatConversations", fields: [userId], references: [id], onDelete: Cascade)
+  title              String
+  documentIds        String[]
+  previousResponseId String?       @map("previous_response_id")
+  messages           ChatMessage[]
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  content        String           @db.Text
+  sources        Json[]
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  @@map("chat_messages")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum DocumentType {
+  RESUME
+  COVER_LETTER
+  PORTFOLIO
+  JOB_DESCRIPTION
+  NOTES
+  PROJECT_DOCUMENTATION
+  TRANSCRIPT
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
 }
