@@ -1,8 +1,23 @@
 // @ts-nocheck
 // TODO: Fix this when we turn strict mode on.
 import { UserSubscriptionPlan } from "types"
-import { freePlan, proPlan } from "@/config/subscriptions"
+import { env } from "@/env.mjs"
 import { db } from "@/lib/db"
+
+const FREE_PLAN = {
+  name: "Free",
+  description:
+    "The free plan is limited to 3 posts. Upgrade to the PRO plan for unlimited posts.",
+  stripePriceId: "",
+}
+
+const PRO_PLAN = {
+  name: "PRO",
+  description: "The PRO plan has unlimited posts.",
+  stripePriceId: env.STRIPE_PRO_MONTHLY_PLAN_ID || "",
+}
+
+export const PRO_PLAN_PRICE_ID = PRO_PLAN.stripePriceId
 
 export async function getUserSubscriptionPlan(
   userId: string
@@ -28,7 +43,7 @@ export async function getUserSubscriptionPlan(
     user.stripePriceId &&
     user.stripeCurrentPeriodEnd?.getTime() + 86_400_000 > Date.now()
 
-  const plan = isPro ? proPlan : freePlan
+  const plan = isPro ? PRO_PLAN : FREE_PLAN
 
   return {
     ...plan,

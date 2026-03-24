@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import { z } from "zod"
 
+import { ConfigService } from "@/lib/config/config.service"
 import { db } from "@/lib/db"
 import { saveChatInteraction } from "@/lib/langchain/memory"
 import {
@@ -15,8 +16,6 @@ import redis from "@/lib/redis"
 import { getCurrentUser } from "@/lib/session"
 import { RagChatRequestSchema } from "@/lib/validations/chat-message"
 
-const PREV_RESP_TTL = 86400 // 24h
-
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -26,6 +25,9 @@ export async function POST(req: NextRequest) {
         headers: { "Content-Type": "application/json" },
       })
     }
+
+    const config = await ConfigService.forUser(user.id)
+    const PREV_RESP_TTL = config.openai.cache.prevResponseTtlSec
 
     const body = await req.json()
     const { message, selectedDocuments, sessionId, options } =
@@ -106,7 +108,12 @@ export async function POST(req: NextRequest) {
             vectorStoreId,
             previousResponseId ?? undefined,
             selectedDocuments || [],
-            fileIdToTitle
+            fileIdToTitle,
+            {
+              model: config.openai.chat.model,
+              temperature: config.openai.chat.temperature,
+              maxOutputTokens: config.openai.chat.maxTokens,
+            }
           )
 
           for await (const chunk of streamIterator) {

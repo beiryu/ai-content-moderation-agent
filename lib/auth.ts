@@ -5,7 +5,7 @@ import GitHubProvider from "next-auth/providers/github"
 import { Resend } from "resend"
 
 import { env } from "@/env.mjs"
-import { siteConfig } from "@/config/site"
+import { siteConfig } from "@/config/defaults/site"
 import { db } from "@/lib/db"
 import { EmailTemplate } from "@/components/email-template"
 

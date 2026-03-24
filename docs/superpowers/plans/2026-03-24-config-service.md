@@ -1,4 +1,5 @@
 <!-- cspell:ignore endpointing agentic -->
+
 # Config Service Implementation Plan
 
 > **For automated workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -15,34 +16,35 @@
 
 ## File Map
 
-| Action | File | Responsibility |
-|---|---|---|
-| Create | `config/defaults/openai.ts` | All OpenAI operator defaults |
-| Create | `config/defaults/deepgram.ts` | All Deepgram operator defaults |
-| Create | `config/defaults/interview.ts` | Interview timing/VAD defaults |
-| Create | `config/schemas/user-config.schema.ts` | Zod schema for user-overridable fields + private keys |
-| Create | `config/index.ts` | Re-export defaults + schemas (no Prisma imports) |
-| Modify | `prisma/schema.prisma` | Add `UserConfig` model |
-| Create | `lib/config/config.service.ts` | Server-side merge + validate |
-| Create | `app/api/user/config/route.ts` | GET + PUT endpoints |
-| Create | `lib/config/config.context.tsx` | React context + ConfigProvider |
-| Create | `lib/config/config.hooks.ts` | `useConfig()` hook |
-| Modify | `app/(dashboard)/dashboard/layout.tsx` | Mount ConfigProvider with SSR initial config |
-| Modify | `app/api/assistant/completion/route.ts` | Remove `runtime = "edge"`, use ConfigService |
-| Modify | `app/api/assistant/classify-question/route.ts` | Use ConfigService |
-| Modify | `app/api/transcription-session/route.ts` | Use ConfigService |
-| Modify | `app/api/chat/rag/stream/route.ts` | Use ConfigService, pass config to streamWithFileSearch |
-| Modify | `lib/openai/file-search-stream.ts` | Accept config values as arguments |
-| Modify | `lib/agents/interview-agents.ts` | Use OPENAI_DEFAULTS |
-| Modify | `hooks/use-deepgram-connection.ts` | Use useConfig() |
-| Modify | `hooks/use-openai-transcription.ts` | Use useConfig() |
-| Delete | `config/rag.ts` | Replaced by config/defaults/openai.ts |
+| Action | File                                           | Responsibility                                         |
+| ------ | ---------------------------------------------- | ------------------------------------------------------ |
+| Create | `config/defaults/openai.ts`                    | All OpenAI operator defaults                           |
+| Create | `config/defaults/deepgram.ts`                  | All Deepgram operator defaults                         |
+| Create | `config/defaults/interview.ts`                 | Interview timing/VAD defaults                          |
+| Create | `config/schemas/user-config.schema.ts`         | Zod schema for user-overridable fields + private keys  |
+| Create | `config/index.ts`                              | Re-export defaults + schemas (no Prisma imports)       |
+| Modify | `prisma/schema.prisma`                         | Add `UserConfig` model                                 |
+| Create | `lib/config/config.service.ts`                 | Server-side merge + validate                           |
+| Create | `app/api/user/config/route.ts`                 | GET + PUT endpoints                                    |
+| Create | `lib/config/config.context.tsx`                | React context + ConfigProvider                         |
+| Create | `lib/config/config.hooks.ts`                   | `useConfig()` hook                                     |
+| Modify | `app/(dashboard)/dashboard/layout.tsx`         | Mount ConfigProvider with SSR initial config           |
+| Modify | `app/api/assistant/completion/route.ts`        | Remove `runtime = "edge"`, use ConfigService           |
+| Modify | `app/api/assistant/classify-question/route.ts` | Use ConfigService                                      |
+| Modify | `app/api/transcription-session/route.ts`       | Use ConfigService                                      |
+| Modify | `app/api/chat/rag/stream/route.ts`             | Use ConfigService, pass config to streamWithFileSearch |
+| Modify | `lib/openai/file-search-stream.ts`             | Accept config values as arguments                      |
+| Modify | `lib/agents/interview-agents.ts`               | Use OPENAI_DEFAULTS                                    |
+| Modify | `hooks/use-deepgram-connection.ts`             | Use useConfig()                                        |
+| Modify | `hooks/use-openai-transcription.ts`            | Use useConfig()                                        |
+| Delete | `config/rag.ts`                                | Replaced by config/defaults/openai.ts                  |
 
 ---
 
 ## Task 1: Create operator defaults files
 
 **Files:**
+
 - Create: `config/defaults/openai.ts`
 - Create: `config/defaults/deepgram.ts`
 - Create: `config/defaults/interview.ts`
@@ -145,6 +147,7 @@ git commit -m "feat: add operator defaults files for OpenAI, Deepgram, and inter
 ## Task 2: Create Zod schemas
 
 **Files:**
+
 - Create: `config/schemas/user-config.schema.ts`
 - Create: `config/index.ts`
 
@@ -166,7 +169,9 @@ export const UserConfigSchemaV1 = z.object({
   chatModel: z.enum(["gpt-4o-mini", "gpt-4o"]).optional(),
   chatTemperature: z.number().min(0).max(1).optional(),
   realtimeModel: z.enum(["gpt-4o-realtime-preview"]).optional(),
-  realtimeVoice: z.enum(["alloy", "echo", "shimmer", "verse", "ash"]).optional(),
+  realtimeVoice: z
+    .enum(["alloy", "echo", "shimmer", "verse", "ash"])
+    .optional(),
 
   // Deepgram
   deepgramModel: z.enum(["nova-3", "nova-2"]).optional(),
@@ -237,6 +242,7 @@ git commit -m "feat: add Zod schemas for user config and private keys"
 ## Task 3: Add Prisma UserConfig model
 
 **Files:**
+
 - Modify: `prisma/schema.prisma`
 
 - [ ] **Step 1: Add `UserConfig` model and relation to `User`**
@@ -309,6 +315,7 @@ git commit -m "feat: add UserConfig Prisma model for per-user config overrides"
 ## Task 4: Create ConfigService
 
 **Files:**
+
 - Create: `lib/config/config.service.ts`
 
 `ConfigService.forUser(userId)` is the only server-side way to get resolved config. It merges operator defaults with DB row values and validates via Zod. This file imports Prisma — never import it in edge runtime routes or `config/index.ts`.
@@ -317,12 +324,17 @@ git commit -m "feat: add UserConfig Prisma model for per-user config overrides"
 
 ```ts
 // lib/config/config.service.ts
-import { CURRENT_SCHEMA_VERSION, UserConfigSchema, configMigrations } from "@/config/schemas/user-config.schema"
+
+import { env } from "@/env.mjs"
 import { DEEPGRAM_DEFAULTS } from "@/config/defaults/deepgram"
 import { INTERVIEW_DEFAULTS } from "@/config/defaults/interview"
 import { OPENAI_DEFAULTS } from "@/config/defaults/openai"
+import {
+  CURRENT_SCHEMA_VERSION,
+  UserConfigSchema,
+  configMigrations,
+} from "@/config/schemas/user-config.schema"
 import { db } from "@/lib/db"
-import { env } from "@/env.mjs"
 
 export interface ResolvedConfig {
   openai: {
@@ -334,7 +346,12 @@ export interface ResolvedConfig {
       frequencyPenalty: number
     }
     interviewAssistant: { temperature: number }
-    classify: { model: string; maxTokens: number; temperature: number; timeoutMs: number }
+    classify: {
+      model: string
+      maxTokens: number
+      temperature: number
+      timeoutMs: number
+    }
     realtime: { model: string; voice: string; baseURL: string }
     transcribe: { model: string }
     memory: { model: string; temperature: number }
@@ -365,7 +382,8 @@ function buildBaseConfig(): ResolvedConfig {
       classify: { ...OPENAI_DEFAULTS.classify },
       realtime: {
         ...OPENAI_DEFAULTS.realtime,
-        baseURL: env.OPENAI_BASE_URL ?? OPENAI_DEFAULTS.realtime.baseFallbackURL,
+        baseURL:
+          env.OPENAI_BASE_URL ?? OPENAI_DEFAULTS.realtime.baseFallbackURL,
       },
       transcribe: { ...OPENAI_DEFAULTS.transcribe },
       memory: { ...OPENAI_DEFAULTS.memory },
@@ -405,11 +423,14 @@ export class ConfigService {
 
     if (!parseResult.success) {
       // Last resort: reset to all-null and return defaults
-      console.warn("[ConfigService] Failed to parse UserConfig — resetting to defaults", {
-        userId,
-        schemaVersion: row.schemaVersion,
-        errors: parseResult.error.issues,
-      })
+      console.warn(
+        "[ConfigService] Failed to parse UserConfig — resetting to defaults",
+        {
+          userId,
+          schemaVersion: row.schemaVersion,
+          errors: parseResult.error.issues,
+        }
+      )
       try {
         await db.userConfig.update({
           where: { userId },
@@ -425,7 +446,9 @@ export class ConfigService {
             utteranceEndMs: null,
           },
         })
-      } catch { /* ignore secondary failure */ }
+      } catch {
+        /* ignore secondary failure */
+      }
       return base
     }
 
@@ -438,18 +461,26 @@ export class ConfigService {
           where: { userId },
           data: { schemaVersion: CURRENT_SCHEMA_VERSION },
         })
-      } catch { /* non-fatal */ }
+      } catch {
+        /* non-fatal */
+      }
     }
 
     // Merge user overrides onto base (right-side wins, undefined/null falls back to default)
     if (userConfig.chatModel) base.openai.chat.model = userConfig.chatModel
-    if (userConfig.chatTemperature != null) base.openai.chat.temperature = userConfig.chatTemperature
-    if (userConfig.realtimeModel) base.openai.realtime.model = userConfig.realtimeModel
-    if (userConfig.realtimeVoice) base.openai.realtime.voice = userConfig.realtimeVoice
+    if (userConfig.chatTemperature != null)
+      base.openai.chat.temperature = userConfig.chatTemperature
+    if (userConfig.realtimeModel)
+      base.openai.realtime.model = userConfig.realtimeModel
+    if (userConfig.realtimeVoice)
+      base.openai.realtime.voice = userConfig.realtimeVoice
     if (userConfig.deepgramModel) base.deepgram.model = userConfig.deepgramModel
-    if (userConfig.deepgramLanguage) base.deepgram.language = userConfig.deepgramLanguage
-    if (userConfig.silenceThresholdMs != null) base.interview.silenceThresholdMs = userConfig.silenceThresholdMs
-    if (userConfig.utteranceEndMs != null) base.deepgram.utteranceEndMs = userConfig.utteranceEndMs
+    if (userConfig.deepgramLanguage)
+      base.deepgram.language = userConfig.deepgramLanguage
+    if (userConfig.silenceThresholdMs != null)
+      base.interview.silenceThresholdMs = userConfig.silenceThresholdMs
+    if (userConfig.utteranceEndMs != null)
+      base.deepgram.utteranceEndMs = userConfig.utteranceEndMs
 
     return base
   }
@@ -478,6 +509,7 @@ git commit -m "feat: add ConfigService for server-side merged config resolution"
 ## Task 5: Create GET + PUT /api/user/config endpoints
 
 **Files:**
+
 - Create: `app/api/user/config/route.ts`
 
 - [ ] **Step 1: Create the route file**
@@ -487,10 +519,12 @@ git commit -m "feat: add ConfigService for server-side merged config resolution"
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 
-import { UserConfigSchema } from "@/config/schemas/user-config.schema"
+import {
+  CURRENT_SCHEMA_VERSION,
+  UserConfigSchema,
+} from "@/config/schemas/user-config.schema"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { CURRENT_SCHEMA_VERSION } from "@/config/schemas/user-config.schema"
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -589,6 +623,7 @@ git commit -m "feat: add GET and PUT /api/user/config endpoints"
 ## Task 6: Create React context and useConfig hook
 
 **Files:**
+
 - Create: `lib/config/config.context.tsx`
 - Create: `lib/config/config.hooks.ts`
 
@@ -600,10 +635,14 @@ git commit -m "feat: add GET and PUT /api/user/config endpoints"
 
 import { createContext, useContext, useEffect, useState } from "react"
 
-import { PrivateKeys, PrivateKeysSchema, UserConfig } from "@/config/schemas/user-config.schema"
 import { DEEPGRAM_DEFAULTS } from "@/config/defaults/deepgram"
 import { INTERVIEW_DEFAULTS } from "@/config/defaults/interview"
 import { OPENAI_DEFAULTS } from "@/config/defaults/openai"
+import {
+  PrivateKeys,
+  PrivateKeysSchema,
+  UserConfig,
+} from "@/config/schemas/user-config.schema"
 import type { ResolvedConfig } from "@/lib/config/config.service"
 
 const PRIVATE_KEYS_STORAGE_KEY = "app:private-keys"
@@ -634,17 +673,35 @@ function buildClientBase(): ResolvedConfig {
   }
 }
 
-function applyUserConfig(base: ResolvedConfig, userConfig: UserConfig | null): ResolvedConfig {
+function applyUserConfig(
+  base: ResolvedConfig,
+  userConfig: UserConfig | null
+): ResolvedConfig {
   if (!userConfig) return base
-  const result = { ...base, openai: { ...base.openai, chat: { ...base.openai.chat }, realtime: { ...base.openai.realtime } }, deepgram: { ...base.deepgram }, interview: { ...base.interview } }
+  const result = {
+    ...base,
+    openai: {
+      ...base.openai,
+      chat: { ...base.openai.chat },
+      realtime: { ...base.openai.realtime },
+    },
+    deepgram: { ...base.deepgram },
+    interview: { ...base.interview },
+  }
   if (userConfig.chatModel) result.openai.chat.model = userConfig.chatModel
-  if (userConfig.chatTemperature != null) result.openai.chat.temperature = userConfig.chatTemperature
-  if (userConfig.realtimeModel) result.openai.realtime.model = userConfig.realtimeModel
-  if (userConfig.realtimeVoice) result.openai.realtime.voice = userConfig.realtimeVoice
+  if (userConfig.chatTemperature != null)
+    result.openai.chat.temperature = userConfig.chatTemperature
+  if (userConfig.realtimeModel)
+    result.openai.realtime.model = userConfig.realtimeModel
+  if (userConfig.realtimeVoice)
+    result.openai.realtime.voice = userConfig.realtimeVoice
   if (userConfig.deepgramModel) result.deepgram.model = userConfig.deepgramModel
-  if (userConfig.deepgramLanguage) result.deepgram.language = userConfig.deepgramLanguage
-  if (userConfig.silenceThresholdMs != null) result.interview.silenceThresholdMs = userConfig.silenceThresholdMs
-  if (userConfig.utteranceEndMs != null) result.deepgram.utteranceEndMs = userConfig.utteranceEndMs
+  if (userConfig.deepgramLanguage)
+    result.deepgram.language = userConfig.deepgramLanguage
+  if (userConfig.silenceThresholdMs != null)
+    result.interview.silenceThresholdMs = userConfig.silenceThresholdMs
+  if (userConfig.utteranceEndMs != null)
+    result.deepgram.utteranceEndMs = userConfig.utteranceEndMs
   return result
 }
 
@@ -656,7 +713,10 @@ interface ConfigProviderProps {
   initialConfig: ResolvedConfig | null
 }
 
-export function ConfigProvider({ children, initialConfig }: ConfigProviderProps) {
+export function ConfigProvider({
+  children,
+  initialConfig,
+}: ConfigProviderProps) {
   const [resolvedConfig, setResolvedConfig] = useState<ResolvedConfig>(
     initialConfig ?? buildClientBase()
   )
@@ -670,7 +730,9 @@ export function ConfigProvider({ children, initialConfig }: ConfigProviderProps)
         const parsed = PrivateKeysSchema.safeParse(JSON.parse(raw))
         if (parsed.success) setPrivateKeys(parsed.data)
       }
-    } catch { /* ignore parse errors */ }
+    } catch {
+      /* ignore parse errors */
+    }
   }, [])
 
   async function updateConfig(patch: Partial<UserConfig>) {
@@ -689,13 +751,20 @@ export function ConfigProvider({ children, initialConfig }: ConfigProviderProps)
     const parsed = PrivateKeysSchema.safeParse(merged)
     if (parsed.success) {
       setPrivateKeys(parsed.data)
-      localStorage.setItem(PRIVATE_KEYS_STORAGE_KEY, JSON.stringify(parsed.data))
+      localStorage.setItem(
+        PRIVATE_KEYS_STORAGE_KEY,
+        JSON.stringify(parsed.data)
+      )
     }
   }
 
   return (
     <ConfigContext.Provider
-      value={{ config: { ...resolvedConfig, privateKeys }, updateConfig, updatePrivateKeys }}
+      value={{
+        config: { ...resolvedConfig, privateKeys },
+        updateConfig,
+        updatePrivateKeys,
+      }}
     >
       {children}
     </ConfigContext.Provider>
@@ -708,7 +777,9 @@ export function useConfigContext() {
     // Outside ConfigProvider: return operator defaults with empty private keys
     return {
       config: { ...buildClientBase(), privateKeys: {} as PrivateKeys },
-      updateConfig: async () => { throw new Error("ConfigProvider not mounted") },
+      updateConfig: async () => {
+        throw new Error("ConfigProvider not mounted")
+      },
       updatePrivateKeys: () => {},
     }
   }
@@ -740,6 +811,7 @@ git commit -m "feat: add ConfigProvider React context and useConfig hook"
 ## Task 7: Mount ConfigProvider in dashboard layout
 
 **Files:**
+
 - Modify: `app/(dashboard)/dashboard/layout.tsx`
 
 - [ ] **Step 1: Add ConfigProvider to dashboard layout**
@@ -750,8 +822,8 @@ Current file (`app/(dashboard)/dashboard/layout.tsx`) uses `getCurrentUser()` an
 // app/(dashboard)/dashboard/layout.tsx
 import { notFound } from "next/navigation"
 
-import { ConfigService } from "@/lib/config/config.service"
 import { ConfigProvider } from "@/lib/config/config.context"
+import { ConfigService } from "@/lib/config/config.service"
 import { getCurrentUser } from "@/lib/session"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -822,6 +894,7 @@ git commit -m "feat: mount ConfigProvider in dashboard layout with SSR initial c
 ## Task 8: Migrate server-side API routes
 
 **Files:**
+
 - Modify: `app/api/assistant/completion/route.ts`
 - Modify: `app/api/assistant/classify-question/route.ts`
 - Modify: `app/api/transcription-session/route.ts`
@@ -838,8 +911,8 @@ Remove `export const runtime = "edge"` and replace `RAG_CONFIG` references with 
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 
-import { ConfigService } from "@/lib/config/config.service"
 import { authOptions } from "@/lib/auth"
+import { ConfigService } from "@/lib/config/config.service"
 import openai from "@/lib/openai"
 import { buildPrompt, buildSummarizerPrompt } from "@/lib/utils"
 
@@ -911,8 +984,8 @@ Replace all hardcoded values with `ConfigService`:
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 
-import { ConfigService } from "@/lib/config/config.service"
 import { authOptions } from "@/lib/auth"
+import { ConfigService } from "@/lib/config/config.service"
 import openai from "@/lib/openai"
 
 export async function POST(req: Request) {
@@ -936,7 +1009,10 @@ export async function POST(req: Request) {
   }
 
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), config.openai.classify.timeoutMs)
+  const timeout = setTimeout(
+    () => controller.abort(),
+    config.openai.classify.timeoutMs
+  )
 
   try {
     const messages: {
@@ -987,8 +1063,8 @@ export async function POST(req: Request) {
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 
-import { ConfigService } from "@/lib/config/config.service"
 import { authOptions } from "@/lib/auth"
+import { ConfigService } from "@/lib/config/config.service"
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -998,17 +1074,20 @@ export async function GET() {
 
   const config = await ConfigService.forUser(session.user.id)
 
-  const response = await fetch(`${config.openai.realtime.baseURL}/realtime/sessions`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: config.openai.realtime.model,
-      voice: config.openai.realtime.voice,
-    }),
-  })
+  const response = await fetch(
+    `${config.openai.realtime.baseURL}/realtime/sessions`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: config.openai.realtime.model,
+        voice: config.openai.realtime.voice,
+      }),
+    }
+  )
 
   if (!response.ok) {
     const error = await response.text()
@@ -1093,7 +1172,8 @@ Never say you are an AI, a language model, or an assistant. You are the candidat
     tools: [fileSearchTool],
     stream: true,
     temperature: modelConfig?.temperature ?? OPENAI_DEFAULTS.chat.temperature,
-    max_output_tokens: modelConfig?.maxOutputTokens ?? OPENAI_DEFAULTS.chat.maxTokens,
+    max_output_tokens:
+      modelConfig?.maxOutputTokens ?? OPENAI_DEFAULTS.chat.maxTokens,
   })
 
   const sources: FileSearchSource[] = []
@@ -1204,6 +1284,7 @@ git commit -m "feat: migrate server-side API routes to use ConfigService"
 ## Task 9: Migrate client-side hooks
 
 **Files:**
+
 - Modify: `hooks/use-deepgram-connection.ts`
 - Modify: `hooks/use-openai-transcription.ts`
 
@@ -1294,7 +1375,9 @@ const { config } = useConfig()
 In the `connect` callback, replace the WebSocket URL construction:
 
 ```ts
-const wsURL = `${config.openai.realtime.baseURL.replace(/^https/, "wss").replace(/^http/, "ws")}/realtime?model=${config.openai.realtime.model}`
+const wsURL = `${config.openai.realtime.baseURL
+  .replace(/^https/, "wss")
+  .replace(/^http/, "ws")}/realtime?model=${config.openai.realtime.model}`
 const ws = new WebSocket(wsURL, [
   "realtime",
   `openai-insecure-api-key.${token}`,
@@ -1340,6 +1423,7 @@ git commit -m "feat: migrate Deepgram and OpenAI transcription hooks to use useC
 ## Task 10: Delete config/rag.ts and final cleanup
 
 **Files:**
+
 - Delete: `config/rag.ts`
 
 - [ ] **Step 1: Verify no remaining imports of config/rag**
@@ -1394,9 +1478,11 @@ Expected: page loads normally, no console errors about config
 Open browser DevTools → Network. Reload the dashboard page and look for the `GET /api/user/config` call (triggered server-side, will appear in the server logs).
 
 Or curl directly after login:
+
 ```bash
 curl -b <session-cookie> http://localhost:3000/api/user/config
 ```
+
 Expected: 200 response with `{ schemaVersion: 1, chatModel: null, ... }`
 
 - [ ] **Step 4: Commit final state**

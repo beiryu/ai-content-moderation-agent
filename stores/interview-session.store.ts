@@ -35,7 +35,10 @@ interface InterviewSessionStore {
     role?: "interviewer" | "candidate"
   ) => void
   flushTranscript: (role: "interviewer" | "candidate") => Promise<void>
-  analyzeMessage: (messageId: string, abortSignal?: AbortSignal) => Promise<void>
+  analyzeMessage: (
+    messageId: string,
+    abortSignal?: AbortSignal
+  ) => Promise<void>
 }
 
 export const useInterviewSessionStore = create<InterviewSessionStore>()(

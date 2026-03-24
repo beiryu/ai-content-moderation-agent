@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useInterviewSessionStore } from "@/stores/interview-session.store"
 
+import { useConfig } from "@/lib/config/config.hooks"
 import { toast } from "@/components/ui/use-toast"
 
 type TranscriptionStatus = "idle" | "loading" | "ready" | "error"
@@ -19,6 +20,7 @@ interface UseOpenAITranscriptionReturn {
 export function useOpenAITranscription(
   role: "interviewer" | "candidate" = "interviewer"
 ): UseOpenAITranscriptionReturn {
+  const { config } = useConfig()
   const { processTranscript, flushTranscript, setMicrophoneStatus } =
     useInterviewSessionStore()
 
@@ -129,14 +131,14 @@ export function useOpenAITranscription(
       if (!res.ok) throw new Error("Failed to get transcription session token")
       const { client_secret: token } = await res.json()
 
-      const ws = new WebSocket(
-        "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview",
-        [
-          "realtime",
-          `openai-insecure-api-key.${token}`,
-          "openai-beta.realtime-v1",
-        ]
-      )
+      const wsURL = `${config.openai.realtime.baseURL
+        .replace(/^https/, "wss")
+        .replace(/^http/, "ws")}/realtime?model=${config.openai.realtime.model}`
+      const ws = new WebSocket(wsURL, [
+        "realtime",
+        `openai-insecure-api-key.${token}`,
+        "openai-beta.realtime-v1",
+      ])
       wsRef.current = ws
 
       ws.onopen = () => {
@@ -146,12 +148,12 @@ export function useOpenAITranscription(
             session: {
               input_audio_format: "pcm16",
               input_audio_transcription: {
-                model: "gpt-4o-transcribe",
+                model: config.openai.transcribe.model,
               },
               turn_detection: {
                 type: "server_vad",
-                silence_duration_ms: 1200,
-                threshold: 0.5,
+                silence_duration_ms: config.interview.vad.silenceDurationMs,
+                threshold: config.interview.vad.threshold,
               },
             },
           })
@@ -242,6 +244,7 @@ export function useOpenAITranscription(
       setMicrophoneStatus("disconnected")
     }
   }, [
+    config,
     startAudioPipeline,
     processTranscript,
     flushTranscript,

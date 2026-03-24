@@ -10,17 +10,17 @@
 
 Config values are scattered across the codebase with no single source of truth:
 
-| Location | Hardcoded Values |
-|---|---|
-| `config/rag.ts` | OpenAI model, temperature, maxTokens |
-| `app/api/transcription-session/route.ts` | `model: "gpt-4o-realtime-preview"`, `voice: "alloy"` |
-| `app/api/assistant/classify-question/route.ts` | `model: "gpt-4o-mini"`, timeout 2000ms, max_tokens: 20 |
-| `app/api/assistant/completion/route.ts` | `temperature: 0.5` (inconsistent with `config/rag.ts` which uses 0.2) |
-| `hooks/use-deepgram-connection.ts` | `model: "nova-3"`, `endpointing: 1200`, keepAlive 10s, silence 5s |
-| `hooks/use-openai-transcription.ts` | WebSocket URL, `model: "gpt-4o-realtime-preview"`, transcription model `"gpt-4o-transcribe"`, VAD `silence_duration_ms: 1200`, VAD `threshold: 0.5` |
-| `lib/openai/file-search-stream.ts` | Imports `RAG_CONFIG` directly: model, temperature, maxTokens |
-| `lib/agents/interview-agents.ts` | `model: "gpt-4o-mini"` hardcoded in `AnswerCoach` agent |
-| `app/api/chat/rag/stream/route.ts` | `PREV_RESP_TTL = 86400` |
+| Location                                       | Hardcoded Values                                                                                                                                    |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config/rag.ts`                                | OpenAI model, temperature, maxTokens                                                                                                                |
+| `app/api/transcription-session/route.ts`       | `model: "gpt-4o-realtime-preview"`, `voice: "alloy"`                                                                                                |
+| `app/api/assistant/classify-question/route.ts` | `model: "gpt-4o-mini"`, timeout 2000ms, max_tokens: 20                                                                                              |
+| `app/api/assistant/completion/route.ts`        | `temperature: 0.5` (inconsistent with `config/rag.ts` which uses 0.2)                                                                               |
+| `hooks/use-deepgram-connection.ts`             | `model: "nova-3"`, `endpointing: 1200`, keepAlive 10s, silence 5s                                                                                   |
+| `hooks/use-openai-transcription.ts`            | WebSocket URL, `model: "gpt-4o-realtime-preview"`, transcription model `"gpt-4o-transcribe"`, VAD `silence_duration_ms: 1200`, VAD `threshold: 0.5` |
+| `lib/openai/file-search-stream.ts`             | Imports `RAG_CONFIG` directly: model, temperature, maxTokens                                                                                        |
+| `lib/agents/interview-agents.ts`               | `model: "gpt-4o-mini"` hardcoded in `AnswerCoach` agent                                                                                             |
+| `app/api/chat/rag/stream/route.ts`             | `PREV_RESP_TTL = 86400`                                                                                                                             |
 
 There is no way for users to customize settings, and no safe upgrade path when values change.
 
@@ -72,6 +72,7 @@ lib/config/
 Static TypeScript files in `config/defaults/`. Changed via git like normal code. No runtime writes.
 
 **`config/defaults/openai.ts`**
+
 ```ts
 export const OPENAI_DEFAULTS = {
   chat: {
@@ -118,6 +119,7 @@ export const OPENAI_DEFAULTS = {
 ```
 
 **`config/defaults/deepgram.ts`**
+
 ```ts
 // Note: "endpointing" is the exact Deepgram API field name (ms before end-of-speech is declared)
 export const DEEPGRAM_DEFAULTS = {
@@ -132,6 +134,7 @@ export const DEEPGRAM_DEFAULTS = {
 ```
 
 **`config/defaults/interview.ts`**
+
 ```ts
 export const INTERVIEW_DEFAULTS = {
   silenceThresholdMs: 5000,
@@ -150,6 +153,7 @@ export const INTERVIEW_DEFAULTS = {
 Schemas define shape, constraints, and allowed user-overridable fields. Historical versions are kept in the same file using a `V{N}` naming convention so migrations can reference them.
 
 **`config/schemas/user-config.schema.ts`**
+
 ```ts
 export const CURRENT_SCHEMA_VERSION = 1
 
@@ -161,7 +165,9 @@ export const UserConfigSchemaV1 = z.object({
   chatModel: z.enum(["gpt-4o-mini", "gpt-4o"]).optional(),
   chatTemperature: z.number().min(0).max(1).optional(),
   realtimeModel: z.enum(["gpt-4o-realtime-preview"]).optional(),
-  realtimeVoice: z.enum(["alloy", "echo", "shimmer", "verse", "ash"]).optional(),
+  realtimeVoice: z
+    .enum(["alloy", "echo", "shimmer", "verse", "ash"])
+    .optional(),
 
   // Deepgram
   deepgramModel: z.enum(["nova-3", "nova-2"]).optional(),
@@ -184,6 +190,7 @@ export const migrations: Record<number, (data: unknown) => unknown> = {
 ```
 
 **Private keys schema (client-only, never persisted to DB):**
+
 ```ts
 // Format validation catches common copy-paste errors before any network call
 export const PrivateKeysSchema = z.object({
@@ -225,9 +232,11 @@ model UserConfig {
 ```
 
 `localStorage` stores only:
+
 ```ts
 { openaiApiKey?: string, deepgramApiKey?: string }
 ```
+
 These are never sent to the server. Hooks use them for direct client-side API calls only.
 
 ---
@@ -242,10 +251,12 @@ PUT  /api/user/config   → validates body with UserConfigSchema, upsert (create
 Both endpoints require authentication (`getServerSession`). Unauthenticated requests return 401.
 
 **`GET /api/user/config` response:**
+
 - If no `UserConfig` row exists yet (first-time user): returns `200` with all optional fields set to `null` and `schemaVersion: 1`. The client merges this with operator defaults normally.
 - Returns the raw DB row values — the client merges with operator defaults in `ConfigProvider`.
 
 **`PUT /api/user/config` semantics:**
+
 - Always uses `prisma.userConfig.upsert` (create on first write, update on subsequent writes).
 - Validates request body with `UserConfigSchema` before writing. Returns `400` with Zod error details on validation failure.
 - Returns the updated merged config (same shape as `GET`).
@@ -264,10 +275,10 @@ Both endpoints require authentication (`getServerSession`). Unauthenticated requ
 // Reads operator defaults → merges with UserConfig from DB → validates via Zod
 const config = await ConfigService.forUser(userId)
 
-config.openai.chat.model             // "gpt-4o" if user set it, "gpt-4o-mini" if not
-config.openai.realtime.baseURL       // env.OPENAI_BASE_URL wins; falls back to baseFallbackURL
-config.deepgram.model                // "nova-3" (operator default)
-config.interview.silenceThresholdMs  // 3000 if user overrode, 5000 otherwise
+config.openai.chat.model // "gpt-4o" if user set it, "gpt-4o-mini" if not
+config.openai.realtime.baseURL // env.OPENAI_BASE_URL wins; falls back to baseFallbackURL
+config.deepgram.model // "nova-3" (operator default)
+config.interview.silenceThresholdMs // 3000 if user overrode, 5000 otherwise
 ```
 
 ### Client Mode (Hooks / Components)
@@ -277,7 +288,7 @@ config.interview.silenceThresholdMs  // 3000 if user overrode, 5000 otherwise
 const { config, updateConfig } = useConfig()
 
 config.openai.chat.model
-config.privateKeys.openaiApiKey  // from localStorage, never sent to server
+config.privateKeys.openaiApiKey // from localStorage, never sent to server
 ```
 
 ### Merge Strategy
@@ -305,14 +316,16 @@ Right side wins. If a DB value is `null`/`undefined`, the operator default is us
 ```tsx
 // app/(dashboard)/dashboard/layout.tsx  (Server Component)
 import { ConfigProvider } from "@/lib/config/config.context"
-import { getCurrentUser } from "@/lib/session"
 import { ConfigService } from "@/lib/config/config.service"
+import { getCurrentUser } from "@/lib/session"
 
 export default async function DashboardLayout({ children }) {
   const user = await getCurrentUser()
   // Pre-fetch merged config on the server and pass as a prop to avoid a client waterfall
   const initialConfig = user ? await ConfigService.forUser(user.id) : null
-  return <ConfigProvider initialConfig={initialConfig}>{children}</ConfigProvider>
+  return (
+    <ConfigProvider initialConfig={initialConfig}>{children}</ConfigProvider>
+  )
 }
 ```
 
@@ -361,35 +374,35 @@ Historical schema versions (`UserConfigSchemaV1`, etc.) are never deleted from t
 
 Every hardcoded value replaced after this implementation:
 
-| File | Before | After |
-|---|---|---|
-| `hooks/use-deepgram-connection.ts` | `model: "nova-3"` | `config.deepgram.model` via `useConfig()` |
-| `hooks/use-deepgram-connection.ts` | `language: "multi"` | `config.deepgram.language` |
-| `hooks/use-deepgram-connection.ts` | `interim_results: true` | `config.deepgram.interimResults` |
-| `hooks/use-deepgram-connection.ts` | `smart_format: true` | `config.deepgram.smartFormat` |
-| `hooks/use-deepgram-connection.ts` | `utteranceEndMs: 2500` | `config.deepgram.utteranceEndMs` |
-| `hooks/use-deepgram-connection.ts` | `endpointing: 1200` | `config.deepgram.endpointing` |
-| `hooks/use-deepgram-connection.ts` | keepAlive `10000` | `config.deepgram.keepAliveIntervalMs` |
-| `hooks/use-deepgram-connection.ts` | silence `5000` | `config.interview.silenceThresholdMs` |
-| `hooks/use-openai-transcription.ts` | `wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview` | built from `config.openai.realtime.baseURL` + `config.openai.realtime.model` |
-| `hooks/use-openai-transcription.ts` | `model: "gpt-4o-transcribe"` | `config.openai.transcribe.model` |
-| `hooks/use-openai-transcription.ts` | VAD `silence_duration_ms: 1200` | `config.interview.vad.silenceDurationMs` |
-| `hooks/use-openai-transcription.ts` | VAD `threshold: 0.5` | `config.interview.vad.threshold` |
-| `app/api/transcription-session/route.ts` | `model: "gpt-4o-realtime-preview"` | `config.openai.realtime.model` |
-| `app/api/transcription-session/route.ts` | `voice: "alloy"` | `config.openai.realtime.voice` |
-| `app/api/transcription-session/route.ts` | `env.OPENAI_BASE_URL \|\| "https://..."` | `config.openai.realtime.baseURL` (resolved by ConfigService) |
-| `app/api/assistant/classify-question/route.ts` | `model: "gpt-4o-mini"` | `config.openai.classify.model` |
-| `app/api/assistant/classify-question/route.ts` | `max_tokens: 20` | `config.openai.classify.maxTokens` |
-| `app/api/assistant/classify-question/route.ts` | `temperature: 0` | `config.openai.classify.temperature` |
-| `app/api/assistant/classify-question/route.ts` | timeout `2000` | `config.openai.classify.timeoutMs` |
-| `app/api/assistant/completion/route.ts` | `temperature: 0.5` | `config.openai.interviewAssistant.temperature` (preserved as 0.5, distinct from chat 0.2) |
-| `app/api/assistant/completion/route.ts` | `model` from `RAG_CONFIG` | `config.openai.chat.model` |
-| `lib/openai/file-search-stream.ts` | `RAG_CONFIG.models.chat.model` | `config.openai.chat.model` via argument passed from calling route |
-| `lib/openai/file-search-stream.ts` | `RAG_CONFIG.models.chat.temperature` | `config.openai.chat.temperature` |
-| `lib/openai/file-search-stream.ts` | `RAG_CONFIG.models.chat.maxTokens` | `config.openai.chat.maxTokens` |
-| `lib/agents/interview-agents.ts` | `model: "gpt-4o-mini"` | `OPENAI_DEFAULTS.agent.answerCoachModel` (operator-only, not user-overridable) |
-| `app/api/chat/rag/stream/route.ts` | `PREV_RESP_TTL = 86400` | `config.openai.cache.prevResponseTtlSec` |
-| `config/rag.ts` | entire file | deleted — all consumers updated to use ConfigService or OPENAI_DEFAULTS |
+| File                                           | Before                                                           | After                                                                                     |
+| ---------------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `hooks/use-deepgram-connection.ts`             | `model: "nova-3"`                                                | `config.deepgram.model` via `useConfig()`                                                 |
+| `hooks/use-deepgram-connection.ts`             | `language: "multi"`                                              | `config.deepgram.language`                                                                |
+| `hooks/use-deepgram-connection.ts`             | `interim_results: true`                                          | `config.deepgram.interimResults`                                                          |
+| `hooks/use-deepgram-connection.ts`             | `smart_format: true`                                             | `config.deepgram.smartFormat`                                                             |
+| `hooks/use-deepgram-connection.ts`             | `utteranceEndMs: 2500`                                           | `config.deepgram.utteranceEndMs`                                                          |
+| `hooks/use-deepgram-connection.ts`             | `endpointing: 1200`                                              | `config.deepgram.endpointing`                                                             |
+| `hooks/use-deepgram-connection.ts`             | keepAlive `10000`                                                | `config.deepgram.keepAliveIntervalMs`                                                     |
+| `hooks/use-deepgram-connection.ts`             | silence `5000`                                                   | `config.interview.silenceThresholdMs`                                                     |
+| `hooks/use-openai-transcription.ts`            | `wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview` | built from `config.openai.realtime.baseURL` + `config.openai.realtime.model`              |
+| `hooks/use-openai-transcription.ts`            | `model: "gpt-4o-transcribe"`                                     | `config.openai.transcribe.model`                                                          |
+| `hooks/use-openai-transcription.ts`            | VAD `silence_duration_ms: 1200`                                  | `config.interview.vad.silenceDurationMs`                                                  |
+| `hooks/use-openai-transcription.ts`            | VAD `threshold: 0.5`                                             | `config.interview.vad.threshold`                                                          |
+| `app/api/transcription-session/route.ts`       | `model: "gpt-4o-realtime-preview"`                               | `config.openai.realtime.model`                                                            |
+| `app/api/transcription-session/route.ts`       | `voice: "alloy"`                                                 | `config.openai.realtime.voice`                                                            |
+| `app/api/transcription-session/route.ts`       | `env.OPENAI_BASE_URL \|\| "https://..."`                         | `config.openai.realtime.baseURL` (resolved by ConfigService)                              |
+| `app/api/assistant/classify-question/route.ts` | `model: "gpt-4o-mini"`                                           | `config.openai.classify.model`                                                            |
+| `app/api/assistant/classify-question/route.ts` | `max_tokens: 20`                                                 | `config.openai.classify.maxTokens`                                                        |
+| `app/api/assistant/classify-question/route.ts` | `temperature: 0`                                                 | `config.openai.classify.temperature`                                                      |
+| `app/api/assistant/classify-question/route.ts` | timeout `2000`                                                   | `config.openai.classify.timeoutMs`                                                        |
+| `app/api/assistant/completion/route.ts`        | `temperature: 0.5`                                               | `config.openai.interviewAssistant.temperature` (preserved as 0.5, distinct from chat 0.2) |
+| `app/api/assistant/completion/route.ts`        | `model` from `RAG_CONFIG`                                        | `config.openai.chat.model`                                                                |
+| `lib/openai/file-search-stream.ts`             | `RAG_CONFIG.models.chat.model`                                   | `config.openai.chat.model` via argument passed from calling route                         |
+| `lib/openai/file-search-stream.ts`             | `RAG_CONFIG.models.chat.temperature`                             | `config.openai.chat.temperature`                                                          |
+| `lib/openai/file-search-stream.ts`             | `RAG_CONFIG.models.chat.maxTokens`                               | `config.openai.chat.maxTokens`                                                            |
+| `lib/agents/interview-agents.ts`               | `model: "gpt-4o-mini"`                                           | `OPENAI_DEFAULTS.agent.answerCoachModel` (operator-only, not user-overridable)            |
+| `app/api/chat/rag/stream/route.ts`             | `PREV_RESP_TTL = 86400`                                          | `config.openai.cache.prevResponseTtlSec`                                                  |
+| `config/rag.ts`                                | entire file                                                      | deleted — all consumers updated to use ConfigService or OPENAI_DEFAULTS                   |
 
 > **Note on `lib/openai/file-search-stream.ts`:** This is a library function, not a route handler. It cannot call `ConfigService.forUser()` directly. The calling route (`app/api/chat/rag/stream/route.ts`) resolves the config and passes the relevant values as arguments to `streamWithFileSearch()`.
 

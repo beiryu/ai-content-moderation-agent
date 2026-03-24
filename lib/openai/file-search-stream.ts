@@ -5,7 +5,7 @@ import type {
   ResponseTextDeltaEvent,
 } from "openai/resources/responses/responses"
 
-import { RAG_CONFIG } from "@/config/rag"
+import { OPENAI_DEFAULTS } from "@/config/defaults/openai"
 import openai from "@/lib/openai"
 
 import { buildFileSearchFilter } from "./vector-store-service"
@@ -27,13 +27,18 @@ export interface FileSearchChunk {
  * Streams a response from the OpenAI Responses API using the file_search tool.
  * Uses previous_response_id for server-side conversation state management.
  * Yields { content, sources, responseId } chunks compatible with the existing SSE handler.
+ *
+ * modelConfig is provided by the calling route (resolved via ConfigService).
+ * Falls back to OPENAI_DEFAULTS if not provided.
  */
 export async function* streamWithFileSearch(
   query: string,
   vectorStoreId: string,
   previousResponseId: string | undefined,
   documentIds?: string[],
-  fileIdToTitle?: Map<string, { documentId: string; title: string }>
+  fileIdToTitle?: Map<string, { documentId: string; title: string }>,
+  // maxOutputTokens: uses the OpenAI Responses API field name (not max_tokens)
+  modelConfig?: { model: string; temperature: number; maxOutputTokens: number }
 ): AsyncGenerator<FileSearchChunk> {
   const filter = buildFileSearchFilter(documentIds || [])
 
@@ -44,7 +49,7 @@ export async function* streamWithFileSearch(
   }
 
   const stream = await openai.responses.create({
-    model: RAG_CONFIG.models.chat.model,
+    model: modelConfig?.model ?? OPENAI_DEFAULTS.chat.model,
     instructions: `You are acting as the person whose documents are provided.
 Answer every question in the first person ("I", "my", "me") as if you are that person.
 Use the uploaded documents as the authoritative source of facts about yourself — experience, skills, projects, education, etc.
@@ -54,15 +59,15 @@ Never say you are an AI, a language model, or an assistant. You are the candidat
     ...(previousResponseId ? { previous_response_id: previousResponseId } : {}),
     tools: [fileSearchTool],
     stream: true,
-    temperature: RAG_CONFIG.models.chat.temperature,
-    max_output_tokens: RAG_CONFIG.models.chat.maxTokens,
+    temperature: modelConfig?.temperature ?? OPENAI_DEFAULTS.chat.temperature,
+    max_output_tokens:
+      modelConfig?.maxOutputTokens ?? OPENAI_DEFAULTS.chat.maxTokens,
   })
 
   const sources: FileSearchSource[] = []
   let sourcesYielded = false
 
   for await (const event of stream) {
-    // Collect file citations
     if (event.type === "response.output_text_annotation.added") {
       const annotationEvent =
         event as unknown as ResponseOutputTextAnnotationAddedEvent
@@ -80,7 +85,6 @@ Never say you are an AI, a language model, or an assistant. You are the candidat
       }
     }
 
-    // Yield sources once before the first content chunk
     if (event.type === "response.output_text.delta") {
       const deltaEvent = event as ResponseTextDeltaEvent
       if (!sourcesYielded) {
@@ -90,7 +94,6 @@ Never say you are an AI, a language model, or an assistant. You are the candidat
       yield { content: deltaEvent.delta, sources: null }
     }
 
-    // Yield response ID and ensure sources are always yielded at least once
     if (event.type === "response.completed") {
       if (!sourcesYielded) {
         yield { content: null, sources }

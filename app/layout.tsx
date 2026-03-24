@@ -1,7 +1,7 @@
 import { Outfit as FontOutfit } from "next/font/google"
 
 import "@/styles/globals.css"
-import { siteConfig } from "@/config/site"
+import { siteConfig } from "@/config/defaults/site"
 import { absoluteUrl, cn } from "@/lib/utils"
 import { Toaster } from "@/components/ui/toaster"
 import { Analytics } from "@/components/analytics"

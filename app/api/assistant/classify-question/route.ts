@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 
 import { authOptions } from "@/lib/auth"
+import { ConfigService } from "@/lib/config/config.service"
 import openai from "@/lib/openai"
 
 export async function POST(req: Request) {
@@ -9,6 +10,8 @@ export async function POST(req: Request) {
   if (!session?.user?.id) {
     return new Response("Unauthorized", { status: 401 })
   }
+
+  const config = await ConfigService.forUser(session.user.id)
 
   const {
     text,
@@ -23,9 +26,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ isQuestion: false })
   }
 
-  // Tier 2: GPT-4o-mini classifier with 2s timeout
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 2000)
+  const timeout = setTimeout(
+    () => controller.abort(),
+    config.openai.classify.timeoutMs
+  )
 
   try {
     const messages: {
@@ -51,11 +56,11 @@ export async function POST(req: Request) {
 
     const response = await openai.chat.completions.create(
       {
-        model: "gpt-4o-mini",
+        model: config.openai.classify.model,
         messages,
         response_format: { type: "json_object" },
-        max_tokens: 20,
-        temperature: 0,
+        max_tokens: config.openai.classify.maxTokens,
+        temperature: config.openai.classify.temperature,
       },
       { signal: controller.signal }
     )

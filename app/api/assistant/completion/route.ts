@@ -1,12 +1,20 @@
 import { NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
 
-import { RAG_CONFIG } from "@/config/rag"
+import { authOptions } from "@/lib/auth"
+import { ConfigService } from "@/lib/config/config.service"
 import openai from "@/lib/openai"
 import { buildPrompt, buildSummarizerPrompt } from "@/lib/utils"
 
-export const runtime = "edge"
+// Note: runtime = "edge" removed — ConfigService requires Node.js (Prisma)
 
 export async function POST(req: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return new Response("Unauthorized", { status: 401 })
+  }
+
+  const config = await ConfigService.forUser(session.user.id)
   const { backgroundText, flag, prompt: transcribe } = await req.json()
 
   let prompt = transcribe
@@ -18,17 +26,12 @@ export async function POST(req: Request) {
 
   try {
     const stream = await openai.chat.completions.create({
-      model: RAG_CONFIG.models.chat.model,
-      max_tokens: RAG_CONFIG.models.chat.maxTokens,
-      temperature: 0.5, // Using a specific value for interview responses
-      presence_penalty: RAG_CONFIG.models.chat.presencePenalty,
-      frequency_penalty: RAG_CONFIG.models.chat.frequencyPenalty,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
+      model: config.openai.chat.model,
+      max_tokens: config.openai.chat.maxTokens,
+      temperature: config.openai.chat.temperature,
+      presence_penalty: config.openai.chat.presencePenalty,
+      frequency_penalty: config.openai.chat.frequencyPenalty,
+      messages: [{ role: "user", content: prompt }],
       stream: true,
     })
 

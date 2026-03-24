@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import { marketingConfig } from "@/config/marketing"
+import { MainNavItem } from "types"
 import { getCurrentUser } from "@/lib/session"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -16,6 +16,26 @@ interface MarketingLayoutProps {
   children: React.ReactNode
 }
 
+const MAIN_NAV_ITEMS: MainNavItem[] = [
+  {
+    title: "Features",
+    href: "/#features",
+  },
+  {
+    title: "Pricing",
+    href: "/pricing",
+  },
+  {
+    title: "Blog",
+    href: "/blog",
+  },
+  {
+    title: "Documentation",
+    href: "/docs",
+    disabled: true,
+  },
+]
+
 export default async function MarketingLayout({
   children,
 }: MarketingLayoutProps) {
@@ -27,7 +47,7 @@ export default async function MarketingLayout({
         <Banner />
         <header className="z-40 sticky top-0 backdrop-blur-sm bg-black/100">
           <div className="flex h-20 container items-center justify-between py-6">
-            <MainNav items={marketingConfig.mainNav} />
+            <MainNav items={MAIN_NAV_ITEMS} />
             {user ? (
               <UserAccountNav
                 user={{

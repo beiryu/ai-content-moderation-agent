@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
+import { ConfigService } from "@/lib/config/config.service"
 import { db } from "@/lib/db"
 import { saveChatInteraction } from "@/lib/langchain/memory"
 import { streamWithFileSearch } from "@/lib/openai/file-search-stream"
@@ -17,6 +18,8 @@ export async function POST(req: NextRequest) {
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    const config = await ConfigService.forUser(user.id)
 
     const body = await req.json()
     const { message, selectedDocuments, sessionId } =
@@ -66,7 +69,12 @@ export async function POST(req: NextRequest) {
       vectorStoreId,
       conversation?.previousResponseId ?? undefined,
       selectedDocuments || [],
-      fileIdToTitle
+      fileIdToTitle,
+      {
+        model: config.openai.chat.model,
+        temperature: config.openai.chat.temperature,
+        maxOutputTokens: config.openai.chat.maxTokens,
+      }
     )) {
       if (chunk.responseId) newResponseId = chunk.responseId
       if (chunk.sources) sources = chunk.sources

@@ -20,10 +20,6 @@ export type SiteConfig = {
   }
 }
 
-export type MarketingConfig = {
-  mainNav: MainNavItem[]
-}
-
 export type SubscriptionPlan = {
   name: string
   description: string

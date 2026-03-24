@@ -1,5 +1,6 @@
 import { Agent, fileSearchTool } from "@openai/agents"
 
+import { OPENAI_DEFAULTS } from "@/config/defaults/openai"
 import { buildFileSearchFilter } from "@/lib/openai/vector-store-service"
 
 export function createAnswerCoachAgent(
@@ -17,7 +18,7 @@ export function createAnswerCoachAgent(
 
   return new Agent({
     name: "AnswerCoach",
-    model: "gpt-4o-mini",
+    model: OPENAI_DEFAULTS.agent.answerCoachModel,
     instructions: `You are an expert interview coach.${contextBlock}
 Given an interviewer's question and optionally a conversation history:
 1. Extract the core question being asked

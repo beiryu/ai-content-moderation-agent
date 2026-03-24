@@ -6,6 +6,8 @@ import {
   createClient,
 } from "@deepgram/sdk"
 
+import { useConfig } from "@/lib/config/config.hooks"
+
 type DeepgramConnectionStatus = "idle" | "loading" | "ready" | "error"
 
 interface UseDeepgramConnectionReturn {
@@ -18,6 +20,12 @@ interface UseDeepgramConnectionReturn {
 export function useDeepgramConnection(
   role: "interviewer" | "candidate" = "interviewer"
 ): UseDeepgramConnectionReturn {
+  const { config } = useConfig()
+  const configRef = useRef(config)
+  useEffect(() => {
+    configRef.current = config
+  }, [config])
+
   const [status, setStatus] = useState<DeepgramConnectionStatus>("idle")
   const [error, setError] = useState<Error | null>(null)
   const [isListening, setIsListening] = useState(false)
@@ -27,6 +35,7 @@ export function useDeepgramConnection(
   const silenceInterval = useRef<NodeJS.Timeout>()
 
   const initializeConnection = useCallback(async () => {
+    const cfg = configRef.current
     try {
       setStatus("loading")
       const response = await fetch("/api/deepgram", { cache: "no-store" })
@@ -38,35 +47,33 @@ export function useDeepgramConnection(
 
       const deepgram = createClient(data.key)
       const conn = deepgram.listen.live({
-        model: "nova-3",
-        language: "multi",
-        interim_results: true,
-        smart_format: true,
-        utterance_end_ms: 2500,
-        endpointing: 1200,
+        model: cfg.deepgram.model,
+        language: cfg.deepgram.language,
+        interim_results: cfg.deepgram.interimResults,
+        smart_format: cfg.deepgram.smartFormat,
+        utterance_end_ms: cfg.deepgram.utteranceEndMs,
+        endpointing: cfg.deepgram.endpointing,
       })
 
-      // Setup keepAlive interval
       keepAliveInterval.current = setInterval(() => {
         if (conn && conn.getReadyState() === 1) {
           // 1 = OPEN
           conn.keepAlive()
           console.log("Sent keepAlive message")
         }
-      }, 10000) // Send keepAlive every 10 seconds
+      }, cfg.deepgram.keepAliveIntervalMs)
 
-      // Silence fallback: flush buffer if no audio for 5s (handles case where UtteranceEnd doesn't fire)
       silenceInterval.current = setInterval(() => {
         const state = useInterviewSessionStore.getState()
         const silentFor = Date.now() - state.lastSpeakTime
-        if (silentFor > 5000) {
+        if (silentFor > cfg.interview.silenceThresholdMs) {
           const bufferKey =
             role === "interviewer" ? "interviewerBuffer" : "candidateBuffer"
           if (state[bufferKey].trim()) {
             state.flushTranscript(role)
           }
         }
-      }, 1000)
+      }, cfg.interview.silenceCheckIntervalMs)
 
       conn.on(LiveTranscriptionEvents.Open, () => {
         setIsListening(true)
